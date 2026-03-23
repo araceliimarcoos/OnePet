@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Mascotas{% endblock %}
+
+{% block nav_mascotas %}active{% endblock %}
+
+{% block breadcrumb %}
+    <a href="{% url 'dashboard' %}">Inicio</a>
+    <span class="material-symbols-outlined">chevron_right</span>
+    <span class="breadcrumb-current">Mascotas</span>
+{% endblock %}
+
+{% block topbar_titulo %}Lista de Mascotas{% endblock %}
+
+{% block contenido %}
+    <div class="page active" id="page-mascotas">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Mascotas</h1>
+                <p class="page-sub">Manejando {{ total_conteo }} mascotas registradas.</p>
+            </div>
+            
+            <div class="page-header-right">
+                <button class="btn-primary" id="btnNuevaMascota">
+                    <span class="material-symbols-outlined">add_circle</span>
+                    Nueva Mascota
+                </button>
+            </div>
+        </div>
+
+        <div class="card">
+<!--#############################################################################-->
+          <div class="filters-bar">
+            <div class="search-box">
+                <span class="material-symbols-outlined">search</span>
+                <input type="text" placeholder="Buscar por mascota, folio, propietario..." id="mascotaSearch" />
+            </div>
+            
+            <div class="filter-selects">
+                <select class="filter-select" id="filterEspecie">
+                    <option value="">Especies: Todas</option>
+                    {% for e in especies %}
+                        <option value="{{ e.nombre }}">{{ e.nombre }}</option>
+                    {% endfor %}
+                </select>
+
+                <select class="filter-select" id="filterRaza">
+                    <option value="">Raza: Todas</option>
+                    {% for r in razas %}
+                        <option value="{{ r.nombre }}" data-especie="{{ r.especie.nombre }}">
+                            {{ r.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <select class="filter-select" id="filterEstado">
+                    <option value="">Estado: Todos</option>
+                    <option value="activo">Activo</option>
+                    <option value="inactivo">Inactivo</option>
+                </select>
+            </div>
+        </div>
+<!--#######################-->      
+            <div class="table-wrapper">
+                <table class="data-table" id="mascotasTable">
+                  <thead>
+                    <tr>
+                      <th>NOMBRE DE LA MASCOTA</th>
+                      <th>ESPECIE</th>
+                      <th>RAZA</th>
+                      <th>PROPIETARIO</th>
+                      <th>FECHA NACIMIENTO</th>
+                      <th>ACCIONES</th>
+                    </tr>
+                  </thead>
+<!--##################################################################################################333-->
+                  <tbody id="mascotasBody">
+                    {% for m in mascotas %}
+                    <tr data-especie="{{ m.especie.nombre }}" data-raza="{{ m.raza.nombre }}">
+                        <td>
+                            <div class="pet-cell">
+                                <div class="user-avatar-p" style="background-color: #DBEAFE; color: #2563EB;">
+                                    <span class="material-symbols-outlined">pets</span>
+                                </div>
+                                <div>
+                                    <strong>{{ m.nombre }}</strong>
+                                    <small>Folio: {{ m.folio }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge-especie {{ m.especie.nombre|lower }}">
+                                {{ m.especie.nombre }}
+                            </span>
+                        </td>
+                        <td>{{ m.raza.nombre }}</td>
+                        <!--#################################################-->
+                        <td> 
+                            <div class="data-vertical">
+                                <p style="margin: 0; font-weight: bold;">{{ m.propietario.nombrepila }} {{ m.propietario.primerapellido }}</p>
+                                <p style="margin: 0; font-size: 0.85em; color: #666;">{{ m.propietario.correo }}</p>
+                            </div>
+                        </td>
+                        <!--#############################################-->
+                        <td>{{ m.fechanacimiento|date:"d M, Y" }}</td>
+                        <!--akiiba-->
+                        <td>
+                            <a href="#" class="link-green">Ver perfil</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 30px; color: #666;">
+                            No hay mascotas registradas con esos criterios.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+<!--###########################################################################################-->
+                </table>
+              </div>
+
+            <div class="table-footer">
+                <span>
+                    Mostrando un total de <strong>{{ total_conteo }}</strong> mascotas filtradas.
+                </span>
+                </div>
+
+            <div class="table-help">
+                <span class="material-symbols-outlined">info</span> ¿Necesitas ayuda? Mira nuestra <a href="#" class="link-green">Guía de manejo de mascotas</a>
+            </div>
+        </div>
+    </div>
+
+<div class="modal-overlay" id="modalNuevaMascota">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>Registrar Nueva Mascota</h2>
+            <button class="modal-close" id="btnCerrarModal">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <form id="formNuevaMascota">
+            {% csrf_token %}
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="propietario">Propietario</label>
+                    <select id="propietario" name="propietario" required>
+                        <option value="">Seleccionar propietario...</option>
+                        {% for p in propietarios %}
+                            <option value="{{ p.id }}">{{ p.nombrepila }} {{ p.primerapellido }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="nombre">Nombre</label>
+                    <input type="text" id="nombre" name="nombre" placeholder="Ej: Buddy" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="especie">Especie</label>
+                        <select id="especie" name="especie" required>
+                            <option value="">Seleccionar...</option>
+                            {% for e in especies %}
+                                <option value="{{ e.id }}">{{ e.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="raza">Raza</label>
+                        <select id="raza" name="raza" required>
+                            <option value="">Seleccionar especie primero</option>
+                            {% for r in razas %}
+                                <option value="{{ r.id }}" data-especie-id="{{ r.especie.id }}">{{ r.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="fecha_nacimiento">Fecha de Nacimiento</label>
+                        <input type="date" id="fecha_nacimiento" name="fecha_nacimiento">
+                    </div>
+                    <div class="form-group">
+                        <label for="sexo">Sexo</label>
+                        <select id="sexo" name="sexo">
+                            <option value="macho">Macho</option>
+                            <option value="hembra">Hembra</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="peso">Peso (kg)</label>
+                        <input type="number" step="0.1" id="peso" name="peso" placeholder="0.0">
+                    </div>
+                    <div class="form-group">
+                        <label for="color">Color</label>
+                        <input type="text" id="color" name="color" placeholder="Café claro">
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-cancelar" id="btnCancelar">Cancelar</button>
+                <button type="submit" class="btn-primary">
+                    <span class="material-symbols-outlined">save</span> Guardar Mascota
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+    <script src="{% static 'core/js/mascotas.js' %}"></script>
+{% endblock %}

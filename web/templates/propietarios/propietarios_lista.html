@@ -1,0 +1,403 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block titulo %}Propietarios{% endblock %}
+
+{% block estilos %}
+<style>
+/* ── Modal más ancho para 3 columnas ── */
+.modal { max-width: 720px !important; }
+
+/* ── Fila de 3 columnas ── */
+.form-row-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+}
+
+/* ── Sección dentro del modal ── */
+.modal-section {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.modal-section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--text);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+}
+.modal-section-title .material-symbols-outlined {
+    font-size: 20px !important;
+    color: var(--blue-dark);
+}
+
+/* ── Subtítulo del header del modal ── */
+.modal-header-sub {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-weight: 400;
+    margin-top: 2px;
+}
+
+/* ── Campo de folio (no editable) ── */
+.folio-input {
+    background: #eef2f7 !important;
+    color: var(--blue-dark) !important;
+    font-family: 'Courier New', monospace !important;
+    font-weight: 700 !important;
+    font-size: 0.88rem !important;
+    border-color: #c2d4e8 !important;
+    cursor: not-allowed;
+}
+.folio-input:focus {
+    border-color: #c2d4e8 !important;
+    background: #eef2f7 !important;
+}
+
+/* ── Footer con limpiar + guardar ── */
+.modal-footer-full {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+}
+
+.btn-limpiar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 8px;
+    font-family: 'Manrope', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.btn-limpiar:hover { background: var(--bg); }
+.btn-limpiar .material-symbols-outlined { font-size: 16px !important; }
+
+/* ── Responsive: 3 cols → 2 → 1 ── */
+@media (max-width: 640px) {
+    .form-row-3 { grid-template-columns: 1fr 1fr; }
+    .modal { max-width: 100% !important; }
+}
+@media (max-width: 420px) {
+    .form-row-3 { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block nav_propietarios %}active{% endblock %}
+
+{% block breadcrumb %}
+    <a href="{% url 'dashboard' %}">Inicio</a>
+    <span class="material-symbols-outlined">chevron_right</span>
+    <span class="breadcrumb-current">Propietarios</span>
+{% endblock %}
+
+{% block topbar_titulo %}Lista de Propietarios{% endblock %}
+
+{% block contenido %}
+<div class="page active" id="page-propietarios">
+
+    <!-- ===== HEADER ===== -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Propietarios</h1>
+            <p class="page-sub">Información de contacto y datos de los propietarios</p>
+        </div>
+        <div class="page-header-right">
+            <button class="btn-primary" id="btnNuevoPropietario">
+                <span class="material-symbols-outlined">person_add</span>
+                Nuevo Propietario
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== TABLA ===== -->
+    <div class="card">
+        <div class="filters-bar">
+            <div class="search-box">
+                <span class="material-symbols-outlined">search</span>
+                <input type="text" id="propietarioSearch" placeholder="Buscar por nombre, correo o ID...">
+            </div>
+            <div class="filters-right">
+                <select class="filter-select" id="filterEstadoProp">
+                    <option value="">Todos los estados</option>
+                    <option value="ACTIVO">Activo</option>
+                    <option value="INACTIVO">Inactivo</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="table-wrapper">
+            <table class="data-table" id="propietariosTable">
+                <thead>
+                    <tr>
+                        <th>NOMBRE</th>
+                        <th>CONTACTO</th>
+                        <th>MASCOTAS ASOCIADAS</th>
+                        <th>ÚLTIMA VISITA</th>
+                        <th>ESTADO</th>
+                        <th>ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody id="propietariosBody">
+
+                    <tr data-estado="ACTIVO">
+                        <td>
+                            <div class="user-cell">
+                                <div class="user-avatar-p" style="background-color: #e2c09c;">JP</div>
+                                <div class="user-info-text">
+                                    <span class="user-name-table">Juan Pérez</span>
+                                    <span class="user-email-table">ID: VCP-2024-0001</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="user-info-text">
+                                <span class="user-name-table">+34 600 123 456</span>
+                                <span class="user-email-table">juan.perez@email.com</span>
+                            </div>
+                        </td>
+                        <td><span class="badge pending">Firulais (Perro)</span></td>
+                        <td><strong>12/10/2025</strong></td>
+                        <td><span class="badge confirmed">ACTIVO</span></td>
+                        <td><a href="{% url 'detalles_propietario' %}" class="link-green">Ver Perfil</a></td>
+                    </tr>
+
+                    <tr data-estado="ACTIVO">
+                        <td>
+                            <div class="user-cell">
+                                <div class="user-avatar-p" style="background-color: #a8d8b9;">MG</div>
+                                <div class="user-info-text">
+                                    <span class="user-name-table">María García</span>
+                                    <span class="user-email-table">ID: VCP-2024-0002</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="user-info-text">
+                                <span class="user-name-table">+34 612 888 777</span>
+                                <span class="user-email-table">m.garcia@email.com</span>
+                            </div>
+                        </td>
+                        <td><span class="badge pending">Michi (Gato)</span></td>
+                        <td><strong>05/09/2025</strong></td>
+                        <td><span class="badge confirmed">ACTIVO</span></td>
+                        <td><a href="#" class="link-green">Ver Perfil</a></td>
+                    </tr>
+
+                    <tr data-estado="ACTIVO">
+                        <td>
+                            <div class="user-cell">
+                                <div class="user-avatar-p" style="background-color: #b8d4f0;">CR</div>
+                                <div class="user-info-text">
+                                    <span class="user-name-table">Carlos Ruiz</span>
+                                    <span class="user-email-table">ID: VCP-2024-0003</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="user-info-text">
+                                <span class="user-name-table">+34 611 987 654</span>
+                                <span class="user-email-table">c.ruiz@email.com</span>
+                            </div>
+                        </td>
+                        <td><span class="badge pending">Bolita (Gato)</span></td>
+                        <td><strong>20/08/2025</strong></td>
+                        <td><span class="badge confirmed">ACTIVO</span></td>
+                        <td><a href="#" class="link-green">Ver Perfil</a></td>
+                    </tr>
+
+                    <tr data-estado="ACTIVO">
+                        <td>
+                            <div class="user-cell">
+                                <div class="user-avatar-p" style="background-color: #f0c8b8;">AL</div>
+                                <div class="user-info-text">
+                                    <span class="user-name-table">Ana López</span>
+                                    <span class="user-email-table">ID: VCP-2024-0004</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="user-info-text">
+                                <span class="user-name-table">+34 601 222 333</span>
+                                <span class="user-email-table">alopez@email.com</span>
+                            </div>
+                        </td>
+                        <td><span class="badge pending">Luna (Perro)</span></td>
+                        <td><strong>15/10/2025</strong></td>
+                        <td><span class="badge confirmed">ACTIVO</span></td>
+                        <td><a href="#" class="link-green">Ver Perfil</a></td>
+                    </tr>
+
+                </tbody>
+            </table>
+        </div>
+
+        <div class="table-footer">
+            <span>Mostrando <strong>1–4</strong> de <strong>124</strong> propietarios</span>
+            <div class="pagination">
+                <button class="page-btn" disabled>‹</button>
+                <button class="page-btn active">1</button>
+                <button class="page-btn">2</button>
+                <button class="page-btn">3</button>
+                <span>…</span>
+                <button class="page-btn">›</button>
+            </div>
+        </div>
+
+        <div class="table-help">
+            <span class="material-symbols-outlined">info</span>
+            ¿Necesitas ayuda? Mira nuestra
+            <a href="#" class="link-green">Guía de manejo de Propietarios</a>
+            o contacta al soporte
+        </div>
+
+    </div>
+</div>
+
+<!-- ===== MODAL: REGISTRAR PROPIETARIO ===== -->
+<div class="modal-overlay" id="modalNuevoPropietario">
+    <div class="modal">
+
+        <!-- Header -->
+        <div class="modal-header">
+            <div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span class="material-symbols-outlined" style="font-size:22px; color:var(--blue-dark);">person_add</span>
+                    <h2>Registrar Propietario</h2>
+                </div>
+                <p class="modal-header-sub">Ingrese la información del nuevo cliente.</p>
+            </div>
+            <button class="modal-close" id="btnCerrarModal">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <!-- Formulario -->
+        <form id="formNuevoPropietario">
+            {% csrf_token %}
+
+            <div class="modal-body">
+
+                <!-- ── Sección 1: Información General ── -->
+                <div class="modal-section">
+                    <div class="modal-section-title">
+                        <span class="material-symbols-outlined">badge</span>
+                        Información General
+                    </div>
+
+                    <!-- Fila 1: ID · Nombre · Apellido -->
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label for="folioAuto">ID Único (Auto-generado)</label>
+                            <input
+                                type="text"
+                                id="folioAuto"
+                                name="folio"
+                                value="VCP-2024-0892"
+                                class="folio-input"
+                                readonly
+                                tabindex="-1"
+                            >
+                        </div>
+                        <div class="form-group">
+                            <label for="nombre">Nombre(s)</label>
+                            <input type="text" id="nombre" name="nombre" placeholder="Ej. Juan" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="apellido">Apellido(s)</label>
+                            <input type="text" id="apellido" name="apellido" placeholder="Ej. Pérez" required>
+                        </div>
+                    </div>
+
+                    <!-- Fila 2: Correo · Tel. Principal · Tel. Secundario -->
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label for="correo">Correo Electrónico</label>
+                            <input type="email" id="correo" name="correo" placeholder="juan.perez@ejemplo.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="telPrincipal">Teléfono Principal</label>
+                            <input type="tel" id="telPrincipal" name="tel_principal" placeholder="55 1234 5678" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="telSecundario">Teléfono Secundario (Opcional)</label>
+                            <input type="tel" id="telSecundario" name="tel_secundario" placeholder="55 8765 4321">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Sección 2: Dirección ── -->
+                <div class="modal-section">
+                    <div class="modal-section-title">
+                        <span class="material-symbols-outlined">location_on</span>
+                        Dirección
+                    </div>
+
+                    <!-- Fila 3: Calle (ancha) · Número -->
+                    <div class="form-row" style="grid-template-columns: 2fr 1fr;">
+                        <div class="form-group">
+                            <label for="calle">Calle</label>
+                            <input type="text" id="calle" name="calle" placeholder="Av. Insurgentes Sur">
+                        </div>
+                        <div class="form-group">
+                            <label for="numero">Número Ext/Int</label>
+                            <input type="text" id="numero" name="numero" placeholder="123 - A">
+                        </div>
+                    </div>
+
+                    <!-- Fila 4: Colonia · Ciudad · C.P. -->
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label for="colonia">Colonia</label>
+                            <input type="text" id="colonia" name="colonia" placeholder="Roma Norte">
+                        </div>
+                        <div class="form-group">
+                            <label for="ciudad">Ciudad</label>
+                            <input type="text" id="ciudad" name="ciudad" placeholder="Ciudad de México">
+                        </div>
+                        <div class="form-group">
+                            <label for="cp">C.P.</label>
+                            <input type="text" id="cp" name="cp" placeholder="06700" maxlength="5">
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /modal-body -->
+
+            <!-- Footer -->
+            <div class="modal-footer-full">
+                <button type="button" class="btn-limpiar" id="btnLimpiar">
+                    <span class="material-symbols-outlined">cleaning_services</span>
+                    Limpiar
+                </button>
+                <button type="button" class="btn-cancelar" id="btnCancelar">Cancelar</button>
+                <button type="submit" class="btn-primary">
+                    <span class="material-symbols-outlined">save</span>
+                    Guardar Propietario
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+    <script src="{% static 'core/js/propietarios.js' %}"></script>
+{% endblock %}

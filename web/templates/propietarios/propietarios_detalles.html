@@ -1,0 +1,570 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block titulo %}Perfil de Propietario{% endblock %}
+
+{% block estilos %}
+<style>
+/* ===== LAYOUT ===== */
+.detalle-propietario {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* ===== TARJETA HEADER ===== */
+.prop-header-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 28px 32px;
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    flex-wrap: wrap;
+}
+
+.prop-foto {
+    width: 100px;
+    height: 100px;
+    border-radius: var(--radius);
+    object-fit: cover;
+    flex-shrink: 0;
+    background: var(--bg);
+    border: 2px solid var(--border);
+}
+
+.prop-foto-placeholder {
+    width: 100px;
+    height: 100px;
+    border-radius: var(--radius);
+    background: linear-gradient(135deg, var(--blue-light), var(--green-light));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--blue-dark);
+}
+
+.prop-header-info {
+    flex: 1;
+    min-width: 200px;
+}
+
+.prop-nombre {
+    font-size: 1.7rem;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 6px;
+}
+
+.prop-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+.prop-meta .material-symbols-outlined { font-size: 15px !important; }
+.prop-meta-sep { color: var(--border); }
+
+/* Grid de contacto */
+.prop-contacto-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+.prop-contacto-item {}
+.prop-contacto-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+.prop-contacto-valor {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Botones del header */
+.prop-header-acciones {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex-shrink: 0;
+    align-self: flex-start;
+}
+
+.btn-editar-perfil {
+    padding: 10px 20px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    border-radius: var(--radius-sm);
+    font-family: 'Manrope', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+}
+.btn-editar-perfil:hover { background: var(--bg); }
+
+/* ===== SECCIÓN MASCOTAS ===== */
+.mascotas-section {
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 24px 28px;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.section-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--text);
+}
+
+.section-count {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+.section-count .material-symbols-outlined { font-size: 16px !important; }
+
+/* Grid de mascotas */
+.mascotas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+}
+
+.mascota-card {
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    cursor: pointer;
+    transition: box-shadow 0.2s, border-color 0.2s;
+    position: relative;
+    background: var(--surface);
+}
+.mascota-card:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--blue-dark);
+}
+
+.mascota-card-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.mascota-foto {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: var(--bg);
+    border: 2px solid var(--border);
+}
+
+.mascota-foto-placeholder {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--blue-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.mascota-foto-placeholder .material-symbols-outlined { font-size: 26px !important; color: var(--blue-dark); }
+
+.mascota-card-nombre {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--text);
+    display: block;
+}
+.mascota-card-especie {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    display: block;
+}
+.mascota-card-detalle {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    display: block;
+}
+
+.mascota-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Badges de estado mascota */
+.badge-estado-mascota {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 4px;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+.badge-saludable    { background: #d1f5e3; color: #1a8a4a; }
+.badge-cita-proxima { background: #fff3d6; color: #a06b00; }
+.badge-tratamiento  { background: #fde8e8; color: var(--red); }
+
+.mascota-arrow {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    transition: background 0.15s, color 0.15s;
+    flex-shrink: 0;
+}
+.mascota-card:hover .mascota-arrow {
+    background: var(--blue-dark);
+    color: #fff;
+    border-color: var(--blue-dark);
+}
+.mascota-arrow .material-symbols-outlined { font-size: 16px !important; }
+
+/* Tarjeta "Registrar mascota" */
+.mascota-card-nueva {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    min-height: 130px;
+    background: transparent;
+    color: var(--text-muted);
+}
+.mascota-card-nueva:hover {
+    border-color: var(--blue-dark);
+    background: var(--blue-light);
+    color: var(--blue-dark);
+}
+.mascota-card-nueva .plus-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.mascota-card-nueva .plus-icon .material-symbols-outlined { font-size: 20px !important; }
+.mascota-card-nueva-label { font-size: 0.88rem; font-weight: 700; }
+.mascota-card-nueva-sub   { font-size: 0.75rem; text-align: center; }
+
+/* ===== ÚLTIMAS VISITAS ===== */
+.visitas-section {
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 24px 28px;
+}
+
+.link-historial {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--blue-dark);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+.link-historial:hover { color: var(--green-dark); text-decoration: underline; }
+
+.visitas-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 4px;
+}
+.visitas-table th {
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+}
+.visitas-table td {
+    padding: 14px 12px;
+    font-size: 0.87rem;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+}
+.visitas-table tr:last-child td { border-bottom: none; }
+.visitas-table tbody tr { transition: background 0.15s; }
+.visitas-table tbody tr:hover { background: var(--bg); }
+
+.btn-ver-visita {
+    width: 32px; height: 32px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: var(--blue-dark);
+    transition: background 0.15s;
+    padding: 0;
+}
+.btn-ver-visita:hover { background: var(--blue-light); }
+.btn-ver-visita .material-symbols-outlined { font-size: 22px !important; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 880px) {
+    .prop-contacto-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 640px) {
+    .prop-header-card { flex-direction: column; align-items: flex-start; }
+    .prop-header-acciones { flex-direction: row; align-self: stretch; }
+    .prop-header-acciones .btn-primary,
+    .prop-header-acciones .btn-editar-perfil { flex: 1; justify-content: center; }
+    .prop-contacto-grid { grid-template-columns: 1fr 1fr; }
+    .mascotas-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 420px) {
+    .prop-contacto-grid { grid-template-columns: 1fr; }
+    .mascotas-grid { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block nav_propietarios %}active{% endblock %}
+
+{% block breadcrumb %}
+    <a href="{% url 'dashboard' %}">Inicio</a>
+    <span class="material-symbols-outlined">chevron_right</span>
+    <a href="{% url 'propietarios' %}">Propietarios</a>
+    <span class="material-symbols-outlined">chevron_right</span>
+    <span class="breadcrumb-current">Consultar Propietario</span>
+{% endblock %}
+
+{% block topbar_titulo %}Perfil de Propietario{% endblock %}
+
+{% block contenido %}
+<div class="detalle-propietario">
+
+    <!-- ===== TARJETA PRINCIPAL ===== -->
+    <div class="prop-header-card">
+
+        <!-- Foto -->
+        <div class="prop-foto-placeholder">CRM</div>
+
+        <!-- Info -->
+        <div class="prop-header-info">
+            <h1 class="prop-nombre">{{ propietario.nombre }}</h1>
+            <div class="prop-meta">
+                <span class="material-symbols-outlined">badge</span>
+                ID: {{ propietario.folio }}
+                <span class="prop-meta-sep">•</span>
+                Miembro desde {{ propietario.miembro_desde }}
+            </div>
+
+            <div class="prop-contacto-grid">
+                <div class="prop-contacto-item">
+                    <div class="prop-contacto-label">Correo Electrónico</div>
+                    <div class="prop-contacto-valor" title="{{ propietario.correo }}">{{ propietario.correo }}</div>
+                </div>
+                <div class="prop-contacto-item">
+                    <div class="prop-contacto-label">Dirección</div>
+                    <div class="prop-contacto-valor" title="{{ propietario.direccion }}">{{ propietario.direccion }}</div>
+                </div>
+                <div class="prop-contacto-item">
+                    <div class="prop-contacto-label">Teléfono Principal</div>
+                    <div class="prop-contacto-valor">{{ propietario.tel_principal }}</div>
+                </div>
+                <div class="prop-contacto-item">
+                    <div class="prop-contacto-label">Teléfono Secundario</div>
+                    <div class="prop-contacto-valor">{{ propietario.tel_secundario }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Acciones -->
+        <div class="prop-header-acciones">
+            <button class="btn-editar-perfil">Editar Perfil</button>
+            <button class="btn-primary">
+                <span class="material-symbols-outlined">add_circle</span>
+                Nueva Mascota
+            </button>
+        </div>
+
+    </div>
+
+    <!-- ===== MASCOTAS REGISTRADAS ===== -->
+    <div class="mascotas-section">
+        <div class="section-header">
+            <h2 class="section-title">Mascotas Registradas</h2>
+            <div class="section-count">
+                <span class="material-symbols-outlined">grid_view</span>
+                3 mascotas registradas
+            </div>
+        </div>
+
+        <div class="mascotas-grid">
+
+            <!-- Mascota 1 -->
+            <div class="mascota-card">
+                <div class="mascota-card-top">
+                    <div class="mascota-foto-placeholder">
+                        <span class="material-symbols-outlined">pets</span>
+                    </div>
+                    <div>
+                        <span class="mascota-card-nombre">Bruno</span>
+                        <span class="mascota-card-especie">Perro</span>
+                        <span class="mascota-card-detalle">Beagle • 4 años</span>
+                    </div>
+                </div>
+                <div class="mascota-card-footer">
+                    <span class="badge-estado-mascota badge-saludable">Saludable</span>
+                    <div class="mascota-arrow">
+                        <span class="material-symbols-outlined">arrow_forward</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mascota 2 -->
+            <div class="mascota-card">
+                <div class="mascota-card-top">
+                    <div class="mascota-foto-placeholder" style="background:#fde8ff;">
+                        <span class="material-symbols-outlined" style="color:#9b4dc0;">pets</span>
+                    </div>
+                    <div>
+                        <span class="mascota-card-nombre">Luna</span>
+                        <span class="mascota-card-especie">Gato</span>
+                        <span class="mascota-card-detalle">Siamés • 2 años</span>
+                    </div>
+                </div>
+                <div class="mascota-card-footer">
+                    <span class="badge-estado-mascota badge-cita-proxima">Cita Próxima</span>
+                    <div class="mascota-arrow">
+                        <span class="material-symbols-outlined">arrow_forward</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mascota 3 -->
+            <div class="mascota-card">
+                <div class="mascota-card-top">
+                    <div class="mascota-foto-placeholder" style="background:#fff3d6;">
+                        <span class="material-symbols-outlined" style="color:var(--orange);">pets</span>
+                    </div>
+                    <div>
+                        <span class="mascota-card-nombre">Max</span>
+                        <span class="mascota-card-especie">Perro</span>
+                        <span class="mascota-card-detalle">Golden Retriever • 3 años</span>
+                    </div>
+                </div>
+                <div class="mascota-card-footer">
+                    <span class="badge-estado-mascota badge-tratamiento">Tratamiento Activo</span>
+                    <div class="mascota-arrow">
+                        <span class="material-symbols-outlined">arrow_forward</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tarjeta "Registrar Mascota" -->
+            <div class="mascota-card-nueva">
+                <div class="plus-icon">
+                    <span class="material-symbols-outlined">add</span>
+                </div>
+                <span class="mascota-card-nueva-label">Registrar Mascota</span>
+                <span class="mascota-card-nueva-sub">Añadir nueva ficha médica</span>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ===== ÚLTIMAS VISITAS ===== -->
+    <div class="visitas-section">
+        <div class="section-header">
+            <h2 class="section-title">Últimas Visitas</h2>
+            <a href="#" class="link-historial">Ver Historial Completo</a>
+        </div>
+
+        <table class="visitas-table">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Mascota</th>
+                    <th>Motivo</th>
+                    <th>Veterinario</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>12 Oct 2023</td>
+                    <td><strong>Bruno</strong></td>
+                    <td>Vacunación Anual</td>
+                    <td>Dra. Marta Gómez</td>
+                    <td>
+                        <button class="btn-ver-visita" title="Ver detalle">
+                            <span class="material-symbols-outlined">visibility</span>
+                        </button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>05 Oct 2023</td>
+                    <td><strong>Luna</strong></td>
+                    <td>Chequeo General</td>
+                    <td>Dr. Alejandro Sanz</td>
+                    <td>
+                        <button class="btn-ver-visita" title="Ver detalle">
+                            <span class="material-symbols-outlined">visibility</span>
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+{% endblock %}

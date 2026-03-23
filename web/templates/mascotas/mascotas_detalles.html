@@ -1,0 +1,333 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Mascotas – Expediente{% endblock %}
+
+{% block estilos %}
+    <link rel="stylesheet" href="{% static 'core/css/mascotas_detalles.css' %}">
+{% endblock %}
+
+{% block nav_mascotas %}active{% endblock %}
+
+{% block breadcrumb %}
+    <a href="{% url 'dashboard' %}">Inicio</a>
+    <span class="material-symbols-outlined">chevron_right</span>
+    <a href="{% url 'mascotas' %}">Mascotas</a>
+    <span class="material-symbols-outlined">chevron_right</span>
+    <span class="breadcrumb-current">Expediente de Mascota</span>
+{% endblock %}
+
+{% block topbar_titulo %}Expediente{% endblock %}
+
+{% block contenido %}
+<div class="page active" id="page-mascotas-detalles">
+
+    <!-- ===== PAGE HEADER ===== -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Mascotas</h1>
+            <p class="page-sub">Pendiente</p>
+        </div>
+        <div class="page-header-right">
+            <button class="btn-primary">
+                <span class="material-symbols-outlined">add_circle</span>
+                Pendiente
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== GRID PRINCIPAL ===== -->
+    <div class="mascota-grid-container">
+
+        <!-- ============ COLUMNA IZQUIERDA ============ -->
+        <div class="mascota-main-col">
+
+            <!-- Tarjeta de perfil -->
+            <div class="card mascota-profile-card">
+                <div class="mascota-foto-section">
+                    <div class="mascota-avatar-wrapper">
+                        <img src="{% static 'core/imagenes/dog.png' %}" alt="Max" class="mascota-img-large">
+                        <button class="edit-photo-btn">
+                            <span class="material-symbols-outlined">edit</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mascota-details-section">
+                    <div class="mascota-name-row">
+                        <h1 class="mascota-title">Max</h1>
+                        <span class="chip chip-green-soft">Paciente Activo</span>
+                        <span class="chip chip-orange-soft">Alergia: Penicilina</span>
+                    </div>
+                    <p class="mascota-meta">Golden Retriever &bull; Male &bull; Neutered &bull; ID: #4402</p>
+
+                    <div class="mascota-quick-stats">
+                        <div class="q-stat">
+                            <span class="q-stat-label">EDAD</span>
+                            <strong>5y 4m</strong>
+                        </div>
+                        <div class="q-stat">
+                            <span class="q-stat-label">PESO</span>
+                            <strong>32.4 kg</strong>
+                        </div>
+                        <div class="q-stat">
+                            <span class="q-stat-label">ÚLTIMA VISITA</span>
+                            <strong>Oct 12</strong>
+                        </div>
+                        <div class="q-stat">
+                            <span class="q-stat-label">BODY SCORE</span>
+                            <strong>5 / 9</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mascota-actions-top">
+                    <button class="btn-outline">Exportar Registro</button>
+                    <button class="btn-outline-cyan">Nota rápida</button>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="mascota-tabs">
+                <button class="tab-item active" data-tab="historial">
+                    <span class="material-symbols-outlined">history</span>
+                    Historial Médico
+                </button>
+                <button class="tab-item" data-tab="vacunas">
+                    <span class="material-symbols-outlined">vaccines</span>
+                    Vacunaciones
+                    <span class="tab-badge-orange">1 Due</span>
+                </button>
+                <button class="tab-item" data-tab="recetas">
+                    <span class="material-symbols-outlined">description</span>
+                    Recetas
+                </button>
+            </div>
+
+            <!-- TAB: Historial Médico -->
+            <div class="card history-section tab-content active" id="tab-historial">
+                <div class="history-header">
+                    <h3>Historial</h3>
+                    <button class="btn-text-add">
+                        <span class="material-symbols-outlined">add</span>
+                        Añadir
+                    </button>
+                </div>
+
+                <div class="timeline">
+
+                    <!-- Entrada 1: Chequeo Anual -->
+                    <div class="timeline-item">
+                        <div class="timeline-dot dot-green">
+                            <span class="material-symbols-outlined">check_circle</span>
+                        </div>
+                        <div class="timeline-content card">
+                            <div class="timeline-meta">
+                                <span class="timeline-fecha">OCT 12, 2023 &bull; 10:30 AM</span>
+                                <span class="timeline-doctor">
+                                    <span class="material-symbols-outlined">person</span>
+                                    Dr. Sarah Wilson
+                                </span>
+                            </div>
+                            <h4 class="timeline-title">Chequeo Anual</h4>
+                            <p class="timeline-desc">Max presented for his routine annual exam. General appearance is excellent. Heart and lungs sound clear. Skin is healthy, though some mild wax buildup in left ear was cleaned. Body condition score maintained at 5/9.</p>
+                            <div class="timeline-tags">
+                                <span class="tag">Physical Exam</span>
+                                <span class="tag">Wellness</span>
+                                <span class="tag">Ear Cleaning</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Entrada 2: Hospitalización -->
+                    <div class="timeline-item">
+                        <div class="timeline-dot dot-blue">
+                            <span class="material-symbols-outlined">local_hospital</span>
+                        </div>
+                        <div class="timeline-content card">
+                            <div class="timeline-meta">
+                                <span class="timeline-fecha">AUG 05, 2023 &bull; 03:15 PM</span>
+                                <span class="timeline-doctor">
+                                    <span class="material-symbols-outlined">person</span>
+                                    Dr. Kevin Miller
+                                </span>
+                            </div>
+                            <h4 class="timeline-title">Hospitalización – Minor Laceration</h4>
+                            <p class="timeline-desc">Owner reports Max cut his right front paw on glass while walking. Cleaned wound under mild sedation. Two stitches applied. Antibiotics and pain management prescribed for 7 days.</p>
+                            <!-- Alerta de follow-up -->
+                            <div class="timeline-alerta">
+                                <span class="material-symbols-outlined">warning</span>
+                                <div>
+                                    <strong>Follow-up Required</strong>
+                                    <p>Stitch removal completed on Aug 15. Wound healed nicely.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Entrada 3: Bloodwork -->
+                    <div class="timeline-item">
+                        <div class="timeline-dot dot-orange">
+                            <span class="material-symbols-outlined">science</span>
+                        </div>
+                        <div class="timeline-content card">
+                            <div class="timeline-meta">
+                                <span class="timeline-fecha">MAY 15, 2023 &bull; 09:00 AM</span>
+                                <span class="timeline-doctor">
+                                    <span class="material-symbols-outlined">person</span>
+                                    Dr. Sarah Wilson
+                                </span>
+                            </div>
+                            <h4 class="timeline-title">Bloodwork & Heartworm Test</h4>
+                            <p class="timeline-desc">Senior blood panel and annual heartworm screen. Results returned within normal ranges.</p>
+                            <a href="#" class="link-reporte">
+                                <span class="material-symbols-outlined">picture_as_pdf</span>
+                                View Lab Report (PDF)
+                            </a>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- TAB: Vacunaciones (oculto por defecto) -->
+            <div class="card history-section tab-content" id="tab-vacunas">
+                <div class="history-header">
+                    <h3>Vacunaciones</h3>
+                    <button class="btn-text-add">
+                        <span class="material-symbols-outlined">add</span>
+                        Añadir
+                    </button>
+                </div>
+                <p class="tab-empty">Contenido de vacunaciones próximamente.</p>
+            </div>
+
+            <!-- TAB: Recetas (oculto por defecto) -->
+            <div class="card history-section tab-content" id="tab-recetas">
+                <div class="history-header">
+                    <h3>Recetas</h3>
+                    <button class="btn-text-add">
+                        <span class="material-symbols-outlined">add</span>
+                        Añadir
+                    </button>
+                </div>
+                <p class="tab-empty">Contenido de recetas próximamente.</p>
+            </div>
+
+        </div>
+        <!-- FIN COLUMNA IZQUIERDA -->
+
+        <!-- ============ COLUMNA DERECHA (ASIDE) ============ -->
+        <div class="mascota-sidebar-col">
+
+            <!-- Widget: Propietario -->
+            <div class="card sidebar-widget">
+                <div class="widget-header">
+                    <span class="material-symbols-outlined">group</span>
+                    <h4>Detalles del Propietario</h4>
+                </div>
+                <div class="owner-info">
+                    <div class="owner-avatar">JD</div>
+                    <div class="owner-text">
+                        <strong>John Doe</strong>
+                        <span>Propietario</span>
+                    </div>
+                </div>
+                <ul class="owner-contact-list">
+                    <li>
+                        <span class="material-symbols-outlined">call</span>
+                        +1 (555) 123-4567
+                    </li>
+                    <li>
+                        <span class="material-symbols-outlined">mail</span>
+                        john.doe@example.com
+                    </li>
+                    <li>
+                        <span class="material-symbols-outlined">home</span>
+                        123 Pine St, Spring City, SC 45678
+                    </li>
+                </ul>
+                <button class="btn-full-gray">Contacto propietario</button>
+            </div>
+
+            <!-- Widget: Tratamiento -->
+            <div class="card sidebar-widget">
+                <div class="widget-header">
+                    <span class="material-symbols-outlined">medication</span>
+                    <h4>Tratamiento</h4>
+                    <span class="chip-active-tiny">ACTIVO</span>
+                </div>
+
+                <!-- Medicamento 1 -->
+                <div class="treatment-item">
+                    <div class="treatment-item-header">
+                        <strong>Apoquel (16mg)</strong>
+                        <span class="treatment-refills">Refills: 2</span>
+                    </div>
+                    <p>1 tablet daily for allergy management.</p>
+                    <small>
+                        <span class="material-symbols-outlined">calendar_today</span>
+                        Next refill: Nov 15
+                    </small>
+                </div>
+
+                <!-- Medicamento 2 -->
+                <div class="treatment-item">
+                    <div class="treatment-item-header">
+                        <strong>Heartgard Plus</strong>
+                        <span class="treatment-refills">Refills: 5</span>
+                    </div>
+                    <p>Monthly chewable preventative.</p>
+                </div>
+            </div>
+
+            <!-- Widget: Reminders -->
+            <div class="card sidebar-widget">
+                <div class="widget-header">
+                    <span class="material-symbols-outlined">notifications</span>
+                    <h4>Reminders</h4>
+                </div>
+
+                <div class="reminder-item">
+                    <span class="reminder-dot reminder-red"></span>
+                    <div>
+                        <p class="reminder-title reminder-overdue">Rabies Vaccine Overdue</p>
+                        <small>Last administered: Oct 2020</small>
+                    </div>
+                </div>
+
+                <div class="reminder-item">
+                    <span class="reminder-dot reminder-green"></span>
+                    <div>
+                        <p class="reminder-title">Dental Prophylaxis</p>
+                        <small>Recommended by Dec 2023</small>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <!-- FIN COLUMNA DERECHA -->
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Lógica de tabs
+    const tabBtns    = document.querySelectorAll('.tab-item');
+    const tabPanels  = document.querySelectorAll('.tab-content');
+
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Quitar activo de todos
+            tabBtns.forEach(b => b.classList.remove('active'));
+            tabPanels.forEach(p => p.classList.remove('active'));
+
+            // Activar el clickeado
+            btn.classList.add('active');
+            document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+        });
+    });
+</script>
+{% endblock %}

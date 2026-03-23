@@ -1,0 +1,63 @@
+
+
+{% extends 'base.html' %}
+{% load static %}
+
+
+{% block titulo %}hospitalizacion{%endblock%}
+
+{% block nav_hospitalizacion %}active{% endblock %}
+
+{% block estilos %}
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+
+{% endblock %}
+
+{% block breadcrumb %}
+    <a href="{% url 'dashboard' %}">Inicio</a>
+    <span class="material-symbols-outlined">chevron_right</span>
+    <span class="breadcrumb-current">Hospitalizacion</span>
+    
+{% endblock %}
+
+{% block topbar_titulo %}Lista de Hospitalizaciones{% endblock %}
+
+{% block contenido %}
+
+    <div class="page active" id="page-hospitalizacion">
+        <div class="page-header">
+            <h1 class="page-title">Hospitalización</h1>
+        </div>
+        <div id="calendario">
+            
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block scripts %}
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+    <script>document.addEventListener('DOMContentLoaded', function () {
+    var el = document.getElementById('calendario');
+    var calendar = new FullCalendar.Calendar(el, {
+        initialView: 'dayGridMonth',   // vista mensual
+        locale: 'es',                  // español
+        headerToolbar: {
+            left:   'prev,next today',
+            center: 'title',
+            right:  'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        dateClick: function() {
+            console.log('a day has been clicked!');
+        },
+        });
+    calendar.render();
+    calendar.on('dateClick', function(info) {
+        console.log('clicked on: ' + info.dateStr);
+    });
+    
+
+    }); //fin de Fullcalendar
+
+    </script>
+{% endblock %}

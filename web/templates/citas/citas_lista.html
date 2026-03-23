@@ -1,0 +1,357 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block titulo %}Citas{% endblock %}
+
+{% block nav_citas %}active{% endblock %}
+
+{% block breadcrumb %}
+    <a href="{% url 'dashboard' %}">Inicio</a>
+    <span class="material-symbols-outlined">chevron_right</span>
+    <span class="breadcrumb-current">Citas</span>
+{% endblock %}
+
+{% block topbar_titulo %}Lista de Citas{% endblock %}
+
+{% block contenido %}
+<div class="page active" id="page-citas">
+
+    <!-- ===== HEADER ===== -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Citas</h1>
+            <p class="page-sub">Gestión de citas y consultas programadas</p>
+        </div>
+        <div class="page-header-right">
+            <button class="btn-primary" id="btnNuevaCita">
+                <span class="material-symbols-outlined">add_circle</span>
+                Nueva Cita
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== STATS ===== -->
+    <div class="citas-stats">
+        <div class="cita-stat-card verde">
+            <div class="cita-stat-icon"><span class="material-symbols-outlined">event_available</span></div>
+            <div>
+                <div class="cita-stat-label">Confirmadas</div>
+                <div class="cita-stat-value">12</div>
+            </div>
+        </div>
+        <div class="cita-stat-card azul">
+            <div class="cita-stat-icon"><span class="material-symbols-outlined">stethoscope</span></div>
+            <div>
+                <div class="cita-stat-label">En Curso</div>
+                <div class="cita-stat-value">3</div>
+            </div>
+        </div>
+        <div class="cita-stat-card naranja">
+            <div class="cita-stat-icon"><span class="material-symbols-outlined">schedule</span></div>
+            <div>
+                <div class="cita-stat-label">Pendientes</div>
+                <div class="cita-stat-value">7</div>
+            </div>
+        </div>
+        <div class="cita-stat-card gris">
+            <div class="cita-stat-icon"><span class="material-symbols-outlined">event_busy</span></div>
+            <div>
+                <div class="cita-stat-label">Canceladas</div>
+                <div class="cita-stat-value">2</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TABLA ===== -->
+    <div class="card">
+
+        <!-- Filtros -->
+        <div class="filters-bar">
+            <div class="search-box">
+                <span class="material-symbols-outlined">search</span>
+                <input type="text" placeholder="Buscar por folio, mascota, propietario..." id="citasSearch" />
+            </div>
+            <div class="filters-right">
+                <input type="date" class="filter-select" id="filterFecha" title="Filtrar por fecha">
+                <select class="filter-select" id="filterEstado">
+                    <option value="">Todos los estados</option>
+                    <option value="Confirmada">Confirmada</option>
+                    <option value="En curso">En curso</option>
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="Cancelada">Cancelada</option>
+                    <option value="Completada">Completada</option>
+                </select>
+                <select class="filter-select" id="filterVet">
+                    <option value="">Todos los veterinarios</option>
+                    <option value="Dra. Sofia Mendez">Dra. Sofia Mendez</option>
+                    <option value="Carlos Ruiz">Carlos Ruiz</option>
+                    <option value="Dra. Elena Blanco">Dra. Elena Blanco</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Tabla -->
+        <div class="table-wrapper">
+            <table class="data-table" id="citasTable">
+                <thead>
+                    <tr>
+                        <th>FOLIO</th>
+                        <th>FECHA / HORA</th>
+                        <th>MASCOTA</th>
+                        <th>PROPIETARIO</th>
+                        <th>VETERINARIO</th>
+                        <th>MOTIVO</th>
+                        <th>ESTADO</th>
+                        <th>ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody id="citasBody">
+
+                    <tr data-estado="Confirmada" data-vet="Dra. Sofia Mendez">
+                        <td><span class="folio-badge">#C-0001</span></td>
+                        <td>
+                            <div class="fecha-cell">
+                                <span class="fecha-dia">Oct 15, 2025</span>
+                                <span class="fecha-hora">
+                                    <span class="material-symbols-outlined">schedule</span>
+                                    08:00 - 08:45 AM
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="mascota-cell">
+                                <div class="mascota-avatar"><span class="material-symbols-outlined">pets</span></div>
+                                <div>
+                                    <span class="mascota-nombre">Buddy</span>
+                                    <span class="mascota-raza">Labrador • Canino</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>John Doe</td>
+                        <td>Dra. Sofia Mendez</td>
+                        <td><span class="motivo-text">Vacunación anual</span></td>
+                        <td><span class="badge-cita badge-confirmada"><span class="material-symbols-outlined">check_circle</span>Confirmada</span></td>
+                        <td>
+                            <a href="#" class="link-green">Ver Detalles</a>
+                        </td>
+                    </tr>
+
+                    <tr data-estado="En curso" data-vet="Carlos Ruiz">
+                        <td><span class="folio-badge">#C-0002</span></td>
+                        <td>
+                            <div class="fecha-cell">
+                                <span class="fecha-dia">Oct 15, 2025</span>
+                                <span class="fecha-hora">
+                                    <span class="material-symbols-outlined">schedule</span>
+                                    09:15 – 10:00 AM
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="mascota-cell">
+                                <div class="mascota-avatar" style="background:#fde8ff;"><span class="material-symbols-outlined" style="color:#9b4dc0;">pets</span></div>
+                                <div>
+                                    <span class="mascota-nombre">Luna</span>
+                                    <span class="mascota-raza">Maine Coon • Felino</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>Emily Smith</td>
+                        <td>Carlos Ruiz</td>
+                        <td><span class="motivo-text">Cirugía dental</span></td>
+                        <td><span class="badge-cita badge-en-curso"><span class="material-symbols-outlined">stethoscope</span>En curso</span></td>
+                        <td>
+                            <a href="#" class="link-green">Ver Detalles</a>
+                        </td>
+                    </tr>
+
+                    <tr data-estado="Pendiente" data-vet="Dra. Elena Blanco">
+                        <td><span class="folio-badge">#C-0003</span></td>
+                        <td>
+                            <div class="fecha-cell">
+                                <span class="fecha-dia">Oct 16, 2025</span>
+                                <span class="fecha-hora">
+                                    <span class="material-symbols-outlined">schedule</span>
+                                    11:00 – 11:30 AM
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="mascota-cell">
+                                <div class="mascota-avatar"><span class="material-symbols-outlined">pets</span></div>
+                                <div>
+                                    <span class="mascota-nombre">Max</span>
+                                    <span class="mascota-raza">Golden Retriever • Canino</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>Carlos García</td>
+                        <td>Dra. Elena Blanco</td>
+                        <td><span class="motivo-text">Revisión de piel</span></td>
+                        <td><span class="badge-cita badge-pendiente"><span class="material-symbols-outlined">schedule</span>Pendiente</span></td>
+                        <td>
+                            <a href="#" class="link-green">Ver Detalles</a>
+                        </td>
+                    </tr>
+
+                    <tr data-estado="Completada" data-vet="Dra. Sofia Mendez">
+                        <td><span class="folio-badge">#C-0004</span></td>
+                        <td>
+                            <div class="fecha-cell">
+                                <span class="fecha-dia">Oct 14, 2025</span>
+                                <span class="fecha-hora">
+                                    <span class="material-symbols-outlined">schedule</span>
+                                    08:00 – 08:30 AM
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="mascota-cell">
+                                <div class="mascota-avatar"><span class="material-symbols-outlined">pets</span></div>
+                                <div>
+                                    <span class="mascota-nombre">Cooper</span>
+                                    <span class="mascota-raza">Golden • Canino</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>Ana López</td>
+                        <td>Dra. Sofia Mendez</td>
+                        <td><span class="motivo-text">Consulta general</span></td>
+                        <td><span class="badge-cita badge-completada"><span class="material-symbols-outlined">task_alt</span>Completada</span></td>
+                        <td>
+                            <a href="#" class="link-green">Ver Detalles</a>
+                        </td>
+                    </tr>
+
+                    <tr data-estado="Cancelada" data-vet="Carlos Ruiz">
+                        <td><span class="folio-badge">#C-0005</span></td>
+                        <td>
+                            <div class="fecha-cell">
+                                <span class="fecha-dia">Oct 14, 2025</span>
+                                <span class="fecha-hora">
+                                    <span class="material-symbols-outlined">schedule</span>
+                                    02:00 – 02:30 PM
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="mascota-cell">
+                                <div class="mascota-avatar" style="background:#fff3d6;"><span class="material-symbols-outlined" style="color:var(--orange);">pets</span></div>
+                                <div>
+                                    <span class="mascota-nombre">Milo</span>
+                                    <span class="mascota-raza">Poodle • Canino</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>Roberto Vega</td>
+                        <td>Carlos Ruiz</td>
+                        <td><span class="motivo-text">Desparasitación</span></td>
+                        <td><span class="badge-cita badge-cancelada"><span class="material-symbols-outlined">cancel</span>Cancelada</span></td>
+                        <td>
+                            <a href="#" class="link-green">Ver Detalles</a>
+                        </td>
+                    </tr>
+
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer de tabla -->
+        <div class="table-footer">
+            <span>Mostrando <strong>1–5</strong> de <strong>24</strong> citas</span>
+            <div class="pagination">
+                <button class="page-btn" disabled>‹</button>
+                <button class="page-btn active">1</button>
+                <button class="page-btn">2</button>
+                <button class="page-btn">3</button>
+                <span>…</span>
+                <button class="page-btn">›</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ===== MODAL NUEVA CITA ===== -->
+<div class="modal-overlay" id="modalNuevaCita">
+    <div class="modal-box">
+
+        <div class="modal-header">
+            <h2>
+                Registrar Nueva Cita
+            </h2>
+            <button class="modal-close" id="cerrarModal">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <div class="modal-body">
+
+            <div class="form-row">
+                <div class="form-field">
+                    <label>Propietario</label>
+                    <select id="citaPropietario">
+                        <option value="">Seleccionar propietario</option>
+                        <option>John Doe</option>
+                        <option>Emily Smith</option>
+                        <option>Carlos García</option>
+                        <option>Ana López</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label>Mascota</label>
+                    <select id="citaMascota">
+                        <option value="">Seleccionar mascota</option>
+                        <option>Buddy (Labrador)</option>
+                        <option>Luna (Maine Coon)</option>
+                        <option>Max (Golden Retriever)</option>
+                        <option>Cooper (Golden)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-field">
+                    <label>Fecha</label>
+                    <input type="date" id="citaFecha">
+                </div>
+                <div class="form-field">
+                    <label>Hora</label>
+                    <input type="time" id="citaHora">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Veterinario</label>
+                <select id="citaVeterinario">
+                    <option value="">Seleccionar veterinario</option>
+                    <option>Dra. Sofia Mendez</option>
+                    <option>Carlos Ruiz</option>
+                    <option>Dra. Elena Blanco</option>
+                </select>
+            </div>
+
+            <div class="form-row full">
+                <div class="form-field">
+                    <label>Motivo de la cita</label>
+                    <textarea id="citaMotivo" placeholder="Describe el motivo de la consulta..."></textarea>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn-secondary" id="cancelarModal">Cancelar</button>
+            <button class="btn-primary">
+                <span class="material-symbols-outlined">save</span>
+                Guardar Cita
+            </button>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+    <script src="{% static 'core/js/citas.js' %}"></script>
+{% endblock %}

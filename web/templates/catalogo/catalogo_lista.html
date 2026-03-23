@@ -1,0 +1,682 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Catálogo de Servicios{% endblock %}
+
+{% block estilos %}
+<style>
+/* ===== STATS ===== */
+.catalogo-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 12px;
+    margin-bottom: 4px;
+}
+.cat-stat-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border-left: 4px solid transparent;
+}
+.cat-stat-card.verde   { border-left-color: var(--green); }
+.cat-stat-card.azul    { border-left-color: var(--blue-dark); }
+.cat-stat-card.naranja { border-left-color: var(--orange); }
+
+.cat-stat-icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+.cat-stat-icon .material-symbols-outlined { font-size: 20px !important; }
+.cat-stat-card.verde   .cat-stat-icon { background: var(--green-light); color: var(--green); }
+.cat-stat-card.azul    .cat-stat-icon { background: var(--blue-light);  color: var(--blue-dark); }
+.cat-stat-card.naranja .cat-stat-icon { background: #fff3d6; color: var(--orange); }
+
+.cat-stat-label { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; }
+.cat-stat-value { font-size: 1.4rem; font-weight: 800; color: var(--text); line-height: 1.1; }
+
+/* ===== CLAVE BADGE ===== */
+.clave-badge {
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: var(--blue-dark);
+    background: var(--blue-light);
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 1px solid #c2e4f8;
+    white-space: nowrap;
+}
+
+/* ===== NOMBRE SERVICIO ===== */
+.servicio-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.servicio-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: var(--green-light);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+.servicio-icon .material-symbols-outlined { font-size: 18px !important; color: var(--green-dark); }
+.servicio-nombre { font-weight: 700; font-size: 0.87rem; color: var(--text); display: block; }
+.servicio-categoria { font-size: 0.77rem; color: var(--text-muted); display: block; }
+
+/* ===== DESCRIPCIÓN ===== */
+.desc-text {
+    font-size: 0.84rem;
+    color: var(--text-muted);
+    max-width: 240px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ===== COSTO ===== */
+.costo-valor {
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: var(--green-dark);
+}
+
+/* ===== BADGE CATEGORÍA ===== */
+.badge-cat {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 0.73rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+.badge-cat.consulta    { background: var(--blue-light);  color: var(--blue-dark); }
+.badge-cat.cirugia     { background: #fde8e8;             color: var(--red); }
+.badge-cat.vacuna      { background: var(--green-light);  color: var(--green-dark); }
+.badge-cat.estetica    { background: #fde8ff;             color: #9b4dc0; }
+.badge-cat.laboratorio { background: #fff3d6;             color: var(--orange); }
+.badge-cat.otro        { background: #f0f1f3;             color: #555e6b; }
+
+/* ===== ACCIONES ===== */
+.actions-cell { display: flex; align-items: center; gap: 6px; }
+.btn-icon-sm {
+    width: 30px; height: 30px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 7px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted);
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.btn-icon-sm:hover               { background: var(--bg); color: var(--text); }
+.btn-icon-sm.danger:hover        { background: #fde8e8; color: var(--red); border-color: #f5c0c0; }
+.btn-icon-sm .material-symbols-outlined { font-size: 16px !important; }
+
+/* ===== MODAL ===== */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+
+.modal-box {
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+    width: 100%;
+    max-width: 520px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: modalIn 0.22s ease;
+}
+@keyframes modalIn {
+    from { opacity: 0; transform: translateY(14px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+.modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+}
+.modal-header h2 { font-size: 1.05rem; font-weight: 800; }
+
+.modal-close {
+    width: 30px; height: 30px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted); transition: background 0.15s;
+}
+.modal-close:hover { background: var(--border); }
+.modal-close .material-symbols-outlined { font-size: 18px !important; }
+
+.modal-body { padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+
+.form-row      { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-row.full { grid-template-columns: 1fr; }
+
+.form-field { display: flex; flex-direction: column; gap: 6px; }
+.form-field label { font-size: 0.83rem; font-weight: 700; color: var(--text); }
+.form-field input,
+.form-field select,
+.form-field textarea {
+    padding: 10px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: 'Manrope', sans-serif;
+    font-size: 0.88rem;
+    color: var(--text);
+    background: var(--bg);
+    outline: none;
+    transition: border-color 0.2s;
+}
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus { border-color: var(--blue-dark); background: var(--surface); }
+.form-field textarea { resize: vertical; min-height: 90px; }
+
+.modal-footer {
+    display: flex; justify-content: flex-end; gap: 10px;
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+}
+.btn-secondary {
+    padding: 9px 20px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: var(--radius-sm);
+    font-family: 'Manrope', sans-serif;
+    font-size: 0.88rem; font-weight: 700;
+    color: var(--text); cursor: pointer;
+    transition: background 0.15s;
+}
+.btn-secondary:hover { background: var(--bg); }
+
+/* ===== MODAL DETALLE ===== */
+.detalle-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+.detalle-item { display: flex; flex-direction: column; gap: 3px; }
+.detalle-label {
+    font-size: 0.75rem; font-weight: 700;
+    color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;
+}
+.detalle-valor { font-size: 0.9rem; font-weight: 600; color: var(--text); }
+.detalle-valor.grande { font-size: 1.4rem; font-weight: 800; color: var(--green-dark); }
+.detalle-desc {
+    grid-column: 1 / -1;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+}
+</style>
+{% endblock %}
+
+{% block nav_catalogo %}active{% endblock %}
+
+{% block breadcrumb %}
+    <a href="{% url 'dashboard' %}">Inicio</a>
+    <span class="material-symbols-outlined">chevron_right</span>
+    <span class="breadcrumb-current">Catálogo</span>
+{% endblock %}
+
+{% block topbar_titulo %}Catálogo de Servicios{% endblock %}
+
+{% block contenido %}
+<div class="page active" id="page-catalogo">
+
+    <!-- ===== HEADER ===== -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Catálogo de Servicios</h1>
+            <p class="page-sub">Servicios y procedimientos disponibles en la clínica</p>
+        </div>
+        <div class="page-header-right">
+            <button class="btn-primary" id="btnNuevoServicio">
+                <span class="material-symbols-outlined">add_circle</span>
+                Nuevo Servicio
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== STATS ===== -->
+    <div class="catalogo-stats">
+        <div class="cat-stat-card verde">
+            <div class="cat-stat-icon"><span class="material-symbols-outlined">medical_services</span></div>
+            <div>
+                <div class="cat-stat-label">Total Servicios</div>
+                <div class="cat-stat-value">24</div>
+            </div>
+        </div>
+        <div class="cat-stat-card azul">
+            <div class="cat-stat-icon"><span class="material-symbols-outlined">category</span></div>
+            <div>
+                <div class="cat-stat-label">Categorías</div>
+                <div class="cat-stat-value">5</div>
+            </div>
+        </div>
+        <div class="cat-stat-card naranja">
+            <div class="cat-stat-icon"><span class="material-symbols-outlined">payments</span></div>
+            <div>
+                <div class="cat-stat-label">Costo Promedio</div>
+                <div class="cat-stat-value">$580</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TABLA ===== -->
+    <div class="card">
+
+        <!-- Filtros -->
+        <div class="filters-bar">
+            <div class="search-box">
+                <span class="material-symbols-outlined">search</span>
+                <input type="text" placeholder="Buscar por clave, nombre o descripción..." id="catalogoSearch" />
+            </div>
+            <div class="filters-right">
+                <select class="filter-select" id="filterCategoria">
+                    <option value="">Todas las categorías</option>
+                    <option value="Consulta">Consulta</option>
+                    <option value="Cirugía">Cirugía</option>
+                    <option value="Vacuna">Vacuna</option>
+                    <option value="Estética">Estética</option>
+                    <option value="Laboratorio">Laboratorio</option>
+                </select>
+                <select class="filter-select" id="filterCosto">
+                    <option value="">Cualquier precio</option>
+                    <option value="bajo">Hasta $300</option>
+                    <option value="medio">$300 – $800</option>
+                    <option value="alto">Más de $800</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Tabla -->
+        <div class="table-wrapper">
+            <table class="data-table" id="catalogoTable">
+                <thead>
+                    <tr>
+                        <th>CLAVE</th>
+                        <th>NOMBRE DEL SERVICIO</th>
+                        <th>CATEGORÍA</th>
+                        <th>DESCRIPCIÓN</th>
+                        <th>COSTO</th>
+                        <th>ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody id="catalogoBody">
+
+                    <tr data-categoria="Consulta" data-costo="500">
+                        <td><span class="clave-badge">SRV-001</span></td>
+                        <td>
+                            <div class="servicio-cell">
+                                <div class="servicio-icon"><span class="material-symbols-outlined">stethoscope</span></div>
+                                <div>
+                                    <span class="servicio-nombre">Consulta General</span>
+                                    <span class="servicio-categoria">Consulta</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="badge-cat consulta">Consulta</span></td>
+                        <td><span class="desc-text">Revisión completa del estado de salud del paciente.</span></td>
+                        <td><span class="costo-valor">$500.00</span></td>
+                        <td>
+                            <div class="actions-cell">
+                                <button class="btn-icon-sm btn-ver-detalle" title="Ver detalles"
+                                    data-clave="SRV-001"
+                                    data-nombre="Consulta General"
+                                    data-categoria="Consulta"
+                                    data-costo="$500.00"
+                                    data-desc="Revisión completa del estado de salud del paciente. Incluye auscultación, palpación abdominal y evaluación general.">
+                                    <span class="material-symbols-outlined">visibility</span>
+                                </button>
+                                <button class="btn-icon-sm" title="Editar"><span class="material-symbols-outlined">edit</span></button>
+                                <button class="btn-icon-sm danger" title="Eliminar"><span class="material-symbols-outlined">delete</span></button>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr data-categoria="Vacuna" data-costo="280">
+                        <td><span class="clave-badge">SRV-002</span></td>
+                        <td>
+                            <div class="servicio-cell">
+                                <div class="servicio-icon" style="background: var(--green-light);"><span class="material-symbols-outlined" style="color:var(--green-dark);">vaccines</span></div>
+                                <div>
+                                    <span class="servicio-nombre">Vacunación Antirrábica</span>
+                                    <span class="servicio-categoria">Vacuna</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="badge-cat vacuna">Vacuna</span></td>
+                        <td><span class="desc-text">Aplicación de vacuna contra la rabia, obligatoria anualmente.</span></td>
+                        <td><span class="costo-valor">$280.00</span></td>
+                        <td>
+                            <div class="actions-cell">
+                                <button class="btn-icon-sm btn-ver-detalle" title="Ver detalles"
+                                    data-clave="SRV-002"
+                                    data-nombre="Vacunación Antirrábica"
+                                    data-categoria="Vacuna"
+                                    data-costo="$280.00"
+                                    data-desc="Aplicación de vacuna contra la rabia. Obligatoria anualmente por normativa oficial. Incluye certificado de vacunación.">
+                                    <span class="material-symbols-outlined">visibility</span>
+                                </button>
+                                <button class="btn-icon-sm" title="Editar"><span class="material-symbols-outlined">edit</span></button>
+                                <button class="btn-icon-sm danger" title="Eliminar"><span class="material-symbols-outlined">delete</span></button>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr data-categoria="Cirugía" data-costo="3500">
+                        <td><span class="clave-badge">SRV-003</span></td>
+                        <td>
+                            <div class="servicio-cell">
+                                <div class="servicio-icon" style="background:#fde8e8;"><span class="material-symbols-outlined" style="color:var(--red);">surgical</span></div>
+                                <div>
+                                    <span class="servicio-nombre">Esterilización Canina</span>
+                                    <span class="servicio-categoria">Cirugía</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="badge-cat cirugia">Cirugía</span></td>
+                        <td><span class="desc-text">Procedimiento quirúrgico de esterilización para perros.</span></td>
+                        <td><span class="costo-valor">$3,500.00</span></td>
+                        <td>
+                            <div class="actions-cell">
+                                <button class="btn-icon-sm btn-ver-detalle" title="Ver detalles"
+                                    data-clave="SRV-003"
+                                    data-nombre="Esterilización Canina"
+                                    data-categoria="Cirugía"
+                                    data-costo="$3,500.00"
+                                    data-desc="Procedimiento quirúrgico de esterilización (ovariohisterectomía u orquiectomía). Incluye anestesia general, monitoreo trans-operatorio y medicación post-operatoria.">
+                                    <span class="material-symbols-outlined">visibility</span>
+                                </button>
+                                <button class="btn-icon-sm" title="Editar"><span class="material-symbols-outlined">edit</span></button>
+                                <button class="btn-icon-sm danger" title="Eliminar"><span class="material-symbols-outlined">delete</span></button>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr data-categoria="Laboratorio" data-costo="750">
+                        <td><span class="clave-badge">SRV-004</span></td>
+                        <td>
+                            <div class="servicio-cell">
+                                <div class="servicio-icon" style="background:#fff3d6;"><span class="material-symbols-outlined" style="color:var(--orange);">science</span></div>
+                                <div>
+                                    <span class="servicio-nombre">Panel Sanguíneo Completo</span>
+                                    <span class="servicio-categoria">Laboratorio</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="badge-cat laboratorio">Laboratorio</span></td>
+                        <td><span class="desc-text">Análisis completo de sangre: biometría, química y electrolitos.</span></td>
+                        <td><span class="costo-valor">$750.00</span></td>
+                        <td>
+                            <div class="actions-cell">
+                                <button class="btn-icon-sm btn-ver-detalle" title="Ver detalles"
+                                    data-clave="SRV-004"
+                                    data-nombre="Panel Sanguíneo Completo"
+                                    data-categoria="Laboratorio"
+                                    data-costo="$750.00"
+                                    data-desc="Análisis completo de sangre que incluye biometría hemática, química sanguínea (glucosa, urea, creatinina, ALT, AST) y electrolitos. Resultados en 24 horas.">
+                                    <span class="material-symbols-outlined">visibility</span>
+                                </button>
+                                <button class="btn-icon-sm" title="Editar"><span class="material-symbols-outlined">edit</span></button>
+                                <button class="btn-icon-sm danger" title="Eliminar"><span class="material-symbols-outlined">delete</span></button>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr data-categoria="Estética" data-costo="350">
+                        <td><span class="clave-badge">SRV-005</span></td>
+                        <td>
+                            <div class="servicio-cell">
+                                <div class="servicio-icon" style="background:#fde8ff;"><span class="material-symbols-outlined" style="color:#9b4dc0;">content_cut</span></div>
+                                <div>
+                                    <span class="servicio-nombre">Baño y Corte</span>
+                                    <span class="servicio-categoria">Estética</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="badge-cat estetica">Estética</span></td>
+                        <td><span class="desc-text">Baño completo, secado, corte de pelo y limpieza de oídos.</span></td>
+                        <td><span class="costo-valor">$350.00</span></td>
+                        <td>
+                            <div class="actions-cell">
+                                <button class="btn-icon-sm btn-ver-detalle" title="Ver detalles"
+                                    data-clave="SRV-005"
+                                    data-nombre="Baño y Corte"
+                                    data-categoria="Estética"
+                                    data-costo="$350.00"
+                                    data-desc="Servicio completo de estética: baño con shampoo medicado o normal, secado, corte de pelo según raza, limpieza de oídos y corte de uñas.">
+                                    <span class="material-symbols-outlined">visibility</span>
+                                </button>
+                                <button class="btn-icon-sm" title="Editar"><span class="material-symbols-outlined">edit</span></button>
+                                <button class="btn-icon-sm danger" title="Eliminar"><span class="material-symbols-outlined">delete</span></button>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr data-categoria="Consulta" data-costo="800">
+                        <td><span class="clave-badge">SRV-006</span></td>
+                        <td>
+                            <div class="servicio-cell">
+                                <div class="servicio-icon"><span class="material-symbols-outlined">cardiology</span></div>
+                                <div>
+                                    <span class="servicio-nombre">Electrocardiograma</span>
+                                    <span class="servicio-categoria">Consulta</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="badge-cat consulta">Consulta</span></td>
+                        <td><span class="desc-text">Registro de la actividad eléctrica del corazón del paciente.</span></td>
+                        <td><span class="costo-valor">$800.00</span></td>
+                        <td>
+                            <div class="actions-cell">
+                                <button class="btn-icon-sm btn-ver-detalle" title="Ver detalles"
+                                    data-clave="SRV-006"
+                                    data-nombre="Electrocardiograma"
+                                    data-categoria="Consulta"
+                                    data-costo="$800.00"
+                                    data-desc="Registro de la actividad eléctrica del corazón. Incluye interpretación por cardiólogo veterinario y reporte escrito con diagnóstico y recomendaciones.">
+                                    <span class="material-symbols-outlined">visibility</span>
+                                </button>
+                                <button class="btn-icon-sm" title="Editar"><span class="material-symbols-outlined">edit</span></button>
+                                <button class="btn-icon-sm danger" title="Eliminar"><span class="material-symbols-outlined">delete</span></button>
+                            </div>
+                        </td>
+                    </tr>
+
+                </tbody>
+            </table>
+        </div>
+
+        <div class="table-footer">
+            <span>Mostrando <strong>1–6</strong> de <strong>24</strong> servicios</span>
+            <div class="pagination">
+                <button class="page-btn" disabled>‹</button>
+                <button class="page-btn active">1</button>
+                <button class="page-btn">2</button>
+                <button class="page-btn">3</button>
+                <span>…</span>
+                <button class="page-btn">›</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ===== MODAL: NUEVO SERVICIO ===== -->
+<div class="modal-overlay" id="modalNuevoServicio">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2>
+                Nuevo Servicio
+            </h2>
+            <button class="modal-close" id="cerrarModalNuevo">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="form-row">
+                <div class="form-field">
+                    <label>Clave</label>
+                    <input type="text" placeholder="SRV-007">
+                </div>
+                <div class="form-field">
+                    <label>Categoría</label>
+                    <select>
+                        <option value="">Seleccionar categoría</option>
+                        <option>Consulta</option>
+                        <option>Cirugía</option>
+                        <option>Vacuna</option>
+                        <option>Estética</option>
+                        <option>Laboratorio</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row full">
+                <div class="form-field">
+                    <label>Nombre del Servicio</label>
+                    <input type="text" placeholder="Ej: Consulta de Cardiología">
+                </div>
+            </div>
+            <div class="form-row full">
+                <div class="form-field">
+                    <label>Descripción</label>
+                    <textarea placeholder="Describe en qué consiste el servicio..."></textarea>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-field">
+                    <label>Costo (MXN)</label>
+                    <input type="number" placeholder="0.00" min="0" step="0.01">
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" id="cancelarModalNuevo">Cancelar</button>
+            <button class="btn-primary">
+                <span class="material-symbols-outlined">save</span>
+                Guardar Servicio
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL: VER DETALLES ===== -->
+<div class="modal-overlay" id="modalDetalle">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2>
+                <span class="material-symbols-outlined" style="vertical-align:middle;font-size:20px;margin-right:6px;">medical_services</span>
+                Detalle del Servicio
+            </h2>
+            <button class="modal-close" id="cerrarModalDetalle">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="detalle-grid">
+                <div class="detalle-item">
+                    <span class="detalle-label">Clave</span>
+                    <span class="detalle-valor" id="detalleClave">—</span>
+                </div>
+                <div class="detalle-item">
+                    <span class="detalle-label">Categoría</span>
+                    <span class="detalle-valor" id="detalleCategoria">—</span>
+                </div>
+                <div class="detalle-item" style="grid-column: 1 / -1;">
+                    <span class="detalle-label">Nombre del Servicio</span>
+                    <span class="detalle-valor" id="detalleNombre" style="font-size:1.1rem;">—</span>
+                </div>
+                <div class="detalle-item" style="grid-column: 1 / -1;">
+                    <span class="detalle-label">Descripción</span>
+                    <div class="detalle-desc" id="detalleDesc">—</div>
+                </div>
+                <div class="detalle-item">
+                    <span class="detalle-label">Costo</span>
+                    <span class="detalle-valor grande" id="detalleCosto">—</span>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" id="cancelarModalDetalle">Cerrar</button>
+            <button class="btn-primary">
+                <span class="material-symbols-outlined">edit</span>
+                Editar Servicio
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // ===== MODAL NUEVO SERVICIO =====
+    const modalNuevo   = document.getElementById('modalNuevoServicio');
+    document.getElementById('btnNuevoServicio').addEventListener('click',  () => modalNuevo.classList.add('open'));
+    document.getElementById('cerrarModalNuevo').addEventListener('click',  () => modalNuevo.classList.remove('open'));
+    document.getElementById('cancelarModalNuevo').addEventListener('click',() => modalNuevo.classList.remove('open'));
+    modalNuevo.addEventListener('click', e => { if (e.target === modalNuevo) modalNuevo.classList.remove('open'); });
+
+    // ===== MODAL DETALLE =====
+    const modalDetalle = document.getElementById('modalDetalle');
+    document.getElementById('cerrarModalDetalle').addEventListener('click',  () => modalDetalle.classList.remove('open'));
+    document.getElementById('cancelarModalDetalle').addEventListener('click',() => modalDetalle.classList.remove('open'));
+    modalDetalle.addEventListener('click', e => { if (e.target === modalDetalle) modalDetalle.classList.remove('open'); });
+
+    document.querySelectorAll('.btn-ver-detalle').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.getElementById('detalleClave').textContent     = btn.dataset.clave;
+            document.getElementById('detalleNombre').textContent    = btn.dataset.nombre;
+            document.getElementById('detalleCategoria').textContent = btn.dataset.categoria;
+            document.getElementById('detalleCosto').textContent     = btn.dataset.costo;
+            document.getElementById('detalleDesc').textContent      = btn.dataset.desc;
+            modalDetalle.classList.add('open');
+        });
+    });
+
+    // ===== FILTROS =====
+    document.getElementById('catalogoSearch').addEventListener('input', filtrar);
+    document.getElementById('filterCategoria').addEventListener('change', filtrar);
+    document.getElementById('filterCosto').addEventListener('change', filtrar);
+
+    function filtrar() {
+        const q         = document.getElementById('catalogoSearch').value.toLowerCase();
+        const categoria = document.getElementById('filterCategoria').value;
+        const costoFilt = document.getElementById('filterCosto').value;
+
+        document.querySelectorAll('#catalogoBody tr').forEach(row => {
+            const texto     = row.textContent.toLowerCase();
+            const rowCat    = row.dataset.categoria || '';
+            const rowCosto  = parseFloat(row.dataset.costo) || 0;
+
+            const okTexto = texto.includes(q);
+            const okCat   = !categoria || rowCat === categoria;
+            let   okCosto = true;
+            if (costoFilt === 'bajo')  okCosto = rowCosto <= 300;
+            if (costoFilt === 'medio') okCosto = rowCosto > 300 && rowCosto <= 800;
+            if (costoFilt === 'alto')  okCosto = rowCosto > 800;
+
+            row.style.display = (okTexto && okCat && okCosto) ? '' : 'none';
+        });
+    }
+</script>
+{% endblock %}

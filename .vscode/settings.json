@@ -1,0 +1,10 @@
+{
+    "django.snippets.exclude": [
+
+        "cms",
+        "wagtail"
+    ],
+    "database.connections": [
+        
+    ]
+}

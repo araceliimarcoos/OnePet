@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Medicamentos{%endblock%}
+
+{% block nav_medicamentos %}active{% endblock %}
+
+{% block breadcrumb %}
+    <a href="{% url 'dashboard' %}">Inicio</a>
+    <span class="material-symbols-outlined">chevron_right</span>
+    <span class="breadcrumb-current">Medicamentos</span>
+    
+{% endblock %}
+
+{% block topbar_titulo %}Lista de Medicamentos{% endblock %}
+
+{% block contenido %}
+
+    <div class="page active" id="page-medicamentos">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Medicamentos</h1>
+                <p class="page-sub">Lista de Medicamentos en el Sistema</p>
+            </div>
+            <div class="page-header-right">
+                <button class="btn-primary" id="btnNuevaMascota">
+                    <span class="material-symbols-outlined">add_circle</span>
+                    Nuevo Medicamento
+                </button>
+            </div>
+        </div>
+        
+        <!-- AQUI INICIA LA TABLA -->
+        <div class="card">
+            <div class="filters-bar">
+                <div class="search-box">
+                    <span class="material-symbols-outlined" style="color: #7a8899">search</span>
+                    <input type="text" placeholder="Buscar por mascota, dueño, o ID..." id="mascotaSearch" />
+                </div>
+                
+                <div class="filter-selects">
+                <select class="filter-select" id="filterEspecie">
+                    <option value="">Especies: Todas</option>
+                    <option value="Canine">Canino</option>
+                    <option value="Feline">Felino</option>
+                    <option value="Exotic">Exótico</option>
+                  </select>
+                  <select class="filter-select" id="filterRaza">
+                    <option value="">Raza: Todas</option>
+                    <option value="Golden Retriever">Golden Retriever</option>
+                    <option value="Siamese">Siamese</option>
+                    <option value="Beagle">Beagle</option>
+                  </select>
+                  <select class="filter-select">
+                    <option>Estado: Activo</option>
+                    <option>Inactivo</option>
+                  </select>
+                </div>
+
+            </div>
+
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>CLAVE</th>
+                            <th>MEDICAMENTO</th> 
+                            <th>PRECIO</th>
+                            <th>ACCIONES</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code class="med-key">#MED-001</code></td>
+                            <td>
+                                <div class="med-cell">
+                                    <span class="med-name">Amoxicilina 500mg</span>
+                                    <small class="med-desc">Antibiótico de amplio espectro para infecciones bacterianas.</small>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="med-price">$12.50</span>
+                            </td>
+                            <td><div><a href="#" class="link-green">Ver Detalles</a></div></td>
+                        </tr>
+
+                        <tr>
+                            <td><code class="med-key">#MED-002</code></td>
+                            <td>
+                                <div class="med-cell">
+                                    <span class="med-name">Simparica 20mg</span>
+                                    <small class="med-desc">Tableta masticable para la prevención de pulgas, garrapatas y sarna en perros.</small>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="med-price">$45.99</span>
+                            </td>
+                            <td><div><a href="#" class="link-green">Ver Detalles</a></div></td>
+                        </tr>
+
+                        <tr>
+                            <td><code class="med-key">#MED-003</code></td>
+                            <td>
+                                <div class="med-cell">
+                                    <span class="med-name">Meloxicam Suspensión</span>
+                                    <small class="med-desc">Antiinflamatorio no esteroideo (AINE) para el alivio del dolor crónico y agudo.</small>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="med-price">$18.25</span>
+                            </td>
+                            <td><div><a href="#" class="link-green">Ver Detalles</a></div></td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+
+    </div>
+
+{% endblock %}

@@ -1,0 +1,882 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Personal{% endblock %}
+
+{% block estilos %}
+<style>
+/* ===== TABS DE PÁGINA ===== */
+.page-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--border);
+    background: var(--surface);
+    border-radius: var(--radius) var(--radius) 0 0;
+    padding: 0 20px;
+    margin-bottom: 0;
+}
+
+.page-tab {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 14px 20px;
+    border: none;
+    background: none;
+    font-family: 'Manrope', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: color 0.2s, border-color 0.2s;
+    white-space: nowrap;
+}
+.page-tab:hover { color: var(--text); }
+.page-tab.active { color: var(--blue-dark); border-bottom-color: var(--blue-dark); }
+.page-tab .material-symbols-outlined { font-size: 18px !important; }
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ===== AGENDA ===== */
+.agenda-layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 0;
+    height: calc(100vh - 220px);
+    min-height: 600px;
+    background: var(--surface);
+    border-radius: 0 0 var(--radius) var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-top: none;
+}
+
+/* --- Sidebar de la agenda --- */
+.agenda-sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.agenda-nueva-cita {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.btn-nueva-cita {
+    width: 100%;
+    padding: 11px 16px;
+    background: var(--blue-dark);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: 'Manrope', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background 0.2s;
+}
+.btn-nueva-cita:hover { background: var(--green); }
+.btn-nueva-cita .material-symbols-outlined { font-size: 18px !important; }
+
+.agenda-sidebar-section {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.agenda-sidebar-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+
+/* Veterinarios */
+.vet-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 8px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.15s;
+    margin-bottom: 2px;
+}
+.vet-item:hover { background: var(--bg); }
+
+.vet-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: var(--blue-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: var(--blue-dark);
+}
+
+.vet-info { flex: 1; }
+.vet-name { font-size: 0.85rem; font-weight: 700; color: var(--text); display: block; }
+.vet-role { font-size: 0.75rem; color: var(--text-muted); display: block; }
+
+.vet-check {
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    background: var(--blue-dark);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.vet-check .material-symbols-outlined { font-size: 14px !important; color: #fff; }
+
+/* Categorías */
+.categoria-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+    padding: 4px 0;
+}
+.cat-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* Estatus de clínica */
+.clinic-status-box {
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+}
+.clinic-status-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+}
+.clinic-status-sub {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+.clinic-status-bar {
+    height: 6px;
+    background: var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+.clinic-status-fill {
+    height: 100%;
+    width: 60%;
+    background: var(--green);
+    border-radius: 10px;
+}
+
+/* --- Cuerpo del calendario --- */
+.agenda-calendar {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Toolbar del calendario */
+.cal-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.cal-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cal-nav-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    min-width: 180px;
+}
+
+.cal-btn {
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 7px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    transition: background 0.15s;
+}
+.cal-btn:hover { background: var(--bg); color: var(--text); }
+.cal-btn .material-symbols-outlined { font-size: 16px !important; }
+
+.cal-hoy {
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 7px;
+    font-family: 'Manrope', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.cal-hoy:hover { background: var(--bg); }
+
+.cal-view-btns {
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+.cal-view-btn {
+    padding: 6px 14px;
+    border: none;
+    background: var(--surface);
+    font-family: 'Manrope', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    border-right: 1px solid var(--border);
+}
+.cal-view-btn:last-child { border-right: none; }
+.cal-view-btn.active {
+    background: var(--blue-dark);
+    color: #fff;
+    font-weight: 700;
+}
+
+/* Grid del calendario */
+.cal-grid-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: auto;
+}
+
+.cal-grid {
+    display: grid;
+    grid-template-columns: 70px repeat(7, 1fr);
+    min-width: 700px;
+}
+
+/* Encabezados de días */
+.cal-header-row {
+    display: contents;
+}
+
+.cal-header-cell {
+    padding: 10px 8px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    background: var(--bg);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+.cal-header-cell:first-child {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+.cal-day-name {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: block;
+}
+.cal-day-num {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--text);
+    display: block;
+    margin-top: 2px;
+}
+.cal-header-cell.today .cal-day-num {
+    color: var(--blue-dark);
+}
+.cal-header-cell.today .cal-day-name {
+    color: var(--blue-dark);
+}
+
+/* Filas de horas */
+.cal-time-cell {
+    padding: 0 8px;
+    height: 60px;
+    border-bottom: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    padding-top: 6px;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    white-space: nowrap;
+    background: var(--surface);
+    position: sticky;
+    left: 0;
+    z-index: 1;
+}
+
+.cal-slot {
+    height: 60px;
+    border-bottom: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    padding: 3px;
+    position: relative;
+    background: var(--surface);
+    transition: background 0.1s;
+}
+.cal-slot:hover { background: #f8fcfe; }
+
+/* Línea de hora actual */
+.cal-now-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--blue-dark);
+    z-index: 3;
+    pointer-events: none;
+}
+.cal-now-line::before {
+    content: '';
+    position: absolute;
+    left: -4px;
+    top: -4px;
+    width: 10px;
+    height: 10px;
+    background: var(--blue-dark);
+    border-radius: 50%;
+}
+
+/* Eventos del calendario */
+.cal-event {
+    border-radius: 6px;
+    padding: 5px 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    overflow: hidden;
+    height: calc(100% - 4px);
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    transition: filter 0.15s;
+    border-left: 3px solid;
+}
+.cal-event:hover { filter: brightness(0.95); }
+
+.cal-event.green {
+    background: var(--green-light);
+    border-left-color: var(--green);
+    color: var(--green-dark);
+}
+.cal-event.blue {
+    background: var(--blue-light);
+    border-left-color: var(--blue-dark);
+    color: #1a6b82;
+}
+.cal-event.canceled {
+    background: #f5f5f5;
+    border-left-color: #ccc;
+    color: #aaa;
+    text-decoration: line-through;
+}
+
+.cal-event-title { font-weight: 700; line-height: 1.2; }
+.cal-event-sub { font-weight: 500; opacity: 0.85; font-size: 0.72rem; }
+.cal-event-time { font-size: 0.7rem; opacity: 0.75; display: flex; align-items: center; gap: 2px; }
+.cal-event-time .material-symbols-outlined { font-size: 11px !important; }
+
+.cal-closed {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    opacity: 0.5;
+}
+</style>
+{% endblock %}
+
+{% block nav_personal %}active{% endblock %}
+
+{% block breadcrumb %}
+    <a href="{% url 'dashboard' %}">Inicio</a>
+    <span class="material-symbols-outlined">chevron_right</span>
+    <span class="breadcrumb-current">Personal</span>
+{% endblock %}
+
+{% block topbar_titulo %}Personal Veterinario{% endblock %}
+
+{% block contenido %}
+<div class="page active" id="page-personal">
+
+    <!-- ===== PAGE HEADER ===== -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Personal Veterinario</h1>
+            <p class="page-sub">Lista de Empleados del Hospital</p>
+        </div>
+        <div class="page-header-right">
+            <button class="btn-primary" id="btnNuevoPersonal">
+                <span class="material-symbols-outlined">person_add</span>
+                Nuevo Personal
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== TABS ===== -->
+    <div class="page-tabs">
+        <button class="page-tab active" data-tab="lista">
+            <span class="material-symbols-outlined">list</span>
+            Lista
+        </button>
+        <button class="page-tab" data-tab="agenda">
+            <span class="material-symbols-outlined">calendar_month</span>
+            Agenda
+        </button>
+    </div>
+
+    <!-- ===== TAB: LISTA ===== -->
+    <div class="tab-panel active" id="tab-lista">
+        <div class="card" style="border-radius: 0 0 var(--radius) var(--radius); border-top: none;">
+
+            <div class="filters-bar">
+                <div class="search-box">
+                    <span class="material-symbols-outlined">search</span>
+                    <input type="text" placeholder="Buscar por nombre, correo o especialidad..." id="personalSearch" />
+                </div>
+                <div class="filters-right">
+                    <select class="filter-select" id="filterEspecialidad">
+                        <option value="">Todas las Especialidades</option>
+                        <option value="vet">Veterinario</option>
+                        <option value="recep">Recepcionista</option>
+                        <option value="admin">Administrador</option>
+                    </select>
+                    <select class="filter-select" id="filterEstado">
+                        <option value="">Todos los Estados</option>
+                        <option value="turno">En turno</option>
+                        <option value="fuera">Fuera de turno</option>
+                        <option value="descanso">En descanso</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table class="data-table" id="personalTable">
+                    <thead>
+                        <tr>
+                            <th>NOMBRE DEL EMPLEADO</th>
+                            <th>ESPECIALIDAD</th>
+                            <th>ESTADO</th>
+                            <th>ACCIONES</th>
+                        </tr>
+                    </thead>
+                    <tbody id="personalBody">
+                        <tr>
+                            <td>
+                                <div class="user-cell">
+                                    <div class="user-avatar-p" style="background-color: #e2c09c;">SM</div>
+                                    <div class="user-info-text">
+                                        <span class="user-name-table">Dra. Sofia Mendez</span>
+                                        <span class="user-email-table">sofia.m@cadahuella.com</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><strong>Cardiología Felina</strong></td>
+                            <td>
+                                <div class="status-cell">
+                                    <span class="status-dot status-active"></span>
+                                    <span class="status-text">En turno</span>
+                                </div>
+                            </td>
+                            <td><a href="#" class="link-green">Ver Perfil</a></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="user-cell">
+                                    <div class="user-avatar-p" style="background-color: #a8d8b9; color: var(--green-dark);">CR</div>
+                                    <div class="user-info-text">
+                                        <span class="user-name-table">Carlos Ruiz</span>
+                                        <span class="user-email-table">c.ruiz@cadahuella.com</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><strong>Traumatología</strong></td>
+                            <td>
+                                <div class="status-cell">
+                                    <span class="status-dot status-active"></span>
+                                    <span class="status-text">En turno</span>
+                                </div>
+                            </td>
+                            <td><a href="#" class="link-green">Ver Perfil</a></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="user-cell">
+                                    <div class="user-avatar-p" style="background-color: #b8d4f0; color: var(--blue-dark);">LT</div>
+                                    <div class="user-info-text">
+                                        <span class="user-name-table">Lucia Torres</span>
+                                        <span class="user-email-table">l.torres@cadahuella.com</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><strong>Recepción / Gestión</strong></td>
+                            <td>
+                                <div class="status-cell">
+                                    <span class="status-dot status-active"></span>
+                                    <span class="status-text">En turno</span>
+                                </div>
+                            </td>
+                            <td><a href="#" class="link-green">Ver Perfil</a></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="user-cell">
+                                    <div class="user-avatar-p" style="background-color: #f0c8b8;">EB</div>
+                                    <div class="user-info-text">
+                                        <span class="user-name-table">Dra. Elena Blanco</span>
+                                        <span class="user-email-table">e.blanco@cadahuella.com</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><strong>Dermatología</strong></td>
+                            <td>
+                                <div class="status-cell">
+                                    <span class="status-dot status-inactive"></span>
+                                    <span class="status-text inactive">Fuera de turno</span>
+                                </div>
+                            </td>
+                            <td><a href="#" class="link-green">Ver Perfil</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="table-footer">
+                <span>Mostrando <strong>1–4</strong> de <strong>28</strong> empleados</span>
+                <div class="pagination">
+                    <button class="page-btn" disabled>‹</button>
+                    <button class="page-btn active">1</button>
+                    <button class="page-btn">2</button>
+                    <button class="page-btn">3</button>
+                    <span>…</span>
+                    <button class="page-btn">›</button>
+                </div>
+            </div>
+
+            <div class="table-help">
+                <span class="material-symbols-outlined">info</span>
+                ¿Necesitas ayuda? Mira nuestra
+                <a href="#" class="link-green">Guía de manejo de Personal Veterinario</a>
+                o contacta al soporte
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ===== TAB: AGENDA ===== -->
+    <div class="tab-panel" id="tab-agenda">
+        <div class="agenda-layout">
+
+            <!-- Sidebar izquierdo -->
+            <div class="agenda-sidebar">
+
+                <div class="agenda-nueva-cita">
+                    <button class="btn-nueva-cita">
+                        <span class="material-symbols-outlined">add</span>
+                        Nueva Cita
+                    </button>
+                </div>
+
+                <!-- Veterinarios -->
+                <div class="agenda-sidebar-section">
+                    <p class="agenda-sidebar-label">Veterinarios</p>
+
+                    <div class="vet-item">
+                        <div class="vet-avatar">SM</div>
+                        <div class="vet-info">
+                            <span class="vet-name">Dra. Sofia Mendez</span>
+                            <span class="vet-role">Cardiología</span>
+                        </div>
+                        <div class="vet-check">
+                            <span class="material-symbols-outlined">check</span>
+                        </div>
+                    </div>
+
+                    <div class="vet-item">
+                        <div class="vet-avatar" style="background: #e8f9f1; color: var(--green-dark);">CR</div>
+                        <div class="vet-info">
+                            <span class="vet-name">Carlos Ruiz</span>
+                            <span class="vet-role">Traumatología</span>
+                        </div>
+                        <div class="vet-check" style="background: var(--green);">
+                            <span class="material-symbols-outlined">check</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Categorías -->
+                <div class="agenda-sidebar-section">
+                    <p class="agenda-sidebar-label">Categorías</p>
+                    <div class="categoria-item">
+                        <span class="cat-dot" style="background: var(--green);"></span>
+                        Revisión
+                    </div>
+                    <div class="categoria-item" style="margin-top: 6px;">
+                        <span class="cat-dot" style="background: var(--blue-dark);"></span>
+                        Cirugía
+                    </div>
+                </div>
+
+                <!-- Estatus clínica -->
+                <div class="agenda-sidebar-section">
+                    <div class="clinic-status-box">
+                        <p class="clinic-status-title">Estatus de la Clínica</p>
+                        <p class="clinic-status-sub">Hoy está lleno</p>
+                        <div class="clinic-status-bar">
+                            <div class="clinic-status-fill"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Calendario semanal -->
+            <div class="agenda-calendar">
+
+                <!-- Toolbar -->
+                <div class="cal-toolbar">
+                    <div class="cal-nav">
+                        <button class="cal-btn" id="prevWeek">
+                            <span class="material-symbols-outlined">chevron_left</span>
+                        </button>
+                        <span class="cal-nav-title" id="weekTitle">Oct 14 – Oct 20, 2023</span>
+                        <button class="cal-btn" id="nextWeek">
+                            <span class="material-symbols-outlined">chevron_right</span>
+                        </button>
+                        <button class="cal-hoy" id="todayBtn">Hoy</button>
+                    </div>
+                    <div class="cal-view-btns">
+                        <button class="cal-view-btn">Día</button>
+                        <button class="cal-view-btn active">Semana</button>
+                        <button class="cal-view-btn">Mes</button>
+                    </div>
+                </div>
+
+                <!-- Grid -->
+                <div class="cal-grid-wrapper">
+                    <div class="cal-grid" id="calGrid">
+                        <!-- Se genera con JS -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ===== TABS =====
+const pageTabs   = document.querySelectorAll('.page-tab');
+const tabPanels  = document.querySelectorAll('.tab-panel');
+
+pageTabs.forEach(btn => {
+    btn.addEventListener('click', () => {
+        pageTabs.forEach(b => b.classList.remove('active'));
+        tabPanels.forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+        if (btn.dataset.tab === 'agenda') renderCalendar();
+    });
+});
+
+// ===== BÚSQUEDA EN LISTA =====
+document.getElementById('personalSearch').addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    document.querySelectorAll('#personalBody tr').forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+});
+
+// ===== CALENDARIO =====
+const HORAS    = ['08:00 AM','09:00 AM','10:00 AM','11:00 AM','12:00 PM',
+                  '01:00 PM','02:00 PM','03:00 PM','04:00 PM'];
+const DIAS     = ['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'];
+
+// Eventos estáticos de ejemplo
+const EVENTOS  = [
+    { dia: 0, hora: 0, titulo: 'Buddy (Labra...)', sub: 'Vacunación • John D.', tiempo: '08:00 - 08:45', color: 'green' },
+    { dia: 0, hora: 1, titulo: 'Luna (Maine Co...)', sub: 'Dental Surgery • Emily Smith', extra: '⚠ High Risk', color: 'blue', span: 3 },
+    { dia: 1, hora: 3, titulo: 'Charlie (Beagle)', sub: 'Revisión rutinaria • Sar...', color: 'green' },
+    { dia: 2, hora: 1, titulo: 'Milo (Poodle)', sub: 'Cancelado', color: 'canceled' },
+    { dia: 2, hora: 2, titulo: 'Sophie (Persian)', sub: 'Spaying • Michael Brown', color: 'blue', span: 2 },
+    { dia: 3, hora: 0, titulo: 'Cooper (Golden...)', sub: 'Consultation', color: 'green' },
+    { dia: 4, hora: 3, titulo: 'Bella (Husky)', sub: 'Hip Dysplasia Check', color: 'blue', span: 2 },
+];
+
+let weekOffset = 0;
+
+function getWeekDates(offset) {
+    const now  = new Date(2023, 9, 14); // Oct 14, 2023 (lunes base)
+    const start = new Date(now);
+    start.setDate(start.getDate() + offset * 7);
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+        const d = new Date(start);
+        d.setDate(start.getDate() + i);
+        days.push(d);
+    }
+    return days;
+}
+
+function formatWeekTitle(days) {
+    const opts = { month: 'short', day: 'numeric', year: 'numeric' };
+    const s = days[0].toLocaleDateString('es-MX', { month: 'short', day: 'numeric' });
+    const e = days[6].toLocaleDateString('es-MX', { month: 'short', day: 'numeric', year: 'numeric' });
+    return `${s} – ${e}`;
+}
+
+function renderCalendar() {
+    const grid  = document.getElementById('calGrid');
+    const days  = getWeekDates(weekOffset);
+    const today = new Date();
+    grid.innerHTML = '';
+
+    // --- Encabezado ---
+    // Celda GMT
+    const gmtCell = document.createElement('div');
+    gmtCell.className = 'cal-header-cell';
+    gmtCell.innerHTML = '<span style="font-size:0.7rem;color:var(--text-muted);font-weight:600;">GMT-5</span>';
+    grid.appendChild(gmtCell);
+
+    days.forEach((d, i) => {
+        const isToday = d.toDateString() === today.toDateString();
+        const cell = document.createElement('div');
+        cell.className = 'cal-header-cell' + (isToday ? ' today' : '');
+        cell.innerHTML = `<span class="cal-day-name">${DIAS[i]}</span><span class="cal-day-num">${d.getDate()}</span>`;
+        grid.appendChild(cell);
+    });
+
+    // --- Filas de horas ---
+    // Materialize events into a lookup: [dia][hora] = evento
+    const lookup = {};
+    EVENTOS.forEach(ev => {
+        if (!lookup[ev.dia]) lookup[ev.dia] = {};
+        lookup[ev.dia][ev.hora] = ev;
+    });
+
+    // Track which slots are occupied by a spanning event
+    const occupied = {}; // "dia-hora" => true
+
+    EVENTOS.forEach(ev => {
+        if (ev.span) {
+            for (let s = 1; s < ev.span; s++) {
+                occupied[`${ev.dia}-${ev.hora + s}`] = true;
+            }
+        }
+    });
+
+    HORAS.forEach((hora, hi) => {
+        // Celda de hora
+        const timeCell = document.createElement('div');
+        timeCell.className = 'cal-time-cell';
+        timeCell.textContent = hora;
+        grid.appendChild(timeCell);
+
+        days.forEach((d, di) => {
+            const isSat = di === 5;
+            const isSun = di === 6;
+            const key   = `${di}-${hi}`;
+
+            if (occupied[key]) return; // slot ocupado por evento superior
+
+            const slot = document.createElement('div');
+            slot.className = 'cal-slot';
+
+            if (isSun) {
+                if (hi === 0) {
+                    slot.style.gridRow = `span ${HORAS.length}`;
+                    slot.innerHTML = `<div class="cal-closed">CLINIC CLOSED</div>`;
+                } else { return; }
+            } else if (isSat && hi >= 4) {
+                if (hi === 4) {
+                    slot.style.gridRow = `span ${HORAS.length - 4}`;
+                    slot.innerHTML = `<div class="cal-closed">MORNING SHIFT ONLY</div>`;
+                } else { return; }
+            } else {
+                const ev = lookup[di] && lookup[di][hi];
+                if (ev) {
+                    if (ev.span) slot.style.gridRow = `span ${ev.span}`;
+                    slot.innerHTML = `
+                        <div class="cal-event ${ev.color}">
+                            <span class="cal-event-title">${ev.titulo}</span>
+                            <span class="cal-event-sub">${ev.sub}</span>
+                            ${ev.tiempo ? `<span class="cal-event-time"><span class="material-symbols-outlined">schedule</span>${ev.tiempo}</span>` : ''}
+                            ${ev.extra  ? `<span class="cal-event-sub" style="color:var(--orange);font-size:0.7rem;">${ev.extra}</span>` : ''}
+                        </div>`;
+                }
+            }
+
+            grid.appendChild(slot);
+        });
+    });
+
+    // Actualizar título
+    document.getElementById('weekTitle').textContent = formatWeekTitle(days);
+}
+
+document.getElementById('prevWeek').addEventListener('click', () => { weekOffset--; renderCalendar(); });
+document.getElementById('nextWeek').addEventListener('click', () => { weekOffset++; renderCalendar(); });
+document.getElementById('todayBtn').addEventListener('click', () => { weekOffset = 0; renderCalendar(); });
+</script>
+{% endblock %}

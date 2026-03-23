@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Reportes{%endblock%}
+
+{% block nav_reportes %}active{% endblock %}
+
+{% block breadcrumb %}
+    <a href="{% url 'dashboard' %}">Inicio</a>
+    <span class="material-symbols-outlined">chevron_right</span>
+    <span class="breadcrumb-current">Reportes</span>
+    
+{% endblock %}
+
+{% block topbar_titulo %}Reportes{% endblock %}
+
+{% block contenido %}
+
+    <div class="page active" id="page-reportes">
+        <div class="page-header">
+            <h1 class="page-title">Reportes </h1>
+        </div>
+        <div class="card placeholder-card">
+            <span class="placeholder-icon material-symbols-outlined">person</span>
+            <p>Módulo de Reportes</p>
+        </div>
+    </div>
+
+{% endblock %}

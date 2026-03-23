@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Iniciar Consulta{% endblock %}
+
+{% block nav_consultas %}active{% endblock %}
+
+
+{% block breadcrumb %}
+    <a href="{% url 'dashboard' %}">Inicio</a>
+    <span class="material-symbols-outlined breadcrumb-sep">chevron_right</span>
+    <a href="{% url 'consultas' %}">Consultas</a>
+    <span class="material-symbols-outlined breadcrumb-sep">chevron_right</span>
+    <span class="breadcrumb-current">Consulta Iniciada</span>
+{% endblock %}
+
+{% block topbar_titulo %}Consultas{% endblock %}
+
+{% block contenido %}
+<div class="page-content">
+
+    <!-- DATOS DE LA MASCOTA -->
+    <div class="card">
+        <div class="mascota-profile">
+            <div class="mascota-photo">🐕</div>
+            <div class="mascota-info">
+                <div class="mascota-name-row">
+                    <span class="mascota-name">Luna</span>
+                    <span class="badge-paciente badge-regular">Paciente Regular</span>
+                </div>
+                <div class="mascota-meta">
+                    <span>Canino</span>
+                    <span class="meta-dot">•</span>
+                    <span>Golden Retriever</span>
+                    <span class="meta-dot">•</span>
+                    <span>4 años y 2 meses</span>
+                </div>
+                <div class="mascota-chips">
+                    <span class="chip">
+                        <span class="material-symbols-outlined">monitor_weight</span>
+                        28.5 kg
+                    </span>
+                    <span class="chip">
+                        <span class="material-symbols-outlined">person</span>
+                        Dueño: Carlos Méndez
+                    </span>
+                </div>
+            </div>
+            <button class="btn-historial">
+                <span class="material-symbols-outlined">history</span>
+                Ver Historial Clínico
+            </button>
+        </div>
+    </div>
+
+    <!-- GRID: FORMULARIO + SIDEBAR -->
+    <div class="consulta-layout">
+
+        <!-- COLUMNA PRINCIPAL -->
+        <div class="consulta-main-col">
+
+            <!-- MOTIVO DE CONSULTA -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>
+                        <span class="material-symbols-outlined">description</span>
+                        Motivo de la consulta
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <input type="text" class="form-input"
+                               placeholder="Ej: Decaimiento y falta de apetito desde hace 24h" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- TRIAJE DE SIGNOS VITALES -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>
+                        <span class="material-symbols-outlined">monitor_heart</span>
+                        Triaje de Signos Vitales
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="vitales-grid">
+                        <div class="vital-field">
+                            <span class="vital-label">Temperatura</span>
+                            <div class="vital-input-wrap">
+                                <input type="text" class="vital-input" value="38.5" />
+                                <span class="vital-unit">°C</span>
+                            </div>
+                        </div>
+                        <div class="vital-field">
+                            <span class="vital-label">Frec. Cardíaca</span>
+                            <div class="vital-input-wrap">
+                                <input type="text" class="vital-input" value="80" />
+                                <span class="vital-unit">lpm</span>
+                            </div>
+                        </div>
+                        <div class="vital-field">
+                            <span class="vital-label">Frec. Resp.</span>
+                            <div class="vital-input-wrap">
+                                <input type="text" class="vital-input" value="24" />
+                                <span class="vital-unit">rpm</span>
+                            </div>
+                        </div>
+                        <div class="vital-field">
+                            <span class="vital-label">Peso Act.</span>
+                            <div class="vital-input-wrap">
+                                <input type="text" class="vital-input" value="28.5" />
+                                <span class="vital-unit">kg</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DIAGNÓSTICO -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>
+                        <span class="material-symbols-outlined">biotech</span>
+                        Diagnóstico
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="input-with-icon">
+                        <input type="text" class="form-input"
+                               placeholder="Buscar diagnóstico o ingresar manual..." />
+                        <span class="material-symbols-outlined input-icon">search</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OBSERVACIONES Y PLAN DE TRATAMIENTO -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>
+                        <span class="material-symbols-outlined">edit_note</span>
+                        Observaciones y Plan de Tratamiento
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <textarea class="form-textarea"
+                              placeholder="Detalle el examen físico, hallazgos, medicamentos recetados y recomendaciones..."></textarea>
+                </div>
+            </div>
+
+        </div><!-- /consulta-main-col -->
+
+        <!-- COLUMNA LATERAL -->
+        <div class="consulta-sidebar-col">
+
+            <!-- VISITAS RECIENTES -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>
+                        <span class="material-symbols-outlined">calendar_today</span>
+                        Visitas Recientes
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="visita-item">
+                        <div class="visita-fecha">15 OCT 2023</div>
+                        <div class="visita-titulo">Control Post-Vacunación</div>
+                        <div class="visita-desc">Sin reacciones adversas. Peso estable.</div>
+                    </div>
+                    <div class="visita-item">
+                        <div class="visita-fecha">02 SEP 2023</div>
+                        <div class="visita-titulo">Limpieza Dental</div>
+                        <div class="visita-desc">Profilaxis completa bajo sedación ligera.</div>
+                    </div>
+                    <a href="#" class="link-ver-todo">
+                        VER TODO EL HISTORIAL
+                        <span class="material-symbols-outlined">arrow_forward</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- RECETA RÁPIDA -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>
+                        <span class="material-symbols-outlined">prescriptions</span>
+                        Receta Rápida
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="receta-item">
+                        <div>
+                            <div class="receta-nombre">Amoxicilina 500mg</div>
+                            <div class="receta-dosis">1 comp cada 12h / 7 días</div>
+                        </div>
+                        <button class="btn-remove">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                    </div>
+                    <button class="btn-add-med">
+                        <span class="material-symbols-outlined">add</span>
+                        Añadir Medicamento
+                    </button>
+                </div>
+            </div>
+
+        </div><!-- /consulta-sidebar-col -->
+
+    </div><!-- /consulta-layout -->
+
+</div><!-- /page-content -->
+
+<!-- FOOTER DE ACCIONES -->
+<footer class="page-footer">
+    <button class="btn-secondary">Cancelar</button>
+    <button class="btn-finalizar">
+        <span class="material-symbols-outlined">check_circle</span>
+        Finalizar Consulta
+    </button>
+</footer>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Pagos{%endblock%}
+
+{% block nav_pagos %}active{% endblock %}
+
+{% block breadcrumb %}
+    <a href="{% url 'dashboard' %}">Inicio</a>
+    <span class="material-symbols-outlined">chevron_right</span>
+    <span class="breadcrumb-current">Pagos</span>
+    
+{% endblock %}
+
+{% block topbar_titulo %}Lista de Pagos{% endblock %}
+
+{% block contenido %}
+
+    <div class="page active" id="page-pagos">
+        <div class="page-header">
+            <h1 class="page-title">Pagos</h1>
+        </div>
+        <div class="card placeholder-card">
+            <span class="placeholder-icon material-symbols-outlined">person</span>
+            <p>Módulo de Pagos</p>
+        </div>
+    </div>
+
+{% endblock %}

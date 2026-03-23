@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Especies{%endblock%}
+
+{% block nav_especies %}active{% endblock %}
+
+{% block breadcrumb %}
+    <a href="{% url 'dashboard' %}">Inicio</a>
+    <span class="material-symbols-outlined">chevron_right</span>
+    <span class="breadcrumb-current">Especies</span>
+    
+{% endblock %}
+
+{% block topbar_titulo %}Lista de Especies Animales{% endblock %}
+
+{% block contenido %}
+
+    <div class="page active" id="page-especies">
+        <div class="page-header">
+            <h1 class="page-title">Especies Animales</h1>
+        </div>
+        <div class="card placeholder-card">
+            <span class="placeholder-icon material-symbols-outlined">person</span>
+            <p>Módulo de Especies</p>
+        </div>
+    </div>
+
+{% endblock %}
