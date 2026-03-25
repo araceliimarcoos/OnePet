@@ -44,31 +44,30 @@ def api_citas(request):
 def dashboard (request):
     return render(request, 'dashboard.html', { 'seccion_activa': 'dashboard' })
 ############################################################################################
+
 from django.core.paginator import Paginator
-from django.db.models import Q # Importante para búsquedas complejas
 
-
-
-#################################################################################3
 @login_required
-
 def mascotas(request):
 
+    mascotas_list = Mascota.objects.select_related(
+        'propietario', 'especie', 'raza'
+    ).all()
+
+    paginator = Paginator(mascotas_list, 15)  # 15 por página en cada tablita
+
+    page_number = request.GET.get('page')
+    mascotas = paginator.get_page(page_number)
+
     contexto = {
-
         'seccion_activa': 'mascotas',
-
-        'mascotas': Mascota.objects.select_related('propietario', 'especie', 'raza').all(),
-
+        'mascotas': mascotas,  #  ahora es paginado
         'especies': Especie.objects.all().order_by('nombre'),
         'razas': Raza.objects.all().order_by('nombre'),
-
-        'total_conteo': Mascota.objects.count()
-
+        'total_conteo': paginator.count  #  mejor que count()
     }
 
     return render(request, 'mascotas/mascotas_lista.html', contexto)
-
 ###############################################################################################
 @login_required
 def detalles_mascota(request):

@@ -66,7 +66,7 @@
                 <table class="data-table" id="mascotasTable">
                   <thead>
                     <tr>
-                      <th>NOMBRE DE LA MASCOTA</th>
+                      <th> MASCOTA</th>
                       <th>ESPECIE</th>
                       <th>RAZA</th>
                       <th>PROPIETARIO</th>
@@ -79,57 +79,54 @@
                     {% for m in mascotas %}
                     <tr data-especie="{{ m.especie.nombre }}" data-raza="{{ m.raza.nombre }}">
                         <td>
-                            <div class="pet-cell">
-                                <div class="user-avatar-p" style="background-color: #DBEAFE; color: #2563EB;">
-                                    <span class="material-symbols-outlined">pets</span>
-                                </div>
-                                <div>
-                                    <strong>{{ m.nombre }}</strong>
-                                    <small>Folio: {{ m.folio }}</small>
-                                </div>
-                            </div>
+                            <!-- Solo el nombre y folio, sin divs adicionales -->
+                            <strong>{{ m.nombre }}</strong><br>
+                            <small>Folio: {{ m.folio }}</small>
                         </td>
-                        <td>
-                            <span class="badge-especie {{ m.especie.nombre|lower }}">
-                                {{ m.especie.nombre }}
-                            </span>
-                        </td>
+                        <td>{{ m.especie.nombre }}</td>
                         <td>{{ m.raza.nombre }}</td>
-                        <!--#################################################-->
-                        <td> 
-                            <div class="data-vertical">
-                                <p style="margin: 0; font-weight: bold;">{{ m.propietario.nombrepila }} {{ m.propietario.primerapellido }}</p>
-                                <p style="margin: 0; font-size: 0.85em; color: #666;">{{ m.propietario.correo }}</p>
-                            </div>
+                        <td>
+                            <!-- Información del propietario en líneas simples -->
+                            {{ m.propietario.nombrepila }} {{ m.propietario.primerapellido }}<br>
+                            <small>{{ m.propietario.correo }}</small>
                         </td>
-                        <!--#############################################-->
                         <td>{{ m.fechanacimiento|date:"d M, Y" }}</td>
-                        <!--akiiba-->
                         <td>
                             <a href="#" class="link-green">Ver perfil</a>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="7" style="text-align: center; padding: 30px; color: #666;">
+                        <td colspan="6" style="text-align: center; padding: 30px; color: #666;">
                             No hay mascotas registradas con esos criterios.
                         </td>
                     </tr>
                     {% endfor %}
-                </tbody>
+                    </tbody>
 <!--###########################################################################################-->
                 </table>
               </div>
 
             <div class="table-footer">
-                <span>
-                    Mostrando un total de <strong>{{ total_conteo }}</strong> mascotas filtradas.
-                </span>
-                </div>
+                <div class="pagination" style="margin-top: 20px; text-align: center;">
 
-            <div class="table-help">
-                <span class="material-symbols-outlined">info</span> ¿Necesitas ayuda? Mira nuestra <a href="#" class="link-green">Guía de manejo de mascotas</a>
-            </div>
+                    {% if mascotas.has_previous %}
+                        <a href="?page=1">« Primera</a>
+                        <a href="?page={{ mascotas.previous_page_number }}">Anterior</a>
+                    {% endif %}
+
+                    <span style="margin: 0 10px;">
+                        Página {{ mascotas.number }} de {{ mascotas.paginator.num_pages }}
+                    </span>
+
+                    {% if mascotas.has_next %}
+                        <a href="?page={{ mascotas.next_page_number }}">Siguiente</a>
+                        <a href="?page={{ mascotas.paginator.num_pages }}">Última »</a>
+                    {% endif %}
+
+                </div>
+            </div>  
+
         </div>
     </div>
 
