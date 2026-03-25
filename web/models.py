@@ -61,6 +61,13 @@ class EdoCita(models.Model):
         managed = False
         db_table = 'edo_cita'
 
+class EdoUsuario(models.Model):
+    clave = models.CharField(primary_key=True, max_length=1)
+    nombre = models.CharField(max_length=8, unique=True)
+
+    class Meta:
+        managed = False
+        db_table = 'edo_usuario'
 
 class EdoHosp(models.Model):
     clave = models.CharField(primary_key=True, max_length=3)
@@ -332,6 +339,9 @@ class Usuario(models.Model):
     veterinario = models.OneToOneField('Veterinario', models.DO_NOTHING, db_column='veterinario', blank=True, null=True)
     administrador = models.OneToOneField(Administrador, models.DO_NOTHING, db_column='administrador', blank=True, null=True)
     imagen = models.CharField(max_length=255, blank=True, null=True)
+    
+    estado = models.ForeignKey('EdoUsuario', on_delete=models.DO_NOTHING, db_column='estado')
+
 
     class Meta:
         managed = False
