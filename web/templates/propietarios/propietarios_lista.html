@@ -154,109 +154,81 @@
                         <th>ACCIONES</th>
                     </tr>
                 </thead>
+            <!--...............................................................................................................-->
                 <tbody id="propietariosBody">
 
-                    <tr data-estado="ACTIVO">
-                        <td>
-                            <div class="user-cell">
-                                <div class="user-avatar-p" style="background-color: #e2c09c;">JP</div>
-                                <div class="user-info-text">
-                                    <span class="user-name-table">Juan Pérez</span>
-                                    <span class="user-email-table">ID: VCP-2024-0001</span>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="user-info-text">
-                                <span class="user-name-table">+34 600 123 456</span>
-                                <span class="user-email-table">juan.perez@email.com</span>
-                            </div>
-                        </td>
-                        <td><span class="badge pending">Firulais (Perro)</span></td>
-                        <td><strong>12/10/2025</strong></td>
-                        <td><span class="badge confirmed">ACTIVO</span></td>
-                        <td><a href="{% url 'detalles_propietario' %}" class="link-green">Ver Perfil</a></td>
-                    </tr>
+                    {% for propietario in propietarios %}
+                        <tr>
 
-                    <tr data-estado="ACTIVO">
-                        <td>
-                            <div class="user-cell">
-                                <div class="user-avatar-p" style="background-color: #a8d8b9;">MG</div>
-                                <div class="user-info-text">
-                                    <span class="user-name-table">María García</span>
-                                    <span class="user-email-table">ID: VCP-2024-0002</span>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="user-info-text">
-                                <span class="user-name-table">+34 612 888 777</span>
-                                <span class="user-email-table">m.garcia@email.com</span>
-                            </div>
-                        </td>
-                        <td><span class="badge pending">Michi (Gato)</span></td>
-                        <td><strong>05/09/2025</strong></td>
-                        <td><span class="badge confirmed">ACTIVO</span></td>
-                        <td><a href="#" class="link-green">Ver Perfil</a></td>
-                    </tr>
+                            <td>
+                                <div class="user-cell">
+                                    <div class="user-avatar-p">
+                                        {{ propietario.nombrepila|slice:":1" }}{{ propietario.primerapellido|slice:":1" }}
+                                    </div>
 
-                    <tr data-estado="ACTIVO">
-                        <td>
-                            <div class="user-cell">
-                                <div class="user-avatar-p" style="background-color: #b8d4f0;">CR</div>
-                                <div class="user-info-text">
-                                    <span class="user-name-table">Carlos Ruiz</span>
-                                    <span class="user-email-table">ID: VCP-2024-0003</span>
+                                    <div class="user-info-text">
+                                        <span class="user-name-table">
+                                            {{ propietario.nombrepila }} {{ propietario.primerapellido }} {{ propietario.segundoapellido }}
+                                        </span>
+                                        <span class="user-email-table">
+                                            ID: {{ propietario.folio }}
+                                        </span>
+                                    </div>
                                 </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="user-info-text">
-                                <span class="user-name-table">+34 611 987 654</span>
-                                <span class="user-email-table">c.ruiz@email.com</span>
-                            </div>
-                        </td>
-                        <td><span class="badge pending">Bolita (Gato)</span></td>
-                        <td><strong>20/08/2025</strong></td>
-                        <td><span class="badge confirmed">ACTIVO</span></td>
-                        <td><a href="#" class="link-green">Ver Perfil</a></td>
-                    </tr>
+                            </td>
 
-                    <tr data-estado="ACTIVO">
-                        <td>
-                            <div class="user-cell">
-                                <div class="user-avatar-p" style="background-color: #f0c8b8;">AL</div>
+                            <td>
                                 <div class="user-info-text">
-                                    <span class="user-name-table">Ana López</span>
-                                    <span class="user-email-table">ID: VCP-2024-0004</span>
+                                    <span class="user-name-table">Sin teléfono</span>
+                                    <span class="user-email-table">{{ propietario.correo }}</span>
                                 </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="user-info-text">
-                                <span class="user-name-table">+34 601 222 333</span>
-                                <span class="user-email-table">alopez@email.com</span>
-                            </div>
-                        </td>
-                        <td><span class="badge pending">Luna (Perro)</span></td>
-                        <td><strong>15/10/2025</strong></td>
-                        <td><span class="badge confirmed">ACTIVO</span></td>
-                        <td><a href="#" class="link-green">Ver Perfil</a></td>
-                    </tr>
+                            </td>
 
-                </tbody>
+                            <td>
+                                <span class="badge">Sin mascotas</span>
+                            </td>
+
+                            <td>
+                                <strong>Sin registro</strong>
+                            </td>
+
+                            <td>
+                                <span class="badge confirmed">ACTIVO</span>
+                            </td>
+
+                            <td>
+                                <a href="#" class="link-green">Ver Perfil</a>
+                            </td>
+
+                        </tr>
+                        {% endfor %}
+
+                </tbody>           
+                 <!-- ...............................................................................................................-->
             </table>
         </div>
 
         <div class="table-footer">
-            <span>Mostrando <strong>1–4</strong> de <strong>124</strong> propietarios</span>
+            <span>
+                Mostrando 
+                <strong>{{ propietarios.start_index }}–{{ propietarios.end_index }}</strong> 
+                de 
+                <strong>{{ propietarios.paginator.count }}</strong> propietarios
+            </span>
             <div class="pagination">
-                <button class="page-btn" disabled>‹</button>
-                <button class="page-btn active">1</button>
-                <button class="page-btn">2</button>
-                <button class="page-btn">3</button>
-                <span>…</span>
-                <button class="page-btn">›</button>
+
+                {% if propietarios.has_previous %}
+                    <a href="?page={{ propietarios.previous_page_number }}" class="page-btn">‹</a>
+                {% endif %}
+
+                <span class="page-btn active">
+                    {{ propietarios.number }}
+                </span>
+
+                {% if propietarios.has_next %}
+                    <a href="?page={{ propietarios.next_page_number }}" class="page-btn">›</a>
+                {% endif %}
+
             </div>
         </div>
 

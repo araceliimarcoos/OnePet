@@ -43,9 +43,7 @@ def api_citas(request):
 @login_required
 def dashboard (request):
     return render(request, 'dashboard.html', { 'seccion_activa': 'dashboard' })
-############################################################################################
-
-from django.core.paginator import Paginator
+#------------------------------------------ MASCOTAS ------------------------------------------------#
 
 @login_required
 def mascotas(request):
@@ -68,22 +66,41 @@ def mascotas(request):
     }
 
     return render(request, 'mascotas/mascotas_lista.html', contexto)
-###############################################################################################
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 @login_required
 def detalles_mascota(request):
     return render(request, 'mascotas/mascotas_detalles.html', { 'seccion_activa': 'mascotas' })
+
+#------------------------------------------ PROPIETARIOS ------------------------------------------------#
     
 @login_required
 def propietarios(request):
-    return render(request, 'propietarios/propietarios_lista.html', { 'seccion_activa': 'propietarios'})
 
+    propietarios_list = Propietario.objects.all().order_by('nombrepila')
+
+    paginator = Paginator(propietarios_list, 15)
+
+    page_number = request.GET.get('page')
+    propietarios = paginator.get_page(page_number)
+
+    contexto = {
+        'seccion_activa': 'propietarios',
+        'propietarios': propietarios,
+        'total_conteo': paginator.count
+    }
+
+    return render(request, 'propietarios/propietarios_lista.html', contexto)
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 @login_required
 def detalles_propietario(request):
     return render(request, 'propietarios/propietarios_detalles.html', { 'seccion_activa': 'propietarios'})
 
+#----------------------------------------------- CITAS ---------------------------------------------------#
 @login_required
 def citas(request):
     return render(request, 'citas/citas_lista.html', { 'seccion_activa': 'citas'})
+
+#---------------------------------------------- CONSULTAS ------------------------------------------------#
 
 @login_required
 def consultas(request):
@@ -93,10 +110,12 @@ def consultas(request):
 def iniciar_consulta(request):
     return render(request, 'consultas/consultas_inicio.html', {'seccion_activa': 'consultas'})
 
+#------------------------------------------ HOSPITALIZACIONES ------------------------------------------------#
 @login_required
 def hospitalizacion(request):
     return render(request, 'hospitalizacion/hospitalizacion_lista.html', { 'seccion_activa': 'hospitalizacion' })
 
+#------------------------------------------ PAGOS ------------------------------------------------#
 @login_required
 def pagos(request):
     return render(request, 'pagos/pagos_lista.html', { 'seccion_activa': 'pagos' })
