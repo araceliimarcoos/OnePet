@@ -76,10 +76,14 @@ def detalles_mascota(request):
 @login_required
 def propietarios(request):
 
-    propietarios_list = Propietario.objects.all().order_by('nombrepila')
+    propietarios_list = Propietario.objects.select_related(
+        'usuario__estado'   # 🔥 trae estado en una sola consulta
+    ).prefetch_related(
+        'telefono_set',     # 🔥 teléfonos
+        'mascota_set'       # 🔥 mascotas
+    )
 
     paginator = Paginator(propietarios_list, 15)
-
     page_number = request.GET.get('page')
     propietarios = paginator.get_page(page_number)
 

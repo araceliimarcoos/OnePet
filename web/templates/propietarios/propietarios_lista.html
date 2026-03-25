@@ -148,7 +148,7 @@
                     <tr>
                         <th>NOMBRE</th>
                         <th>CONTACTO</th>
-                        <th>MASCOTAS ASOCIADAS</th>
+                        <th>MASCOTAS</th>
                         <th>ÚLTIMA VISITA</th>
                         <th>ESTADO</th>
                         <th>ACCIONES</th>
@@ -158,63 +158,87 @@
                 <tbody id="propietariosBody">
 
                     {% for propietario in propietarios %}
-                        <tr>
+                    <tr>
 
-                            <td>
-                                <div class="user-cell">
-                                    <div class="user-avatar-p">
-                                        {{ propietario.nombrepila|slice:":1" }}{{ propietario.primerapellido|slice:":1" }}
-                                    </div>
-
-                                    <div class="user-info-text">
-                                        <span class="user-name-table">
-                                            {{ propietario.nombrepila }} {{ propietario.primerapellido }} {{ propietario.segundoapellido }}
-                                        </span>
-                                        <span class="user-email-table">
-                                            ID: {{ propietario.folio }}
-                                        </span>
-                                    </div>
+                        <!-- NOMBRE -->
+                        <td>
+                            <div class="user-cell">
+                                <div class="user-avatar-p">
+                                    {{ propietario.nombrepila|slice:":1" }}{{ propietario.primerapellido|slice:":1" }}
                                 </div>
-                            </td>
 
-                            <td>
                                 <div class="user-info-text">
-                                    <span class="user-name-table">Sin teléfono</span>
-                                    <span class="user-email-table">{{ propietario.correo }}</span>
+                                    <span class="user-name-table">
+                                        {{ propietario.nombrepila }} {{ propietario.primerapellido }} {{ propietario.segundoapellido }}
+                                    </span>
+                                    <span class="user-email-table">
+                                         {{ propietario.folio }}
+                                    </span>
                                 </div>
-                            </td>
+                            </div>
+                        </td>
 
-                            <td>
+                        <!-- CONTACTO -->
+                        <td>
+                            <div class="user-info-text">
+
+                                <!-- 📞 Teléfono principal -->
+                                {% with tel=propietario.telefono_set.first %}
+                                    {% if tel %}
+                                        <span class="user-name-table">{{ tel.numprincipal }}</span>
+                                    {% else %}
+                                        <span class="user-name-table">Sin teléfono</span>
+                                    {% endif %}
+                                {% endwith %}
+
+                                <!-- 📧 Correo -->
+                                <span class="user-email-table">{{ propietario.correo }}</span>
+
+                            </div>
+                        </td>
+
+                        <!-- 🐾 MASCOTAS -->
+                        <td>
+                            {% for mascota in propietario.mascota_set.all %}
+                                <span class="badge pending">
+                                    {{ mascota.nombre }}
+                                </span>
+                            {% empty %}
                                 <span class="badge">Sin mascotas</span>
-                            </td>
+                            {% endfor %}
+                        </td>
 
-                            <td>
-                                <strong>Sin registro</strong>
-                            </td>
+                        <!-- 🕒 ÚLTIMA VISITA (placeholder por ahora) -->
+                        <td>
+                            <strong>Sin registro</strong>
+                        </td>
 
-                            <td>
-                                <span class="badge confirmed">ACTIVO</span>
-                            </td>
+                        <!-- 🟢 ESTADO -->
+                        <td>
+                            {% if propietario.usuario %}
+                                <span class="badge confirmed">
+                                    {{ propietario.usuario.estado.nombre }}
+                                </span>
+                            {% else %}
+                                <span class="badge">Sin usuario</span>
+                            {% endif %}
+                        </td>
 
-                            <td>
-                                <a href="#" class="link-green">Ver Perfil</a>
-                            </td>
+                        <!-- ACCIONES -->
+                        <td>
+                            <a href="#" class="link-green">Ver Perfil</a>
+                        </td>
 
-                        </tr>
-                        {% endfor %}
+                    </tr>
+                    {% endfor %}
 
-                </tbody>           
+                </tbody>          
                  <!-- ...............................................................................................................-->
             </table>
         </div>
 
         <div class="table-footer">
-            <span>
-                Mostrando 
-                <strong>{{ propietarios.start_index }}–{{ propietarios.end_index }}</strong> 
-                de 
-                <strong>{{ propietarios.paginator.count }}</strong> propietarios
-            </span>
+            
             <div class="pagination">
 
                 {% if propietarios.has_previous %}
