@@ -72,16 +72,25 @@ def detalles_mascota(request):
     return render(request, 'mascotas/mascotas_detalles.html', { 'seccion_activa': 'mascotas' })
 
 #------------------------------------------ PROPIETARIOS ------------------------------------------------#
-    
+
 @login_required
 def propietarios(request):
 
-    propietarios_list = Propietario.objects.select_related(
-        'usuario__estado'   # 🔥 trae estado en una sola consulta
-    ).prefetch_related(
-        'telefono_set',     # 🔥 teléfonos
-        'mascota_set'       # 🔥 mascotas
+    query = request.GET.get('q')
+
+    propietarios_list = Propietario.objects.prefetch_related(
+        'telefono_set',
+        'mascota_set'
     )
+
+    # FILTRO
+    if query:
+        propietarios_list = propietarios_list.filter(
+            Q(nombrepila__icontains=query) |
+            Q(primerapellido__icontains=query) |
+            Q(segundoapellido__icontains=query) |
+            Q(folio__icontains=query)
+        )
 
     paginator = Paginator(propietarios_list, 15)
     page_number = request.GET.get('page')
@@ -90,7 +99,8 @@ def propietarios(request):
     contexto = {
         'seccion_activa': 'propietarios',
         'propietarios': propietarios,
-        'total_conteo': paginator.count
+        'total_conteo': paginator.count,
+        'query': query
     }
 
     return render(request, 'propietarios/propietarios_lista.html', contexto)

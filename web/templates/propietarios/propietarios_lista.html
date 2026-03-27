@@ -129,17 +129,17 @@
     <!-- ===== TABLA ===== -->
     <div class="card">
         <div class="filters-bar">
-            <div class="search-box">
-                <span class="material-symbols-outlined">search</span>
-                <input type="text" id="propietarioSearch" placeholder="Buscar por nombre, correo o ID...">
-            </div>
-            <div class="filters-right">
-                <select class="filter-select" id="filterEstadoProp">
-                    <option value="">Todos los estados</option>
-                    <option value="ACTIVO">Activo</option>
-                    <option value="INACTIVO">Inactivo</option>
-                </select>
-            </div>
+            <form method="GET">
+                <div class="search-box">
+                    <span class="material-symbols-outlined">search</span>
+                    <input 
+                        type="text" 
+                        name="q"
+                        value="{{ query|default:'' }}"
+                        placeholder="Buscar por nombre o folio..."
+                    >
+                </div>
+            </form>
         </div>
 
         <div class="table-wrapper">
@@ -150,7 +150,6 @@
                         <th>CONTACTO</th>
                         <th>MASCOTAS</th>
                         <th>ÚLTIMA VISITA</th>
-                        <th>ESTADO</th>
                         <th>ACCIONES</th>
                     </tr>
                 </thead>
@@ -213,17 +212,6 @@
                             <strong>Sin registro</strong>
                         </td>
 
-                        <!-- 🟢 ESTADO -->
-                        <td>
-                            {% if propietario.usuario %}
-                                <span class="badge confirmed">
-                                    {{ propietario.usuario.estado.nombre }}
-                                </span>
-                            {% else %}
-                                <span class="badge">Sin usuario</span>
-                            {% endif %}
-                        </td>
-
                         <!-- ACCIONES -->
                         <td>
                             <a href="#" class="link-green">Ver Perfil</a>
@@ -254,13 +242,6 @@
                 {% endif %}
 
             </div>
-        </div>
-
-        <div class="table-help">
-            <span class="material-symbols-outlined">info</span>
-            ¿Necesitas ayuda? Mira nuestra
-            <a href="#" class="link-green">Guía de manejo de Propietarios</a>
-            o contacta al soporte
         </div>
 
     </div>
