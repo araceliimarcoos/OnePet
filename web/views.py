@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 # Importa solo los que necesites para la lista por ahora:
-from .models import Mascota, Propietario, Especie, Raza, Servicio
+from .models import Mascota, Propietario, Especie, Raza, Servicio, Medicamento
 
 from django.core.paginator import Paginator
 from django.db.models import Q
@@ -135,8 +135,6 @@ def pagos(request):
     return render(request, 'pagos/pagos_lista.html', { 'seccion_activa': 'pagos' })
 #............................................................................ C A T A L O G O ............................................................................#
 
-from django.db.models import Q
-
 @login_required
 def servicios(request):
 
@@ -164,17 +162,46 @@ def servicios(request):
     }
 
     return render(request, 'servicios/servicios_lista.html', contexto)
-#------------------------------------------ PAGOS ------------------------------------------------------------#
+#.............................................................. M E D I C A M E N T O S ..............................................................................................................................-#
 
 @login_required
+@login_required
 def medicamentos(request):
-    return render(request, 'medicamentos/medicamentos_lista.html', { 'seccion_activa': 'medicamentos' })
-#------------------------------------------ PAGOS ------------------------------------------------------------#
+    
+    query = request.GET.get('q')
+
+    medicamentos_list = Medicamento.objects.all()
+
+    # 🔍 FILTRO
+    if query:
+        medicamentos_list = medicamentos_list.filter(
+            Q(nombre__icontains=query) |
+            Q(clave__icontains=query)
+        )
+
+    # 🔠 ORDEN
+    medicamentos_list = medicamentos_list.order_by('nombre')
+
+    # 📄 PAGINACIÓN
+    paginator = Paginator(medicamentos_list, 15)
+    page_number = request.GET.get('page')
+    medicamentos = paginator.get_page(page_number)
+
+    contexto = {
+        'seccion_activa': 'medicamentos',
+        'medicamentos': medicamentos,
+        'total_conteo': paginator.count,
+        'query': query
+    }
+
+    return render(request, 'medicamentos/medicamentos_lista.html', contexto)
+
+#.............................................................. U S U A R I O S  ..............................................................................................................................#
 
 @login_required
 def usuarios(request):
     return render(request, 'usuarios/usuarios_lista.html', { 'seccion_activa': 'usuarios' })
-#------------------------------------------ PAGOS ------------------------------------------------------------#
+#............................................................... E S P E C I E S ....................................................................................................#
 
 @login_required
 def especies(request):

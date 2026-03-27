@@ -20,7 +20,7 @@
         <div class="page-header">
             <div>
                 <h1 class="page-title">Medicamentos</h1>
-                <p class="page-sub">Lista de Medicamentos en el Sistema</p>
+                <p class="page-sub">Medicamentos en el Sistema</p>
             </div>
             <div class="page-header-right">
                 <button class="btn-primary" id="btnNuevaMascota">
@@ -32,32 +32,20 @@
         
         <!-- AQUI INICIA LA TABLA -->
         <div class="card">
-            <div class="filters-bar">
-                <div class="search-box">
-                    <span class="material-symbols-outlined" style="color: #7a8899">search</span>
-                    <input type="text" placeholder="Buscar por mascota, dueño, o ID..." id="mascotaSearch" />
-                </div>
-                
-                <div class="filter-selects">
-                <select class="filter-select" id="filterEspecie">
-                    <option value="">Especies: Todas</option>
-                    <option value="Canine">Canino</option>
-                    <option value="Feline">Felino</option>
-                    <option value="Exotic">Exótico</option>
-                  </select>
-                  <select class="filter-select" id="filterRaza">
-                    <option value="">Raza: Todas</option>
-                    <option value="Golden Retriever">Golden Retriever</option>
-                    <option value="Siamese">Siamese</option>
-                    <option value="Beagle">Beagle</option>
-                  </select>
-                  <select class="filter-select">
-                    <option>Estado: Activo</option>
-                    <option>Inactivo</option>
-                  </select>
-                </div>
 
-            </div>
+            <div class="filters-bar">
+            <form method="GET">
+                <div class="search-box">
+                    <span class="material-symbols-outlined style="color: #7a8899"">search</span>
+                    <input 
+                        type="text" 
+                        name="q"
+                        value="{{ query|default:'' }}"
+                        placeholder="Buscar por nombre o clave..."
+                    >
+                </div>
+            </form>
+        </div>
 
             <div class="table-wrapper">
                 <table class="data-table">
@@ -69,51 +57,62 @@
                             <th>ACCIONES</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td><code class="med-key">#MED-001</code></td>
-                            <td>
-                                <div class="med-cell">
-                                    <span class="med-name">Amoxicilina 500mg</span>
-                                    <small class="med-desc">Antibiótico de amplio espectro para infecciones bacterianas.</small>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="med-price">$12.50</span>
-                            </td>
-                            <td><div><a href="#" class="link-green">Ver Detalles</a></div></td>
-                        </tr>
 
+<!--...............................................................................................................................................-->
+                    <tbody id="catalogoBody">
+                        {% for medicamento in medicamentos %}
                         <tr>
-                            <td><code class="med-key">#MED-002</code></td>
-                            <td>
-                                <div class="med-cell">
-                                    <span class="med-name">Simparica 20mg</span>
-                                    <small class="med-desc">Tableta masticable para la prevención de pulgas, garrapatas y sarna en perros.</small>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="med-price">$45.99</span>
-                            </td>
-                            <td><div><a href="#" class="link-green">Ver Detalles</a></div></td>
-                        </tr>
 
-                        <tr>
-                            <td><code class="med-key">#MED-003</code></td>
+                            <!-- CLAVE -->
+                            <td>
+                                <code class="med-key">{{ medicamento.clave }}</code>
+                            </td>
+
+                            <!-- NOMBRE + DESCRIPCIÓN -->
                             <td>
                                 <div class="med-cell">
-                                    <span class="med-name">Meloxicam Suspensión</span>
-                                    <small class="med-desc">Antiinflamatorio no esteroideo (AINE) para el alivio del dolor crónico y agudo.</small>
+                                    <div>
+                                        <span class="med-name">{{ medicamento.nombre }}</span>
+                                        <small class="med-desc">{{ medicamento.descripcion }}</small>
+                                    </div>  
                                 </div>
                             </td>
+
+                            <!-- COSTO -->
                             <td>
-                                <span class="med-price">$18.25</span>
+                                <span class="med-price">${{ medicamento.precio }}</span>
                             </td>
+
+                            <!-- DETALLES -->
                             <td><div><a href="#" class="link-green">Ver Detalles</a></div></td>
                         </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5">No hay medicamentos registrados</td>
+                        </tr>
+                        {% endfor %}
 
                     </tbody>
                 </table>
+            </div>
+            
+            <div class="table-footer">
+            
+                <div class="pagination">
+
+                    {% if medicamentos.has_previous %}
+                        <a href="?page={{ medicamentos.previous_page_number }}" class="page-btn">‹</a>
+                    {% endif %}
+
+                    <span class="page-btn active">
+                        {{ medicamentos.number }}
+                    </span>
+
+                    {% if medicamentos.has_next %}
+                        <a href="?page={{ medicamentos.next_page_number }}" class="page-btn">›</a>
+                    {% endif %}
+
+                </div>
             </div>
 
     </div>
