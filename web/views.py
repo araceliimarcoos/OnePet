@@ -8,6 +8,7 @@ from .models import Mascota, Propietario, Especie, Raza, Servicio
 
 from django.core.paginator import Paginator
 from django.db.models import Q
+from django.db.models import Count
 ####################################################################################
 def inicio(request):
     """Página de inicio pública (landing page)."""
@@ -133,7 +134,7 @@ def hospitalizacion(request):
 @login_required
 def pagos(request):
     return render(request, 'pagos/pagos_lista.html', { 'seccion_activa': 'pagos' })
-#............................................................................ C A T A L O G O ............................................................................#
+#............................................................................ S E R V I C I O S ............................................................................#
 
 from django.db.models import Q
 
@@ -174,11 +175,27 @@ def medicamentos(request):
 @login_required
 def usuarios(request):
     return render(request, 'usuarios/usuarios_lista.html', { 'seccion_activa': 'usuarios' })
-#------------------------------------------ PAGOS ------------------------------------------------------------#
+#------------------------------------------ ESPECIES ------------------------------------------------------------#
 
 @login_required
 def especies(request):
-    return render(request, 'especies/especies_lista.html', { 'seccion_activa': 'especies' })
+    
+    especies_list = Especie.objects.annotate(
+        total_mascotas=Count('mascota'),
+        total_razas=Count('raza', distinct=True)
+    ).order_by('nombre')
+    
+    especie_top = especies_list.order_by('-total_mascotas').first()
+    
+    contexto = {
+        'seccion_activa': 'especies',
+        'especies': especies_list,
+        'total_especies': especies_list.count(),
+        'especie_top': especie_top
+    }
+    
+    
+    return render(request, 'especies/especies_lista.html', contexto)
 #------------------------------------------ PAGOS ------------------------------------------------------------#
 
 @login_required

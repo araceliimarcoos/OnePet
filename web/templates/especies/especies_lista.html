@@ -36,7 +36,7 @@
             <span class="stat-icon material-symbols-outlined">pet_supplies</span>
             <div class="stat-body">
               <p class="stat-label">Total de Especies</p>
-              <p class="stat-value">15</p>
+              <p class="stat-value">{{ total_especies }}</p>
             </div>
           </div>
 
@@ -45,8 +45,10 @@
             <span class="stat-icon material-symbols-outlined">pets</span>
             <div class="stat-body">
               <p class="stat-label">Especie con más mascotas</p>
-              <p class="stat-value">Canino</p>
-              <p class="stat-sub">10 mascotas registradas</p>
+                {% if especie_top %}
+                <p class="stat-value">{{ especie_top.nombre }}</p>
+                <p class="stat-sub">{{ especie_top.total_mascotas }} mascotas registradas</p>
+                {% endif %}
             </div>
           </div>
         </div>
@@ -78,26 +80,20 @@
                             <th>ACCIONES</th>
                         </tr>
                     </thead>
-                    <tbody id="especiesBody">   
+                    <tbody id="especiesBody">  
+                    {% for especie in especies %} 
                         <tr>
-                            <td><strong>#ESP-001</strong></td>
-                            <td>Canino</td>
-                            <td>10</td>
+                            <td><strong>{{ especie.clave }}</strong></td>
+                            <td>{{ especie.nombre }}</td>
+                            <td>{{ especie.total_mascotas }}</td>
                             <td>
                                 <div class="badge badge-confirmada">
-                                    <strong>15</strong>
+                                    <strong>{{ especie.total_razas }}</strong>
                                 </div>
                             </td>
                             <td><a href="#" class="link-green">Ver Detalles</a></td>
                         </tr>
-
-                        <tr>
-                            <td><strong>#ESP-002</strong></td>
-                            <td>Felino</td>
-                            <td>6</td>
-                            <td><div class="badge badge-confirmada">11</div></td>
-                            <td><a href="#" class="link-green">Ver Detalles</a></td>
-                        </tr>
+                    {% endfor %}
                     </tbody>
                 </table>
             </div>
