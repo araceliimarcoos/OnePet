@@ -74,13 +74,16 @@
                                 <div class="user-cell">
                                     <div class="user-avatar-p" style="background-color: #e2c09c;">
                                         <span>
-                                            {{ usuario.usuario|slice:":2"|upper }}
+                                            {{ usuario.nombre_real|slice:":2"|upper }}
                                         </span>
                                     </div>
 
                                     <div class="user-info-text">
                                         <span class="user-name-table">
                                             {{ usuario.usuario }}
+                                        </span>
+                                        <span class="user-email-table">
+                                            {{ usuario.nombre_real }}
                                         </span>
 
                                     </div>
