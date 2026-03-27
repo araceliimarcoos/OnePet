@@ -265,20 +265,6 @@
                 <div class="cat-stat-value">24</div>
             </div>
         </div>
-        <div class="cat-stat-card azul">
-            <div class="cat-stat-icon"><span class="material-symbols-outlined">category</span></div>
-            <div>
-                <div class="cat-stat-label">Categorías</div>
-                <div class="cat-stat-value">5</div>
-            </div>
-        </div>
-        <div class="cat-stat-card naranja">
-            <div class="cat-stat-icon"><span class="material-symbols-outlined">payments</span></div>
-            <div>
-                <div class="cat-stat-label">Costo Promedio</div>
-                <div class="cat-stat-value">$580</div>
-            </div>
-        </div>
     </div>
 
     <!-- ===== TABLA ===== -->
@@ -286,28 +272,18 @@
 
         <!-- Filtros -->
         <div class="filters-bar">
-            <div class="search-box">
-                <span class="material-symbols-outlined">search</span>
-                <input type="text" placeholder="Buscar por clave, nombre o descripción..." id="catalogoSearch" />
-            </div>
-            <div class="filters-right">
-                <select class="filter-select" id="filterCategoria">
-                    <option value="">Todas las categorías</option>
-                    <option value="Consulta">Consulta</option>
-                    <option value="Cirugía">Cirugía</option>
-                    <option value="Vacuna">Vacuna</option>
-                    <option value="Estética">Estética</option>
-                    <option value="Laboratorio">Laboratorio</option>
-                </select>
-                <select class="filter-select" id="filterCosto">
-                    <option value="">Cualquier precio</option>
-                    <option value="bajo">Hasta $300</option>
-                    <option value="medio">$300 – $800</option>
-                    <option value="alto">Más de $800</option>
-                </select>
-            </div>
+            <form method="GET">
+                <div class="search-box">
+                    <span class="material-symbols-outlined">search</span>
+                    <input 
+                        type="text" 
+                        name="q"
+                        value="{{ query|default:'' }}"
+                        placeholder="Buscar por nombre o folio..."
+                    >
+                </div>
+            </form>
         </div>
-
         <!-- Tabla -->
         <div class="table-wrapper">
             <table class="data-table" id="catalogoTable">
@@ -315,207 +291,101 @@
                     <tr>
                         <th>CLAVE</th>
                         <th>NOMBRE DEL SERVICIO</th>
-                        <th>CATEGORÍA</th>
                         <th>DESCRIPCIÓN</th>
                         <th>COSTO</th>
                         <th>ACCIONES</th>
                     </tr>
                 </thead>
+<!-- ............................................................................................................................................... -->
                 <tbody id="catalogoBody">
 
-                    <tr data-categoria="Consulta" data-costo="500">
-                        <td><span class="clave-badge">SRV-001</span></td>
+                    {% for servicio in servicios %}
+                    <tr>
+
+                        <!-- CLAVE -->
+                        <td>
+                            <span class="clave-badge">{{ servicio.clave }}</span>
+                        </td>
+
+                        <!-- NOMBRE -->
                         <td>
                             <div class="servicio-cell">
-                                <div class="servicio-icon"><span class="material-symbols-outlined">stethoscope</span></div>
+                                <div class="servicio-icon">
+                                    <span class="material-symbols-outlined">medical_services</span>
+                                </div>
                                 <div>
-                                    <span class="servicio-nombre">Consulta General</span>
-                                    <span class="servicio-categoria">Consulta</span>
+                                    <span class="servicio-nombre">{{ servicio.nombre }}</span>
                                 </div>
                             </div>
                         </td>
-                        <td><span class="badge-cat consulta">Consulta</span></td>
-                        <td><span class="desc-text">Revisión completa del estado de salud del paciente.</span></td>
-                        <td><span class="costo-valor">$500.00</span></td>
+
+                        <!-- DESCRIPCIÓN -->
+                        <td>
+                            <span class="desc-text">{{ servicio.descripcion }}</span>
+                        </td>
+
+                        <!-- COSTO -->
+                        <td>
+                            <span class="costo-valor">${{ servicio.costo }}</span>
+                        </td>
+
+                        <!-- ACCIONES -->
                         <td>
                             <div class="actions-cell">
-                                <button class="btn-icon-sm btn-ver-detalle" title="Ver detalles"
-                                    data-clave="SRV-001"
-                                    data-nombre="Consulta General"
-                                    data-categoria="Consulta"
-                                    data-costo="$500.00"
-                                    data-desc="Revisión completa del estado de salud del paciente. Incluye auscultación, palpación abdominal y evaluación general.">
+
+                                <!-- VER DETALLE -->
+                                <button class="btn-icon-sm btn-ver-detalle"
+                                    title="Ver detalles"
+                                    data-clave="{{ servicio.clave }}"
+                                    data-nombre="{{ servicio.nombre }}"
+                                    data-costo="${{ servicio.costo }}"
+                                    data-desc="{{ servicio.descripcion }}">
+
                                     <span class="material-symbols-outlined">visibility</span>
                                 </button>
-                                <button class="btn-icon-sm" title="Editar"><span class="material-symbols-outlined">edit</span></button>
-                                <button class="btn-icon-sm danger" title="Eliminar"><span class="material-symbols-outlined">delete</span></button>
-                            </div>
-                        </td>
-                    </tr>
 
-                    <tr data-categoria="Vacuna" data-costo="280">
-                        <td><span class="clave-badge">SRV-002</span></td>
-                        <td>
-                            <div class="servicio-cell">
-                                <div class="servicio-icon" style="background: var(--green-light);"><span class="material-symbols-outlined" style="color:var(--green-dark);">vaccines</span></div>
-                                <div>
-                                    <span class="servicio-nombre">Vacunación Antirrábica</span>
-                                    <span class="servicio-categoria">Vacuna</span>
-                                </div>
-                            </div>
-                        </td>
-                        <td><span class="badge-cat vacuna">Vacuna</span></td>
-                        <td><span class="desc-text">Aplicación de vacuna contra la rabia, obligatoria anualmente.</span></td>
-                        <td><span class="costo-valor">$280.00</span></td>
-                        <td>
-                            <div class="actions-cell">
-                                <button class="btn-icon-sm btn-ver-detalle" title="Ver detalles"
-                                    data-clave="SRV-002"
-                                    data-nombre="Vacunación Antirrábica"
-                                    data-categoria="Vacuna"
-                                    data-costo="$280.00"
-                                    data-desc="Aplicación de vacuna contra la rabia. Obligatoria anualmente por normativa oficial. Incluye certificado de vacunación.">
-                                    <span class="material-symbols-outlined">visibility</span>
+                                <!-- EDITAR -->
+                                <button class="btn-icon-sm" title="Editar">
+                                    <span class="material-symbols-outlined">edit</span>
                                 </button>
-                                <button class="btn-icon-sm" title="Editar"><span class="material-symbols-outlined">edit</span></button>
-                                <button class="btn-icon-sm danger" title="Eliminar"><span class="material-symbols-outlined">delete</span></button>
-                            </div>
-                        </td>
-                    </tr>
 
-                    <tr data-categoria="Cirugía" data-costo="3500">
-                        <td><span class="clave-badge">SRV-003</span></td>
-                        <td>
-                            <div class="servicio-cell">
-                                <div class="servicio-icon" style="background:#fde8e8;"><span class="material-symbols-outlined" style="color:var(--red);">surgical</span></div>
-                                <div>
-                                    <span class="servicio-nombre">Esterilización Canina</span>
-                                    <span class="servicio-categoria">Cirugía</span>
-                                </div>
-                            </div>
-                        </td>
-                        <td><span class="badge-cat cirugia">Cirugía</span></td>
-                        <td><span class="desc-text">Procedimiento quirúrgico de esterilización para perros.</span></td>
-                        <td><span class="costo-valor">$3,500.00</span></td>
-                        <td>
-                            <div class="actions-cell">
-                                <button class="btn-icon-sm btn-ver-detalle" title="Ver detalles"
-                                    data-clave="SRV-003"
-                                    data-nombre="Esterilización Canina"
-                                    data-categoria="Cirugía"
-                                    data-costo="$3,500.00"
-                                    data-desc="Procedimiento quirúrgico de esterilización (ovariohisterectomía u orquiectomía). Incluye anestesia general, monitoreo trans-operatorio y medicación post-operatoria.">
-                                    <span class="material-symbols-outlined">visibility</span>
+                                <!-- ELIMINAR -->
+                                <button class="btn-icon-sm danger" title="Eliminar">
+                                    <span class="material-symbols-outlined">delete</span>
                                 </button>
-                                <button class="btn-icon-sm" title="Editar"><span class="material-symbols-outlined">edit</span></button>
-                                <button class="btn-icon-sm danger" title="Eliminar"><span class="material-symbols-outlined">delete</span></button>
-                            </div>
-                        </td>
-                    </tr>
 
-                    <tr data-categoria="Laboratorio" data-costo="750">
-                        <td><span class="clave-badge">SRV-004</span></td>
-                        <td>
-                            <div class="servicio-cell">
-                                <div class="servicio-icon" style="background:#fff3d6;"><span class="material-symbols-outlined" style="color:var(--orange);">science</span></div>
-                                <div>
-                                    <span class="servicio-nombre">Panel Sanguíneo Completo</span>
-                                    <span class="servicio-categoria">Laboratorio</span>
-                                </div>
                             </div>
                         </td>
-                        <td><span class="badge-cat laboratorio">Laboratorio</span></td>
-                        <td><span class="desc-text">Análisis completo de sangre: biometría, química y electrolitos.</span></td>
-                        <td><span class="costo-valor">$750.00</span></td>
-                        <td>
-                            <div class="actions-cell">
-                                <button class="btn-icon-sm btn-ver-detalle" title="Ver detalles"
-                                    data-clave="SRV-004"
-                                    data-nombre="Panel Sanguíneo Completo"
-                                    data-categoria="Laboratorio"
-                                    data-costo="$750.00"
-                                    data-desc="Análisis completo de sangre que incluye biometría hemática, química sanguínea (glucosa, urea, creatinina, ALT, AST) y electrolitos. Resultados en 24 horas.">
-                                    <span class="material-symbols-outlined">visibility</span>
-                                </button>
-                                <button class="btn-icon-sm" title="Editar"><span class="material-symbols-outlined">edit</span></button>
-                                <button class="btn-icon-sm danger" title="Eliminar"><span class="material-symbols-outlined">delete</span></button>
-                            </div>
-                        </td>
-                    </tr>
 
-                    <tr data-categoria="Estética" data-costo="350">
-                        <td><span class="clave-badge">SRV-005</span></td>
-                        <td>
-                            <div class="servicio-cell">
-                                <div class="servicio-icon" style="background:#fde8ff;"><span class="material-symbols-outlined" style="color:#9b4dc0;">content_cut</span></div>
-                                <div>
-                                    <span class="servicio-nombre">Baño y Corte</span>
-                                    <span class="servicio-categoria">Estética</span>
-                                </div>
-                            </div>
-                        </td>
-                        <td><span class="badge-cat estetica">Estética</span></td>
-                        <td><span class="desc-text">Baño completo, secado, corte de pelo y limpieza de oídos.</span></td>
-                        <td><span class="costo-valor">$350.00</span></td>
-                        <td>
-                            <div class="actions-cell">
-                                <button class="btn-icon-sm btn-ver-detalle" title="Ver detalles"
-                                    data-clave="SRV-005"
-                                    data-nombre="Baño y Corte"
-                                    data-categoria="Estética"
-                                    data-costo="$350.00"
-                                    data-desc="Servicio completo de estética: baño con shampoo medicado o normal, secado, corte de pelo según raza, limpieza de oídos y corte de uñas.">
-                                    <span class="material-symbols-outlined">visibility</span>
-                                </button>
-                                <button class="btn-icon-sm" title="Editar"><span class="material-symbols-outlined">edit</span></button>
-                                <button class="btn-icon-sm danger" title="Eliminar"><span class="material-symbols-outlined">delete</span></button>
-                            </div>
-                        </td>
                     </tr>
-
-                    <tr data-categoria="Consulta" data-costo="800">
-                        <td><span class="clave-badge">SRV-006</span></td>
-                        <td>
-                            <div class="servicio-cell">
-                                <div class="servicio-icon"><span class="material-symbols-outlined">cardiology</span></div>
-                                <div>
-                                    <span class="servicio-nombre">Electrocardiograma</span>
-                                    <span class="servicio-categoria">Consulta</span>
-                                </div>
-                            </div>
-                        </td>
-                        <td><span class="badge-cat consulta">Consulta</span></td>
-                        <td><span class="desc-text">Registro de la actividad eléctrica del corazón del paciente.</span></td>
-                        <td><span class="costo-valor">$800.00</span></td>
-                        <td>
-                            <div class="actions-cell">
-                                <button class="btn-icon-sm btn-ver-detalle" title="Ver detalles"
-                                    data-clave="SRV-006"
-                                    data-nombre="Electrocardiograma"
-                                    data-categoria="Consulta"
-                                    data-costo="$800.00"
-                                    data-desc="Registro de la actividad eléctrica del corazón. Incluye interpretación por cardiólogo veterinario y reporte escrito con diagnóstico y recomendaciones.">
-                                    <span class="material-symbols-outlined">visibility</span>
-                                </button>
-                                <button class="btn-icon-sm" title="Editar"><span class="material-symbols-outlined">edit</span></button>
-                                <button class="btn-icon-sm danger" title="Eliminar"><span class="material-symbols-outlined">delete</span></button>
-                            </div>
-                        </td>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5">No hay servicios registrados</td>
                     </tr>
+                    {% endfor %}
 
-                </tbody>
+                    </tbody>
+
+<!-- ............................................................................................................................................... -->
             </table>
         </div>
 
         <div class="table-footer">
-            <span>Mostrando <strong>1–6</strong> de <strong>24</strong> servicios</span>
+            
             <div class="pagination">
-                <button class="page-btn" disabled>‹</button>
-                <button class="page-btn active">1</button>
-                <button class="page-btn">2</button>
-                <button class="page-btn">3</button>
-                <span>…</span>
-                <button class="page-btn">›</button>
+
+                {% if servicios.has_previous %}
+                    <a href="?page={{ servicios.previous_page_number }}" class="page-btn">‹</a>
+                {% endif %}
+
+                <span class="page-btn active">
+                    {{ servicios.number }}
+                </span>
+
+                {% if servicios.has_next %}
+                    <a href="?page={{ servicios.next_page_number }}" class="page-btn">›</a>
+                {% endif %}
+
             </div>
         </div>
 
@@ -653,30 +523,6 @@
         });
     });
 
-    // ===== FILTROS =====
-    document.getElementById('catalogoSearch').addEventListener('input', filtrar);
-    document.getElementById('filterCategoria').addEventListener('change', filtrar);
-    document.getElementById('filterCosto').addEventListener('change', filtrar);
-
-    function filtrar() {
-        const q         = document.getElementById('catalogoSearch').value.toLowerCase();
-        const categoria = document.getElementById('filterCategoria').value;
-        const costoFilt = document.getElementById('filterCosto').value;
-
-        document.querySelectorAll('#catalogoBody tr').forEach(row => {
-            const texto     = row.textContent.toLowerCase();
-            const rowCat    = row.dataset.categoria || '';
-            const rowCosto  = parseFloat(row.dataset.costo) || 0;
-
-            const okTexto = texto.includes(q);
-            const okCat   = !categoria || rowCat === categoria;
-            let   okCosto = true;
-            if (costoFilt === 'bajo')  okCosto = rowCosto <= 300;
-            if (costoFilt === 'medio') okCosto = rowCosto > 300 && rowCosto <= 800;
-            if (costoFilt === 'alto')  okCosto = rowCosto > 800;
-
-            row.style.display = (okTexto && okCat && okCosto) ? '' : 'none';
-        });
-    }
+    
 </script>
 {% endblock %}
