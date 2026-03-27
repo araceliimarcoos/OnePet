@@ -129,17 +129,17 @@
     <!-- ===== TABLA ===== -->
     <div class="card">
         <div class="filters-bar">
-            <div class="search-box">
-                <span class="material-symbols-outlined">search</span>
-                <input type="text" id="propietarioSearch" placeholder="Buscar por nombre, correo o ID...">
-            </div>
-            <div class="filters-right">
-                <select class="filter-select" id="filterEstadoProp">
-                    <option value="">Todos los estados</option>
-                    <option value="ACTIVO">Activo</option>
-                    <option value="INACTIVO">Inactivo</option>
-                </select>
-            </div>
+            <form method="GET">
+                <div class="search-box">
+                    <span class="material-symbols-outlined">search</span>
+                    <input 
+                        type="text" 
+                        name="q"
+                        value="{{ query|default:'' }}"
+                        placeholder="Buscar por nombre o folio..."
+                    >
+                </div>
+            </form>
         </div>
 
         <div class="table-wrapper">
@@ -148,9 +148,8 @@
                     <tr>
                         <th>NOMBRE</th>
                         <th>CONTACTO</th>
-                        <th>MASCOTAS ASOCIADAS</th>
+                        <th>MASCOTAS</th>
                         <th>ÚLTIMA VISITA</th>
-                        <th>ESTADO</th>
                         <th>ACCIONES</th>
                     </tr>
                 </thead>
@@ -158,63 +157,76 @@
                 <tbody id="propietariosBody">
 
                     {% for propietario in propietarios %}
-                        <tr>
+                    <tr>
 
-                            <td>
-                                <div class="user-cell">
-                                    <div class="user-avatar-p">
-                                        {{ propietario.nombrepila|slice:":1" }}{{ propietario.primerapellido|slice:":1" }}
-                                    </div>
-
-                                    <div class="user-info-text">
-                                        <span class="user-name-table">
-                                            {{ propietario.nombrepila }} {{ propietario.primerapellido }} {{ propietario.segundoapellido }}
-                                        </span>
-                                        <span class="user-email-table">
-                                            ID: {{ propietario.folio }}
-                                        </span>
-                                    </div>
+                        <!-- NOMBRE -->
+                        <td>
+                            <div class="user-cell">
+                                <div class="user-avatar-p">
+                                    {{ propietario.nombrepila|slice:":1" }}{{ propietario.primerapellido|slice:":1" }}
                                 </div>
-                            </td>
 
-                            <td>
                                 <div class="user-info-text">
-                                    <span class="user-name-table">Sin teléfono</span>
-                                    <span class="user-email-table">{{ propietario.correo }}</span>
+                                    <span class="user-name-table">
+                                        {{ propietario.nombrepila }} {{ propietario.primerapellido }} {{ propietario.segundoapellido }}
+                                    </span>
+                                    <span class="user-email-table">
+                                         {{ propietario.folio }}
+                                    </span>
                                 </div>
-                            </td>
+                            </div>
+                        </td>
 
-                            <td>
+                        <!-- CONTACTO -->
+                        <td>
+                            <div class="user-info-text">
+
+                                <!-- 📞 Teléfono principal -->
+                                {% with tel=propietario.telefono_set.first %}
+                                    {% if tel %}
+                                        <span class="user-name-table">{{ tel.numprincipal }}</span>
+                                    {% else %}
+                                        <span class="user-name-table">Sin teléfono</span>
+                                    {% endif %}
+                                {% endwith %}
+
+                                <!-- 📧 Correo -->
+                                <span class="user-email-table">{{ propietario.correo }}</span>
+
+                            </div>
+                        </td>
+
+                        <!-- 🐾 MASCOTAS -->
+                        <td>
+                            {% for mascota in propietario.mascota_set.all %}
+                                <span class="badge pending">
+                                    {{ mascota.nombre }}
+                                </span>
+                            {% empty %}
                                 <span class="badge">Sin mascotas</span>
-                            </td>
+                            {% endfor %}
+                        </td>
 
-                            <td>
-                                <strong>Sin registro</strong>
-                            </td>
+                        <!-- 🕒 ÚLTIMA VISITA (placeholder por ahora) -->
+                        <td>
+                            <strong>Sin registro</strong>
+                        </td>
 
-                            <td>
-                                <span class="badge confirmed">ACTIVO</span>
-                            </td>
+                        <!-- ACCIONES -->
+                        <td>
+                            <a href="#" class="link-green">Ver Perfil</a>
+                        </td>
 
-                            <td>
-                                <a href="#" class="link-green">Ver Perfil</a>
-                            </td>
+                    </tr>
+                    {% endfor %}
 
-                        </tr>
-                        {% endfor %}
-
-                </tbody>           
+                </tbody>          
                  <!-- ...............................................................................................................-->
             </table>
         </div>
 
         <div class="table-footer">
-            <span>
-                Mostrando 
-                <strong>{{ propietarios.start_index }}–{{ propietarios.end_index }}</strong> 
-                de 
-                <strong>{{ propietarios.paginator.count }}</strong> propietarios
-            </span>
+            
             <div class="pagination">
 
                 {% if propietarios.has_previous %}
@@ -230,13 +242,6 @@
                 {% endif %}
 
             </div>
-        </div>
-
-        <div class="table-help">
-            <span class="material-symbols-outlined">info</span>
-            ¿Necesitas ayuda? Mira nuestra
-            <a href="#" class="link-green">Guía de manejo de Propietarios</a>
-            o contacta al soporte
         </div>
 
     </div>

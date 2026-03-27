@@ -33,24 +33,6 @@ btnLimpiar.addEventListener('click', () => {
     folioInput.value = folio;       // restaurar folio
 });
 
-// ── Filtro búsqueda en tabla ──
-document.getElementById('propietarioSearch').addEventListener('input', filtrar);
-document.getElementById('filterEstadoProp').addEventListener('change', filtrar);
-
-function filtrar() {
-    const q      = document.getElementById('propietarioSearch').value.toLowerCase();
-    const estado = document.getElementById('filterEstadoProp').value;
-
-    document.querySelectorAll('#propietariosBody tr').forEach(row => {
-        const texto    = row.textContent.toLowerCase();
-        const rowEst   = row.dataset.estado || '';
-
-        const okTexto  = texto.includes(q);
-        const okEstado = !estado || rowEst === estado;
-
-        row.style.display = (okTexto && okEstado) ? '' : 'none';
-    });
-}
 
 // ── Enviar formulario a Django ──
 form.addEventListener('submit', async e => {

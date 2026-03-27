@@ -1,11 +1,11 @@
 # web/views.py
-#####################################################################################
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 # Importa solo los que necesites para la lista por ahora:
-from .models import Mascota, Propietario, Especie, Raza
-#####################################################################################
+from .models import Mascota, Propietario, Especie, Raza, Servicio
+
 from django.core.paginator import Paginator
 from django.db.models import Q
 ####################################################################################
@@ -71,22 +71,36 @@ def mascotas(request):
 def detalles_mascota(request):
     return render(request, 'mascotas/mascotas_detalles.html', { 'seccion_activa': 'mascotas' })
 
-#------------------------------------------ PROPIETARIOS ------------------------------------------------#
-    
+#------------------------------------------------------------ P R O P I E T A R I O S -----------------------------------------------------------------#
+
 @login_required
 def propietarios(request):
 
-    propietarios_list = Propietario.objects.all().order_by('nombrepila')
+    query = request.GET.get('q')
+
+    propietarios_list = Propietario.objects.prefetch_related(
+        'telefono_set',
+        'mascota_set'
+    )
+
+
+    if query:
+        propietarios_list = propietarios_list.filter(
+            Q(nombrepila__icontains=query) |
+            Q(primerapellido__icontains=query) |
+            Q(segundoapellido__icontains=query) |
+            Q(folio__icontains=query)
+        )
 
     paginator = Paginator(propietarios_list, 15)
-
     page_number = request.GET.get('page')
     propietarios = paginator.get_page(page_number)
 
     contexto = {
         'seccion_activa': 'propietarios',
         'propietarios': propietarios,
-        'total_conteo': paginator.count
+        'total_conteo': paginator.count,
+        'query': query
     }
 
     return render(request, 'propietarios/propietarios_lista.html', contexto)
@@ -95,12 +109,12 @@ def propietarios(request):
 def detalles_propietario(request):
     return render(request, 'propietarios/propietarios_detalles.html', { 'seccion_activa': 'propietarios'})
 
-#----------------------------------------------- CITAS ---------------------------------------------------#
+#------------------------------------------------------------------- C I T A S ---------------------------------------------------------------------#
 @login_required
 def citas(request):
     return render(request, 'citas/citas_lista.html', { 'seccion_activa': 'citas'})
 
-#---------------------------------------------- CONSULTAS ------------------------------------------------#
+#------------------------------------------------------------------ C O N S U L T A S ------------------------------------------------------------#
 
 @login_required
 def consultas(request):
@@ -110,34 +124,67 @@ def consultas(request):
 def iniciar_consulta(request):
     return render(request, 'consultas/consultas_inicio.html', {'seccion_activa': 'consultas'})
 
-#------------------------------------------ HOSPITALIZACIONES ------------------------------------------------#
+#.................................................................... H O S P I T A LI Z A C I O N E S ...................................................................#
 @login_required
 def hospitalizacion(request):
     return render(request, 'hospitalizacion/hospitalizacion_lista.html', { 'seccion_activa': 'hospitalizacion' })
 
-#------------------------------------------ PAGOS ------------------------------------------------#
+#............................................................................. P A G O S ..................................................................................#
 @login_required
 def pagos(request):
     return render(request, 'pagos/pagos_lista.html', { 'seccion_activa': 'pagos' })
+#............................................................................ C A T A L O G O ............................................................................#
+
+from django.db.models import Q
 
 @login_required
-def catalogo(request):
-    return render(request, 'catalogo/catalogo_lista.html', { 'seccion_activa': 'catalogo' })
+def servicios(request):
+
+    query = request.GET.get('q')
+
+    servicios_list = Servicio.objects.all()
+
+    if query:
+        servicios_list = servicios_list.filter(
+            Q(nombre__icontains=query) |
+            Q(clave__icontains=query) 
+        )
+
+    servicios_list = servicios_list.order_by('nombre')
+
+    paginator = Paginator(servicios_list, 15)
+    page_number = request.GET.get('page')
+    servicios = paginator.get_page(page_number)
+
+    contexto = {
+        'seccion_activa': 'servicios',
+        'servicios': servicios,
+        'total_conteo': paginator.count,
+        'query': query
+    }
+
+    return render(request, 'servicios/servicios_lista.html', contexto)
+#------------------------------------------ PAGOS ------------------------------------------------------------#
+
 @login_required
 def medicamentos(request):
     return render(request, 'medicamentos/medicamentos_lista.html', { 'seccion_activa': 'medicamentos' })
+#------------------------------------------ PAGOS ------------------------------------------------------------#
 
 @login_required
 def usuarios(request):
     return render(request, 'usuarios/usuarios_lista.html', { 'seccion_activa': 'usuarios' })
+#------------------------------------------ PAGOS ------------------------------------------------------------#
 
 @login_required
 def especies(request):
     return render(request, 'especies/especies_lista.html', { 'seccion_activa': 'especies' })
+#------------------------------------------ PAGOS ------------------------------------------------------------#
 
 @login_required
 def personal(request):
     return render(request, 'personal/personal_lista.html', { 'seccion_activa': 'personal' })
+#------------------------------------------ PAGOS ------------------------------------------------------------#
 
 @login_required
 def reportes(request):
