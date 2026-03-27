@@ -347,6 +347,26 @@ class Usuario(models.Model):
         managed = False
         db_table = 'usuario'
 
+    
+    @property
+    def nombre_real(self):
+        if self.tipo.codigo == 'VET' and self.veterinario:
+            v = self.veterinario
+            return f"{v.nombrepila} {v.primerapellido}"
+
+        if self.tipo.codigo == 'PRO' and self.propietario:
+            p = self.propietario
+            return f"{p.nombrepila} {p.primerapellido}"
+
+        if self.tipo.codigo == 'REC' and self.recepcionista:
+            r = self.recepcionista
+            return f"{r.nombrepila} {r.primerapellido} "
+
+        if self.tipo.codigo == 'ADM' and self.administrador:
+            a = self.administrador
+            return f"{a.nombrepila} {a.primerapellido}"
+
+        return ""
 
 class Veterinario(models.Model):
     folio = models.CharField(primary_key=True, max_length=7)
