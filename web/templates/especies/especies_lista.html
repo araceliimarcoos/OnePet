@@ -18,12 +18,127 @@
 
     <div class="page active" id="page-especies">
         <div class="page-header">
-            <h1 class="page-title">Especies Animales</h1>
+            <div>
+                <h1 class="page-title">Gestion de Especies Animales</h1>
+                <p class="page-sub">Administra la informacion de las Especies del sistema</p>
+            </div>
+            <div class="page-header-right">
+                <button class="btn-primary" id="btnNuevaEspecie">
+                    <span class="material-symbols-outlined">add_circle</span>
+                    Nueva Especie
+                </button>
+            </div>
         </div>
-        <div class="card placeholder-card">
-            <span class="placeholder-icon material-symbols-outlined">person</span>
-            <p>Módulo de Especies</p>
+
+        <!-- STATS -->
+        <div class="stats-grid">
+          <div class="stat-card blue">
+            <span class="stat-icon material-symbols-outlined">pet_supplies</span>
+            <div class="stat-body">
+              <p class="stat-label">Total de Especies</p>
+              <p class="stat-value">15</p>
+            </div>
+          </div>
+
+          
+          <div class="stat-card green">
+            <span class="stat-icon material-symbols-outlined">pets</span>
+            <div class="stat-body">
+              <p class="stat-label">Especie con más mascotas</p>
+              <p class="stat-value">Canino</p>
+              <p class="stat-sub">10 mascotas registradas</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- TABLA -->
+        <div class="card">
+            <div class="filters-bar">
+                <div class="search-box">
+                    <span class="material-symbols-outlined">search</span>
+                    <input type="text" id="especieSearch" placeholder="Buscar por nombre...">
+                </div>
+
+                <div class="filters-right">
+                    <select class="filter-select" id="filterAlgo">    <!-- ID PENDIENTE -->
+                        <option value="">FiltroDeNoSeQue</option>
+                        <option value="">holis</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table class="data-table" id="especiesTable">
+                    <thead>
+                        <tr>
+                            <th>CLAVE</th>
+                            <th>NOMBRE</th>
+                            <th>MASCOTAS REGISTRADAS</th>
+                            <th>RAZAS</th>
+                            <th>ACCIONES</th>
+                        </tr>
+                    </thead>
+                    <tbody id="especiesBody">   
+                        <tr>
+                            <td><strong>#ESP-001</strong></td>
+                            <td>Canino</td>
+                            <td>10</td>
+                            <td>
+                                <div class="badge badge-confirmada">
+                                    <strong>15</strong>
+                                </div>
+                            </td>
+                            <td><a href="#" class="link-green">Ver Detalles</a></td>
+                        </tr>
+
+                        <tr>
+                            <td><strong>#ESP-002</strong></td>
+                            <td>Felino</td>
+                            <td>6</td>
+                            <td><div class="badge badge-confirmada">11</div></td>
+                            <td><a href="#" class="link-green">Ver Detalles</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
+    <!-- MODAL -->
+     <div class="modal-overlay" id="modalNuevaEspecie">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Registrar Nueva Especie</h2>
+                <button class="modal-close" id="btnCerrarModal">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <form id="formNuevaEspecie">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="nombre">Clave (auto-generada)</label>
+                        <input class= "folio-input"type="text" id="clave" name="clave" placeholder="Ej. Esp-001" required readonly tabindex="-1">
+                    </div>
+
+                    <div class="form-group form-field">
+                        <label for="precio">Nombre de la Especie</label>
+                        <input type="text" id="nombre" name="nombre" placeholder="Ej. Canino, Reptil..." required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancelar" id="btnCancelar">Cancelar</button>
+                    <button type="submit" class="btn-primary">
+                        <span class="material-symbols-outlined">save</span> Agregar Especie
+                    </button>
+                </div>
+            </form>
+        </div>
+     </div>
+
+{% endblock %}
+
+{% block scripts %}
+    <script src="{% static 'core/js/especies.js' %}"></script>
 {% endblock %}
