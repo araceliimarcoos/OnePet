@@ -34,10 +34,19 @@
         <!-- FILTRO-->
         <div class="card">
             <div class="filters-bar">
-                <div class="search-box">
-                    <span class="material-symbols-outlined">search</span>
-                    <input type="text" placeholder="Buscar por nombre, correo, o rol..." id="usuariosSearch" />
-                </div>
+                <form method="GET" action="">
+                    <div class="search-box">
+                        <span class="material-symbols-outlined">search</span>
+
+                        <input 
+                            type="text" 
+                            name="q"
+                            value="{{ query|default:'' }}"
+                            placeholder="Buscar por clave o nombre..."
+                            autocomplete="off"
+                        >
+                    </div>
+                </form>
                 <div class="filters-right">
                     <select class="filter-select" id="filterRol">   
                     <option value="">Todos los roles</option>
@@ -125,16 +134,21 @@
             </div>
 
             <div class="table-footer">
-                <span>Mostrando <strong>1-4</strong> de <strong>12</strong> usuarios</span>
                 <div class="pagination">
-                  <button class="page-btn" disabled>‹</button>
-                  <button class="page-btn active">1</button>
-                  <button class="page-btn">2</button>
-                  <button class="page-btn">3</button>
-                  <span>…</span>
-                  <button class="page-btn">›</button>
+
+                    {% if usuarios.has_previous %}
+                        <a href="?page={{ usuarios.previous_page_number }}" class="page-btn">‹</a>
+                    {% endif %}
+
+                    <span class="page-btn active">
+                        {{ usuarios.number }}
+                    </span>
+
+                    {% if usuarios.has_next %}
+                        <a href="?page={{ usuarios.next_page_number }}" class="page-btn">›</a>
+                    {% endif %}
+
                 </div>
-              </div>
               
         </div>
     </div>
