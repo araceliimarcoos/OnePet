@@ -196,6 +196,28 @@ def especies(request):
     
     
     return render(request, 'especies/especies_lista.html', contexto)
+
+#------------------------------------------ RAZAS ------------------------------------------------------------#
+
+@login_required
+def razas(request, clave_especie):
+    
+    especie = get_object_or_404(Especie, clave=clave_especie)
+    
+    razas_list = Raza.objects.filter(especie=especie).annotate(
+        total_mascotas=Count('mascota')
+    ).order_by('nombre')
+    
+    contexto = {
+        'seccion_activa': 'especies',
+        'especie': especie,
+        'razas': razas_list,
+        'total_razas': razas_list.count(),
+    }
+    
+    return render(request, 'especies/razas_lista.html', contexto)
+
+
 #------------------------------------------ PAGOS ------------------------------------------------------------#
 
 @login_required

@@ -91,7 +91,7 @@
                                     <strong>{{ especie.total_razas }}</strong>
                                 </div>
                             </td>
-                            <td><a href="#" class="link-green">Ver Detalles</a></td>
+                            <td><a href="{% url 'razas' especie.clave %}" class="link-green">Ver Detalles</a></td>
                         </tr>
                     {% endfor %}
                     </tbody>
@@ -105,7 +105,7 @@
         <div class="modal">
             <div class="modal-header">
                 <h2>Registrar Nueva Especie</h2>
-                <button class="modal-close" id="btnCerrarModal">
+                <button class="modal-close" id="btnCerrarModal" type="button">
                     <span class="material-symbols-outlined">close</span>
                 </button>
             </div>
@@ -122,7 +122,7 @@
                         <label for="precio">Nombre de la Especie</label>
                         <input type="text" id="nombre" name="nombre" placeholder="Ej. Canino, Reptil..." required>
                     </div>
-                </div>
+                </div> 
                 <div class="modal-footer">
                     <button type="button" class="btn-cancelar" id="btnCancelar">Cancelar</button>
                     <button type="submit" class="btn-primary">
