@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Razas - {{ especie.nombre }}{%endblock%}
+
+{% block nav_especies %}active{% endblock %}
+
+{% block breadcrumb %}
+    <a href="{% url 'dashboard' %}">Inicio</a>
+    <span class="material-symbols-outlined">chevron_right</span>
+    <a href="{% url 'especies' %}">Especies</a>
+    <span class="material-symbols-outlined">chevron_right</span>
+    <span class="breadcrumb-current">Consultar Especie</span>
+    
+{% endblock %}
+
+{% block topbar_titulo %}Razas de {{ especie.nombre }}{% endblock %}
+
+{% block contenido %}
+    <div class="page active" id="page-razas">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Razas - {{ especie.nombre }}</h1>
+                <p class="page-sub">{{ total_razas }} razas registradas para esta especie</p>
+            </div>
+
+            <div class="page-header-right">
+                <button class="btn-primary" id="btnNuevaRaza">
+                    <span class="material-symbols-outlined">add_circle</span>
+                    Nueva Raza
+                </button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>CLAVE</th>
+                            <th>NOMBRE</th>
+                            <th>MASCOTAS REGISTRADAS</th>
+                            <th>ACCIONES</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for raza in razas %}
+                        <tr>
+                            <td><strong>{{ raza.clave }}</strong></td>
+                            <td>{{ raza.nombre }}</td>
+                            <td>{{ raza.total_mascotas }}</td>
+                            <td><a href="#" class="link-green">Ver Detalles</a></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3">No hay razas registradas para esta especie.</td>
+                        </tr>
+                        
+
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Nueva Raza -->
+    <div class="modal-overlay" id="modalNuevaRaza">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Registrar Nueva Raza</h2>
+                <button class="modal-close" id="btnCerrarModalRaza" type="button">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <form id="formNuevaRaza">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="nombre">Clave (auto-generada)</label>
+                        <input class= "folio-input"type="text" id="clave" name="clave" placeholder="Ej. RAZ-001" required readonly tabindex="-1">
+                    </div>
+
+                    <div class="form-group form-field">
+                        <label for="precio">Nombre de la Raza</label>
+                        <input type="text" id="nombre" name="nombre" placeholder="Ej. Labrador, Pastor alemán..." required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancelar" id="btnCancelarRaza">Cancelar</button>
+                    <button type="submit" class="btn-primary">
+                        <span class="material-symbols-outlined">save</span> Agregar Raza
+                    </button>
+                </div>
+            </form>
+        </div>
+     </div>
+
+{% endblock %}
+
+{% block scripts %}
+    <script src="{% static 'core/js/razas.js' %}"></script>
+{% endblock %}

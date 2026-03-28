@@ -35,6 +35,9 @@ urlpatterns = [
     path('medicamentos/', views.medicamentos, name='medicamentos'),
     path('usuarios/', views.usuarios, name='usuarios'),
     path('especies/', views.especies, name='especies'),
+    path('especies/<str:clave_especie>/', views.razas, name='razas'),
+    
+    
     path('personal/', views.personal, name='personal'),
     path('reportes/', views.reportes, name='reportes'),
     
