@@ -20,13 +20,13 @@
         <div class="page-header">
             <div>
                 <h1 class="page-title">Consultas</h1>
-                <p class="page-sub">Gestión de citas y consultas programadas</p>
+                <p class="page-sub">Gestión de consultas medicas</p>
             </div>
 
             <div class="page-header-right">
-                <button class="btn-primary" id="btnVerExpedientes">
-                    <span class="material-symbols-outlined">pets</span>
-                    Ver Mascotas
+                <button class="btn-primary" id="btnIniciarConsulta">
+                    <span class="material-symbols-outlined">add_circle</span>
+                    Iniciar Consulta
                 </button>
             </div>
         </div>
@@ -40,7 +40,7 @@
 
                 <div class="filters-right">
                 
-                <select class="filter-select" id="filterEstado">
+                <select class="filter-select" id="filterEstado"> <!-- pendiente -->
                     <option value="">Todos los estados</option>
                     <option value="Confirmada">Confirmada</option>
                     <option value="En curso">En curso</option>
@@ -56,20 +56,24 @@
                 <table class="data-table" id="consultasTable">
                     <thead>
                         <tr>
-                            <th>HORA</th>
+                            <th>NUMERO</th>
+                            <th>FECHA</th>
                             <th>MASCOTA</th>
                             <th>PROPIETARIO</th>
                             <th>MOTIVO</th>
-                            <th>ESTADO</th>
                             <th>ACCIONES</th>
                         </tr>
                     </thead>
-                    <tbody id="consultasBody">
-                        <tr data-estado="Completada">
+                    <tbody id="consultasBody">  <!-- pendiente -->
+                        <tr>
+                            <td><strong>#0001</strong></td>
                             <td>
-                                <div class="consulta-hora">
-                                    <span class="material-symbols-outlined">schedule</span>
-                                    <p><strong>9:00 AM</strong></p>
+                                <div class="fecha-cell">
+                                    <span class="fecha-dia">Oct 15, 2025</span>
+                                    <span class="fecha-hora">
+                                        <span class="material-symbols-outlined">schedule</span>
+                                        09:45 AM
+                                    </span>
                                 </div>
                             </td>
                             <td>
@@ -84,127 +88,8 @@
                             </td>
                             <td>John Doe</td>
                             <td><span class="motivo-text">Vacunacion Anual</span></td>
-                            <td>
-                                <span class="badge-cita badge-completada">
-                                    <span class="material-symbols-outlined">schedule</span>
-                                    Completada
-                                </span>
-                            </td>
                             <td><a href="#" class="link-green">Ver Detalles</a></td>
                         </tr>
-
-                        <tr data-estado="Completada">
-                            <td>
-                                <div class="consulta-hora">
-                                    <span class="material-symbols-outlined">schedule</span>
-                                    <p><strong>10:15 AM</strong></p>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="mascota-cell">
-                                    <div class="mascota-avatar"><span class="material-symbols-outlined">pets</span></div>
-                                    <div>
-                                        <span class="mascota-nombre">Luna</span>
-                                        <span class="mascota-raza">Main Coun • Felino</span>
-
-                                    </div>
-                                </div>
-                            </td>
-                            <td>Emily Smith</td>
-                            <td><span class="motivo-text">Cirugia Dental</span></td>
-                            <td>
-                                <span class="badge-cita badge-completada">
-                                    <span class="material-symbols-outlined">schedule</span>
-                                    Completada
-                                </span>
-                            </td>
-                            <td><a href="#" class="link-green">Ver Detalles</a></td>
-                        </tr>
-
-                        <tr data-estado="Pendiente">
-                            <td>
-                                <div class="consulta-hora">
-                                    <span class="material-symbols-outlined">schedule</span>
-                                    <p><strong>11:00 AM</strong></p>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="mascota-cell">
-                                    <div class="mascota-avatar"><span class="material-symbols-outlined">pets</span></div>
-                                    <div>
-                                        <span class="mascota-nombre">Max</span>
-                                        <span class="mascota-raza">Golden Retriever • Canino</span>
-
-                                    </div>
-                                </div>
-                            </td>
-                            <td>Carlos Garcia</td>
-                            <td><span class="motivo-text">Revision de Piel</span></td>
-                            <td>
-                                <span class="badge-cita badge-pendiente">
-                                    <span class="material-symbols-outlined">schedule</span>
-                                    Pendiente
-                                </span>
-                            </td>
-                            <td><a href="{%  url 'iniciar_consulta' %}" class="link-green">Iniciar Consulta</a></td>
-                        </tr>
-
-                        <tr data-estado="Pendiente">
-                            <td>
-                                <div class="consulta-hora">
-                                    <span class="material-symbols-outlined">schedule</span>
-                                    <p><strong>12:15 PM</strong></p>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="mascota-cell">
-                                    <div class="mascota-avatar"><span class="material-symbols-outlined">pets</span></div>
-                                    <div>
-                                        <span class="mascota-nombre">Cooper</span>
-                                        <span class="mascota-raza">Labrador • Canino</span>
-
-                                    </div>
-                                </div>
-                            </td>
-                            <td>Ana Lopez</td>
-                            <td><span class="motivo-text">Consulta General</span></td>
-                            <td>
-                                <span class="badge-cita badge-pendiente">
-                                    <span class="material-symbols-outlined">schedule</span>
-                                    Pendiente
-                                </span>
-                            </td>
-                            <td><a href="{%  url 'iniciar_consulta' %}" class="link-green">Iniciar Consulta</a></td>
-                        </tr>
-
-                        <tr data-estado="Cancelada">
-                            <td>
-                                <div class="consulta-hora">
-                                    <span class="material-symbols-outlined">schedule</span>
-                                    <p><strong>1:30 PM</strong></p>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="mascota-cell">
-                                    <div class="mascota-avatar"><span class="material-symbols-outlined">pets</span></div>
-                                    <div>
-                                        <span class="mascota-nombre">Milo</span>
-                                        <span class="mascota-raza">Poodle • Canino</span>
-
-                                    </div>
-                                </div>
-                            </td>
-                            <td>Roberto Vega</td>
-                            <td><span class="motivo-text">Desparacitacion</span></td>
-                            <td>
-                                <span class="badge-cita badge-cancelada">
-                                    <span class="material-symbols-outlined">schedule</span>
-                                    Cancelada
-                                </span>
-                            </td>
-                            <td><a href="#" class="link-green">Ver Detalles</a></td>
-                        </tr>
-
                     </tbody>
                 </table>
 
@@ -224,6 +109,79 @@
 
         </div>
 
+    </div>
+
+    <div class="modal-overlay" id="modalIniciarConsulta">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Iniciar Consulta</h2>
+                <button class="modal-close" id="btnCerrarConsulta">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <!-- INPUT CON SUGERENCIAS -->
+                <div class="form-group">
+                    <label>Clave de la Cita</label>
+                    <div class="autocomplete-wrapper">
+                        <input 
+                            type="text" 
+                            id="inputCita" 
+                            placeholder="Ej. CIT0001 o nombre de mascota..."
+                            autocomplete="off"
+                        >
+                        <!-- Aquí aparecen las sugerencias -->
+                        <div class="autocomplete-dropdown" id="citaDropdown"></div>
+                    </div>
+                </div>
+
+                <!-- RESUMEN (oculto hasta seleccionar) -->
+                <div class="resumen-cita" id="resumenCita" style="display:none;">
+                    <h4>Resumen de la Cita</h4>
+                    <div class="resumen-grid">
+                        <div class="resumen-item">
+                            <span class="resumen-label">Folio</span>
+                            <span class="resumen-valor" id="r-folio"></span>
+                        </div>
+                        <div class="resumen-item">
+                            <span class="resumen-label">Fecha y Hora</span>
+                            <span class="resumen-valor" id="r-fecha"></span>
+                        </div>
+                        <div class="resumen-item">
+                            <span class="resumen-label">Mascota</span>
+                            <span class="resumen-valor" id="r-mascota"></span>
+                        </div>
+                        <div class="resumen-item">
+                            <span class="resumen-label">Propietario</span>
+                            <span class="resumen-valor" id="r-propietario"></span>
+                        </div>
+                        <div class="resumen-item">
+                            <span class="resumen-label">Veterinario</span>
+                            <span class="resumen-valor" id="r-veterinario"></span>
+                        </div>
+                        <div class="resumen-item">
+                            <span class="resumen-label">Motivo</span>
+                            <span class="resumen-valor" id="r-motivo"></span>
+                        </div>
+                        <div class="resumen-item">
+                            <span class="resumen-label">Estado</span>
+                            <span class="resumen-valor" id="r-estado"></span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-cancelar" id="btnCancelarConsulta">Cancelar</button>
+                <button type="button" class="btn-primary" id="btnConfirmarConsulta" disabled>
+                    <span class="material-symbols-outlined">vaccines</span>
+                    Iniciar Consulta
+                </button>
+            </div>
+        </div>
     </div>
 
 {% endblock %}
