@@ -3,15 +3,9 @@
 {% extends 'base.html' %}
 {% load static %}
 
-
 {% block titulo %}hospitalizacion{%endblock%}
 
 {% block nav_hospitalizacion %}active{% endblock %}
-
-{% block estilos %}
-    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
-
-{% endblock %}
 
 {% block breadcrumb %}
     <a href="{% url 'dashboard' %}">Inicio</a>
@@ -26,38 +20,168 @@
 
     <div class="page active" id="page-hospitalizacion">
         <div class="page-header">
-            <h1 class="page-title">Hospitalización</h1>
+            <div>
+                <h1 class="page-title">Hospitalizaciones</h1>
+                <p class="page-sub">Gestiona y supervisa el estado de las mascotas hospitalizadas y tratamientos en curso</p>
+            </div>
+        
+            <div class="page-header-right">
+                <button class="btn-primary">
+                    <span class="material-symbols-outlined">add_circle</span>
+                    iniciar Hospitalización
+                </button>
+            </div>
         </div>
-        <div id="calendario">
-            
+
+        <!-- STATS -->
+        <div class="stats-grid">
+          <div class="stat-card blue">
+            <span class="stat-icon material-symbols-outlined">vital_signs</span>
+            <div class="stat-body">
+              <p class="stat-label">Mascotas Hospitalizadas</p>
+              <p class="stat-value">8</p>
+              <p class="stat-sub">2 Mascotas admitidas en las últimas 24 horas</p>
+            </div>
+          </div>
+
+          
+          <div class="stat-card green">
+            <span class="stat-icon material-symbols-outlined">assignment_late</span>
+            <div class="stat-body">
+              <p class="stat-label">Revisiones Pendientes</p>
+              <p class="stat-value">3</p>
+              <p class="stat-sub">Evaluaciones médicas por realizar</p>
+            </div>
+          </div>
+
+          <div class="stat-card blue">
+            <span class="stat-icon material-symbols-outlined">logout</span>
+            <div class="stat-body">
+              <p class="stat-label">Altas del dia</p>
+              <p class="stat-value">5</p>
+              <p class="stat-sub">Mascotas dadas de alta hoy</p>
+            </div>
+          </div>
+
+        </div>
+
+        
+        <!-- TABLA -->
+        <div class="card">
+            <div class="filters-bar">
+                <div class="search-box">
+                    <span class="material-symbols-outlined">search</span>
+                    <input type="text" placeholder="Buscar por numero o mascota ..." id="hospitalizacionSearch" />
+                </div>
+
+                <div class="filters-right">
+                
+                <select class="filter-select" id="filterEstado">
+                    <option value="">Todos los estados</option>
+                    <option value="Confirmada">De Alta</option>
+                    <option value="En curso">En curso</option>
+                    <option value="Pendiente">Morido</option>
+                </select>
+                </div>
+
+            </div>
+
+            <div class="table-wrapper">
+                <table class="data-table" id="consultasTable">
+                    <thead>
+                        <tr>
+                            <th>NUMERO</th>
+                            <th>INGRESO</th>
+                            <th>MASCOTA</th>
+                            <th>VETERINARIO</th>
+                            <th>SALIDA</th>
+                            <th>ESTADO</th>
+                            <th>ACCIONES</th>
+                        </tr>
+                    </thead>
+                    <tbody id="hospitalizacionBody">
+                        <tr>
+                            <td><strong>#0001</strong></td>
+                            <td>
+                                <div class="fecha-cell">
+                                    <span class="fecha-dia">Oct 15, 2025</span>
+                                    <span class="fecha-hora">
+                                        <span class="material-symbols-outlined">schedule</span>
+                                        08:45 AM
+                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="mascota-cell">
+                                    <div class="mascota-avatar"><span class="material-symbols-outlined">pets</span></div>
+                                    <div>
+                                        <span class="mascota-nombre">Buddy</span>
+                                        <span class="mascota-raza">Labrador • Canino</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>Dra. Sofia Mendez</td>
+                            <td>
+                                <div class="fecha-cell">
+                                    <span class="fecha-dia">Oct 18, 2025</span>
+                                    <span class="fecha-hora">
+                                        <span class="material-symbols-outlined">schedule</span>
+                                        12:00 PM
+                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge-cita badge-confirmada">
+                                    <span class="material-symbols-outlined">schedule</span>
+                                    De Alta
+                                </span>
+                            </td>
+                            <td><a href="#" class="link-green">Ver Detalles</a></td>
+                        </tr>
+
+                        <tr>
+                            <td><strong>#0001</strong></td>
+                            <td>
+                                <div class="fecha-cell">
+                                    <span class="fecha-dia">Oct 15, 2025</span>
+                                    <span class="fecha-hora">
+                                        <span class="material-symbols-outlined">schedule</span>
+                                        08:45 AM
+                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="mascota-cell">
+                                    <div class="mascota-avatar"><span class="material-symbols-outlined">pets</span></div>
+                                    <div>
+                                        <span class="mascota-nombre">Buddy</span>
+                                        <span class="mascota-raza">Labrador • Canino</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>Dra. Sofia Mendez</td>
+                            <td>
+                                <div class="fecha-cell">
+                                    <span class="fecha-dia">Oct 18, 2025</span>
+                                    <span class="fecha-hora">
+                                        <span class="material-symbols-outlined">check_circle</span>
+                                        12:00 PM
+                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge-cita badge-en-curso">
+                                    <span class="material-symbols-outlined">stethoscope</span>
+                                    En Curso
+                                </span>
+                            </td>
+                            <td><a href="#" class="link-green">Ver Detalles</a></td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>       
         </div>
     </div>
 
-{% endblock %}
-
-{% block scripts %}
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
-    <script>document.addEventListener('DOMContentLoaded', function () {
-    var el = document.getElementById('calendario');
-    var calendar = new FullCalendar.Calendar(el, {
-        initialView: 'dayGridMonth',   // vista mensual
-        locale: 'es',                  // español
-        headerToolbar: {
-            left:   'prev,next today',
-            center: 'title',
-            right:  'dayGridMonth,timeGridWeek,timeGridDay'
-        },
-        dateClick: function() {
-            console.log('a day has been clicked!');
-        },
-        });
-    calendar.render();
-    calendar.on('dateClick', function(info) {
-        console.log('clicked on: ' + info.dateStr);
-    });
-    
-
-    }); //fin de Fullcalendar
-
-    </script>
 {% endblock %}
