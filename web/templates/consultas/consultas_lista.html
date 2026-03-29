@@ -24,7 +24,7 @@
             </div>
 
             <div class="page-header-right">
-                <button class="btn-primary" id="btnVerExpedientes">
+                <button class="btn-primary" id="btnIniciarConsulta">
                     <span class="material-symbols-outlined">add_circle</span>
                     Iniciar Consulta
                 </button>
@@ -40,7 +40,7 @@
 
                 <div class="filters-right">
                 
-                <select class="filter-select" id="filterEstado">
+                <select class="filter-select" id="filterEstado"> <!-- pendiente -->
                     <option value="">Todos los estados</option>
                     <option value="Confirmada">Confirmada</option>
                     <option value="En curso">En curso</option>
@@ -64,7 +64,7 @@
                             <th>ACCIONES</th>
                         </tr>
                     </thead>
-                    <tbody id="consultasBody">
+                    <tbody id="consultasBody">  <!-- pendiente -->
                         <tr>
                             <td><strong>#0001</strong></td>
                             <td>
@@ -109,6 +109,79 @@
 
         </div>
 
+    </div>
+
+    <div class="modal-overlay" id="modalIniciarConsulta">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Iniciar Consulta</h2>
+                <button class="modal-close" id="btnCerrarConsulta">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <!-- INPUT CON SUGERENCIAS -->
+                <div class="form-group">
+                    <label>Clave de la Cita</label>
+                    <div class="autocomplete-wrapper">
+                        <input 
+                            type="text" 
+                            id="inputCita" 
+                            placeholder="Ej. CIT0001 o nombre de mascota..."
+                            autocomplete="off"
+                        >
+                        <!-- Aquí aparecen las sugerencias -->
+                        <div class="autocomplete-dropdown" id="citaDropdown"></div>
+                    </div>
+                </div>
+
+                <!-- RESUMEN (oculto hasta seleccionar) -->
+                <div class="resumen-cita" id="resumenCita" style="display:none;">
+                    <h4>Resumen de la Cita</h4>
+                    <div class="resumen-grid">
+                        <div class="resumen-item">
+                            <span class="resumen-label">Folio</span>
+                            <span class="resumen-valor" id="r-folio"></span>
+                        </div>
+                        <div class="resumen-item">
+                            <span class="resumen-label">Fecha y Hora</span>
+                            <span class="resumen-valor" id="r-fecha"></span>
+                        </div>
+                        <div class="resumen-item">
+                            <span class="resumen-label">Mascota</span>
+                            <span class="resumen-valor" id="r-mascota"></span>
+                        </div>
+                        <div class="resumen-item">
+                            <span class="resumen-label">Propietario</span>
+                            <span class="resumen-valor" id="r-propietario"></span>
+                        </div>
+                        <div class="resumen-item">
+                            <span class="resumen-label">Veterinario</span>
+                            <span class="resumen-valor" id="r-veterinario"></span>
+                        </div>
+                        <div class="resumen-item">
+                            <span class="resumen-label">Motivo</span>
+                            <span class="resumen-valor" id="r-motivo"></span>
+                        </div>
+                        <div class="resumen-item">
+                            <span class="resumen-label">Estado</span>
+                            <span class="resumen-valor" id="r-estado"></span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-cancelar" id="btnCancelarConsulta">Cancelar</button>
+                <button type="button" class="btn-primary" id="btnConfirmarConsulta" disabled>
+                    <span class="material-symbols-outlined">vaccines</span>
+                    Iniciar Consulta
+                </button>
+            </div>
+        </div>
     </div>
 
 {% endblock %}

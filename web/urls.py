@@ -23,10 +23,10 @@ urlpatterns = [
     
     path('propietarios/', views.propietarios, name='propietarios'),
     path('citas/', views.citas, name='citas'),
-    path('consultas/', views.consultas, name='consultas'),
     
-    # Iniciar consulta
-    path('consultas/iniciar_consulta/', views.iniciar_consulta, name='iniciar_consulta'),
+    path('consultas/', views.consultas, name='consultas'),
+    path('consultas/iniciar_consulta/', views.iniciar_consulta, name='iniciar_consulta'),   # Iniciar consulta
+    path('citas/buscar/', views.buscar_citas, name='buscar_citas'),
     
     path('hospitalizacion/', views.hospitalizacion, name='hospitalizacion'),
     path('pagos/', views.pagos, name='pagos'),

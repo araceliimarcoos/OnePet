@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 # Importa solo los que necesites para la lista por ahora:
-from .models import Mascota, Propietario, Especie, Raza, Servicio, Medicamento, Usuario,Veterinario, Recepcionista, Administrador
+from .models import Mascota, Propietario, Especie, Raza, Servicio, Medicamento, Usuario,Veterinario, Recepcionista, Administrador, Cita
 
 from django.core.paginator import Paginator
 from django.db.models import Q
@@ -124,6 +124,47 @@ def consultas(request):
 @login_required
 def iniciar_consulta(request):
     return render(request, 'consultas/consultas_inicio.html', {'seccion_activa': 'consultas'})
+
+@login_required
+def buscar_citas(request):                  # Para la busqueda de citas en 'Iniciar consulta'
+    query = request.GET.get('q', '').strip()
+    
+    if len(query) < 2:
+        return JsonResponse([], safe=False)
+    
+    citas = Cita.objects.select_related(
+        'mascota__propietario', 'veterinario'
+    ).filter(
+        Q(folio__icontains=query) |
+        Q(mascota__nombre__icontains=query)
+    ).values(
+        'folio',
+        'fecha',
+        'hora',
+        'motivo',
+        'mascota__nombre',
+        'mascota__propietario__nombrepila',
+        'mascota__propietario__primerapellido',
+        'veterinario__nombrepila',
+        'veterinario__primerapellido',
+        'estado__nombre',
+    )[:6]  # ← menos resultados
+
+    resultados = [
+        {
+            'folio':       c['folio'],
+            'fecha':       c['fecha'].strftime('%d/%m/%Y'),
+            'hora':        c['hora'].strftime('%H:%M'),
+            'motivo':      c['motivo'],
+            'mascota':     c['mascota__nombre'],
+            'propietario': f"{c['mascota__propietario__nombrepila']} {c['mascota__propietario__primerapellido']}",
+            'veterinario': f"{c['veterinario__nombrepila']} {c['veterinario__primerapellido']}",
+            'estado':      c['estado__nombre'],
+        }
+        for c in citas
+    ]
+
+    return JsonResponse(resultados, safe=False)
 
 #.................................................................... H O S P I T A LI Z A C I O N E S ...................................................................#
 @login_required
