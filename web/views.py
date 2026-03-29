@@ -3,8 +3,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
+from django.utils import timezone
 # Importa solo los que necesites para la lista por ahora:
-from .models import Mascota, Propietario, Especie, Raza, Servicio, Medicamento, Usuario,Veterinario, Recepcionista, Administrador, Cita
+from .models import Mascota, Propietario, Especie, Raza, Servicio, Medicamento, Usuario,Veterinario, Recepcionista, Administrador, Cita, Hospitalizacion, SignosVitales
 
 from django.core.paginator import Paginator
 from django.db.models import Q
@@ -169,7 +170,37 @@ def buscar_citas(request):                  # Para la busqueda de citas en 'Inic
 #.................................................................... H O S P I T A LI Z A C I O N E S ...................................................................#
 @login_required
 def hospitalizacion(request):
-    return render(request, 'hospitalizacion/hospitalizacion_lista.html', { 'seccion_activa': 'hospitalizacion' })
+    
+    hoy = timezone.now().date()
+    
+    hosp_list = Hospitalizacion.objects.select_related(
+        'veterinario',
+        'estado',
+        'expediente__mascota__propietario'
+    ).order_by('-fechaingreso')
+    
+    # pa las stats
+    activas = hosp_list.filter(fechaalta__isnull=True)    #  mascotas Hospitalizadas
+    
+    revisiones_ya_hechas_hoy = SignosVitales.objects.filter(fecha=hoy).values_list('hospitalizacion_id', flat=True)
+    
+    pendientes = activas.exclude(numero__in=revisiones_ya_hechas_hoy).count()
+    
+    altas_hoy = hosp_list.filter(fechaalta=hoy).count()
+    
+    
+
+    contexto = {
+        'seccion_activa':       'hospitalizacion',
+        'hospitalizaciones':    hosp_list,
+        'activas':              activas.count(),
+        'admitidas_hoy':        activas.filter(fechaingreso=hoy).count(),     
+        'pendientes':           pendientes,
+        'altas_hoy':            altas_hoy,
+        'total_conteo':         hosp_list.count(),
+    }
+    
+    return render(request, 'hospitalizacion/hospitalizacion_lista.html', contexto)
 
 #............................................................................. P A G O S ..................................................................................#
 @login_required

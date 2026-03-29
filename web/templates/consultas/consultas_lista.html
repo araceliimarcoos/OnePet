@@ -88,7 +88,7 @@
                             </td>
                             <td>John Doe</td>
                             <td><span class="motivo-text">Vacunacion Anual</span></td>
-                            <td><a href="#" class="link-green">Ver Detalles</a></td>
+                            <td><a href="{% url 'iniciar_consulta' %}" class="link-green">Ver Detalles</a></td>
                         </tr>
                     </tbody>
                 </table>
@@ -129,7 +129,7 @@
                         <input 
                             type="text" 
                             id="inputCita" 
-                            placeholder="Ej. CIT0001 o nombre de mascota..."
+                            placeholder="Ej. C-0001 o nombre de mascota..."
                             autocomplete="off"
                         >
                         <!-- Aquí aparecen las sugerencias -->
