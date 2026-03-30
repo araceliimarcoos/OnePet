@@ -16,7 +16,6 @@
 
 {% block contenido %}
 
-<!-- HEADER-->
     <div class="page active" id="page-usuario">
         <div class="page-header">
             <div>
@@ -31,22 +30,13 @@
                 </button>
             </div>
         </div>
-        <!-- FILTRO-->
+
         <div class="card">
             <div class="filters-bar">
-                <form method="GET" action="">
-                    <div class="search-box">
-                        <span class="material-symbols-outlined">search</span>
-
-                        <input 
-                            type="text" 
-                            name="q"
-                            value="{{ query|default:'' }}"
-                            placeholder="Buscar por clave o nombre..."
-                            autocomplete="off"
-                        >
-                    </div>
-                </form>
+                <div class="search-box">
+                    <span class="material-symbols-outlined">search</span>
+                    <input type="text" placeholder="Buscar por nombre, correo, o rol..." id="usuariosSearch" />
+                </div>
                 <div class="filters-right">
                     <select class="filter-select" id="filterRol">   
                     <option value="">Todos los roles</option>
@@ -61,95 +51,123 @@
                 </div>
             </div>
 
-
             <div class="table-wrapper">
                 <table class="data-table" id="usuariosTable">
                     <thead>
                         <tr>
-                            <th>USUARIO</th>
+                            <th>NOMBRE & CORREO</th>
                             <th>ROL</th>
                             <th>ESTADO</th>
+                            <th>ULTIMO INICIO</th>
                             <th>ACCIONES</th>
                         </tr>
                     </thead>
-
-<!--...............................................................................................................................................-->
                     <tbody id="usuariosBody">
-                        {% for usuario in usuarios %}
-                        
                         <tr>
-                            <td>
-                            <!-- USUARIO -->
-                                <div class="user-cell">
+                            <td><div class="user-cell">
                                     <div class="user-avatar-p" style="background-color: #e2c09c;">
-                                        <span>
-                                            {{ usuario.nombre_real|slice:":2"|upper }}
-                                        </span>
-                                    </div>
-
+                                        <span>AS</span> 
+                                        </div>
                                     <div class="user-info-text">
-                                        <span class="user-name-table">
-                                            {{ usuario.usuario }}
-                                        </span>
-                                        <span class="user-email-table">
-                                            {{ usuario.nombre_real }}
-                                        </span>
-
+                                        <span class="user-name-table">Dr. Alejandro Sanz</span>
+                                        <span class="user-email-table">alejandro.s@cadahuella.com</span>
                                     </div>
                                 </div>
-                             </td>
-
-                            <!-- ROL -->
-                            <td>
-                                <span class="badge-especie feline">
-                                    {{ usuario.tipo.nombre }}
-                                </span>
                             </td>
-                            <!-- ESTADO  -->
+                            <td><span class="badge-especie feline">VETERINARIO</span></td>
                             <td>
                                 <div class="status-cell">
-
-                                    {% if usuario.estado.nombre|lower == "activo" %}
-                                        <span class="status-dot status-active"></span>
-                                        <span class="status-text">Active</span>
-
-                                    {% else %}
-                                        <span class="status-dot status-inactive"></span>
-                                        <span class="status-text inactive">Inactive</span>
-                                    {% endif %}
-
+                                    <span class="status-dot status-active"></span>
+                                    <span class="status-text">Active</span>
                                 </div>
                             </td>
-
-                            <!-- ACCIONES -->
-                            <td>
-                                <a href="#" class="link-green">Ver Acciones</a>
-                            </td>
+                            <td>Hace 10 min</td>
+                            <td><a href="#" class="link-green">Ver Perfil</a></td>
                         </tr>
-                        {% endfor %}
+
+                        <tr>
+                            <td><div class="user-cell">
+                                    <div class="user-avatar-p" style="background-color: #e2c09c;">
+                                        <span>MG</span> 
+                                        </div>
+                                    <div class="user-info-text">
+                                        <span class="user-name-table">Maria Garcia</span>
+                                        <span class="user-email-table">m.garcia@cadahuella.com</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="badge-especie canine">ADMINISTRADOR</span></td>
+                            <td><div class="status-cell">
+                                    <span class="status-dot status-active"></span>
+                                    <span class="status-text">Active</span>
+                                </div></td>
+                            <td>Hace 2 horas</td>
+                            <td><a href="#" class="link-green">Ver Perfil</a></td>
+                        </tr>
+
+                        <tr>
+                            <td><div class="user-cell">
+                                    <div class="user-avatar-p" style="background-color: #e2c09c;">
+                                        <span>LT</span> 
+                                        </div>
+                                    <div class="user-info-text">
+                                        <span class="user-name-table">Lucia Torres</span>
+                                        <span class="user-email-table">l.torres@cadahuella.com</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="badge-especie exotic">RECEPCIONISTA</span></td>
+                            <td><div class="status-cell">
+                                    <span class="status-dot status-active"></span>
+                                    <span class="status-text">Active</span>
+                                </div></td>
+                            <td>Ayer, 18:45</td>
+                            <td><a href="#" class="link-green">Ver Perfil</a></td>
+                        </tr>
+
+                        <tr>
+                            <td><div class="user-cell">
+                                    <div class="user-avatar-p" style="background-color: #e2c09c;">
+                                        <span>RG</span> 
+                                        </div>
+                                    <div class="user-info-text">
+                                        <span class="user-name-table">Roberto Gomez</span>
+                                        <span class="user-email-table">r.gomez@cadahuella.com</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="badge-especie feline">VETERINARIO</span></td>
+                            <td><div class="status-cell">
+                                    <span class="status-dot status-inactive"></span>
+                                    <span class="status-text inactive">Inactive</span>
+                                </div></td>
+                            <td>Hace 4 dias</td>
+                            <td><a href="#" class="link-green">Ver Perfil</a></td>
+                        </tr>
 
                     </tbody>
-<!--...............................................................................................................................................-->
                 </table>
             </div>
 
             <div class="table-footer">
                 <div class="pagination">
 
-                    {% if usuarios.has_previous %}
-                        <a href="?page={{ usuarios.previous_page_number }}" class="page-btn">‹</a>
+                    {% if veterinarios.has_previous %}
+                        <a href="?page={{ veterinarios.previous_page_number }}" class="page-btn">‹</a>
                     {% endif %}
 
                     <span class="page-btn active">
-                        {{ usuarios.number }}
+                        {{ veterinarios.number }}
                     </span>
 
-                    {% if usuarios.has_next %}
-                        <a href="?page={{ usuarios.next_page_number }}" class="page-btn">›</a>
+                    {% if veterinarios.has_next %}
+                        <a href="?page={{ veterinarios.next_page_number }}" class="page-btn">›</a>
                     {% endif %}
 
                 </div>
               
+            </div>
+
         </div>
     </div>
 

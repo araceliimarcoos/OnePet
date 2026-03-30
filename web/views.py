@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 # Importa solo los que necesites para la lista por ahora:
-from .models import Mascota, Propietario, Especie, Raza, Servicio, Medicamento, Usuario,Veterinario, Recepcionista, Administrador, Cita, Hospitalizacion, SignosVitales
+from .models import Mascota, Propietario, Especie, Raza, Servicio, Medicamento, Usuario,Veterinario, Recepcionista, Administrador, Cita, Hospitalizacion, SignosVitales, Especialidad
 
 from django.core.paginator import Paginator
 from django.db.models import Q
@@ -349,11 +349,36 @@ def razas(request, clave_especie):
     return render(request, 'especies/razas_lista.html', contexto)
 
 
-#------------------------------------------ PAGOS ------------------------------------------------------------#
+#------------------------------------------ V E T E R I N A R I O S ------------------------------------------------------------#
 
 @login_required
 def personal(request):
-    return render(request, 'personal/personal_lista.html', { 'seccion_activa': 'personal' })
+    query = request.GET.get('q')
+    
+    veterinarios_list = Veterinario.objects.select_related(
+        'especialidad'
+    ).all()
+    
+    if query:
+        veterinarios_list = veterinarios_list.filter(
+            Q(nombrepila__icontains=query) |
+            Q(primerapellido__icontains=query) |
+            Q(segundoapellido__icontains=query) |
+            Q(folio__icontains=query)
+        )
+
+    paginator = Paginator(veterinarios_list, 15)
+    page_number = request.GET.get('page')
+    veterinarios = paginator.get_page(page_number)
+
+    contexto = {
+        'seccion_activa': 'veterinarios',
+        'veterinarios': veterinarios,
+        'total_conteo': paginator.count,
+        'query': query
+    }
+
+    return render(request, 'personal/personal_lista.html', contexto)
 #------------------------------------------ PAGOS ------------------------------------------------------------#
 
 @login_required

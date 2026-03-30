@@ -487,10 +487,19 @@
         <div class="card" style="border-radius: 0 0 var(--radius) var(--radius); border-top: none;">
 
             <div class="filters-bar">
-                <div class="search-box">
-                    <span class="material-symbols-outlined">search</span>
-                    <input type="text" placeholder="Buscar por nombre, correo o especialidad..." id="personalSearch" />
-                </div>
+                <form method="GET" action="">
+                    <div class="search-box">
+                        <span class="material-symbols-outlined">search</span>
+
+                        <input 
+                            type="text" 
+                            name="q"
+                            value="{{ query|default:'' }}"
+                            placeholder="Buscar por clave o nombre..."
+                            autocomplete="off"
+                        >
+                    </div>
+                </form>
                 <div class="filters-right">
                     <select class="filter-select" id="filterEspecialidad">
                         <option value="">Todas las Especialidades</option>
@@ -511,110 +520,83 @@
                 <table class="data-table" id="personalTable">
                     <thead>
                         <tr>
-                            <th>NOMBRE DEL EMPLEADO</th>
+                            <th>VETERINARIO/A</th>
                             <th>ESPECIALIDAD</th>
-                            <th>ESTADO</th>
+                            <th>CORREO</th>
                             <th>ACCIONES</th>
                         </tr>
                     </thead>
+<!--...............................................................................................................................................-->
                     <tbody id="personalBody">
+                        {% for veterinario in veterinarios %}
                         <tr>
+                            
+
                             <td>
+                            <!-- USUARIO -->
                                 <div class="user-cell">
-                                    <div class="user-avatar-p" style="background-color: #e2c09c;">SM</div>
+                                    <div class="user-avatar-p" style="background-color: #a8d8b9; color: var(--green-dark);">
+                                        <span>
+                                            {{ veterinario.nombrepila|slice:":1"|upper }}{{ veterinario.primerapellido|slice:":1"|upper }}
+                                        </span>
+                                    </div>
+
                                     <div class="user-info-text">
-                                        <span class="user-name-table">Dra. Sofia Mendez</span>
-                                        <span class="user-email-table">sofia.m@cadahuella.com</span>
+                                        <span class="user-name-table">
+                                            {{ veterinario.nombrepila }} {{ veterinario.primerapellido }} {{ veterinario.segundoapellido }}
+                                        </span>
+                                        <span class="user-email-table">
+                                           {{ veterinario.folio }}
+                                        </span>
+
                                     </div>
                                 </div>
-                            </td>
-                            <td><strong>Cardiología Felina</strong></td>
+                             </td>
+
+                            <!-- ESPECIALIDAD-->
+
                             <td>
-                                <div class="status-cell">
-                                    <span class="status-dot status-active"></span>
-                                    <span class="status-text">En turno</span>
-                                </div>
+                                <strong>
+                                    {{ veterinario.especialidad.nombre }}
+                                </strong>
                             </td>
-                            <td><a href="#" class="link-green">Ver Perfil</a></td>
+
+                            <!-- CORREO-->
+                            <td>
+                                <strong>
+                                    {{ veterinario.correo }}
+                                </strong>
+                            </td>
+
+                            <td>
+                                <a href="#" class="link-green">Ver Acciones</a>
+                            </td>
+
+
                         </tr>
-                        <tr>
-                            <td>
-                                <div class="user-cell">
-                                    <div class="user-avatar-p" style="background-color: #a8d8b9; color: var(--green-dark);">CR</div>
-                                    <div class="user-info-text">
-                                        <span class="user-name-table">Carlos Ruiz</span>
-                                        <span class="user-email-table">c.ruiz@cadahuella.com</span>
-                                    </div>
-                                </div>
-                            </td>
-                            <td><strong>Traumatología</strong></td>
-                            <td>
-                                <div class="status-cell">
-                                    <span class="status-dot status-active"></span>
-                                    <span class="status-text">En turno</span>
-                                </div>
-                            </td>
-                            <td><a href="#" class="link-green">Ver Perfil</a></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="user-cell">
-                                    <div class="user-avatar-p" style="background-color: #b8d4f0; color: var(--blue-dark);">LT</div>
-                                    <div class="user-info-text">
-                                        <span class="user-name-table">Lucia Torres</span>
-                                        <span class="user-email-table">l.torres@cadahuella.com</span>
-                                    </div>
-                                </div>
-                            </td>
-                            <td><strong>Recepción / Gestión</strong></td>
-                            <td>
-                                <div class="status-cell">
-                                    <span class="status-dot status-active"></span>
-                                    <span class="status-text">En turno</span>
-                                </div>
-                            </td>
-                            <td><a href="#" class="link-green">Ver Perfil</a></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="user-cell">
-                                    <div class="user-avatar-p" style="background-color: #f0c8b8;">EB</div>
-                                    <div class="user-info-text">
-                                        <span class="user-name-table">Dra. Elena Blanco</span>
-                                        <span class="user-email-table">e.blanco@cadahuella.com</span>
-                                    </div>
-                                </div>
-                            </td>
-                            <td><strong>Dermatología</strong></td>
-                            <td>
-                                <div class="status-cell">
-                                    <span class="status-dot status-inactive"></span>
-                                    <span class="status-text inactive">Fuera de turno</span>
-                                </div>
-                            </td>
-                            <td><a href="#" class="link-green">Ver Perfil</a></td>
-                        </tr>
+                        {% endfor %}
                     </tbody>
+<!--...............................................................................................................................................-->
                 </table>
             </div>
 
             <div class="table-footer">
-                <span>Mostrando <strong>1–4</strong> de <strong>28</strong> empleados</span>
                 <div class="pagination">
-                    <button class="page-btn" disabled>‹</button>
-                    <button class="page-btn active">1</button>
-                    <button class="page-btn">2</button>
-                    <button class="page-btn">3</button>
-                    <span>…</span>
-                    <button class="page-btn">›</button>
-                </div>
-            </div>
 
-            <div class="table-help">
-                <span class="material-symbols-outlined">info</span>
-                ¿Necesitas ayuda? Mira nuestra
-                <a href="#" class="link-green">Guía de manejo de Personal Veterinario</a>
-                o contacta al soporte
+                    {% if veterinarios.has_previous %}
+                        <a href="?page={{ veterinarios.previous_page_number }}" class="page-btn">‹</a>
+                    {% endif %}
+
+                    <span class="page-btn active">
+                        {{ veterinarios.number }}
+                    </span>
+
+                    {% if veterinarios.has_next %}
+                        <a href="?page={{ veterinarios.next_page_number }}" class="page-btn">›</a>
+                    {% endif %}
+
+                </div>
+              
             </div>
 
         </div>
