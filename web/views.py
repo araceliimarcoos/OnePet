@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 # Importa solo los que necesites para la lista por ahora:
-from .models import Mascota, Propietario, Especie, Raza, Servicio, Medicamento, Usuario,Veterinario, Recepcionista, Administrador, Cita, Hospitalizacion, SignosVitales
+from .models import Mascota, Propietario, Especie, Raza, Servicio, Medicamento, Usuario, Veterinario, Recepcionista, Administrador, Cita, Hospitalizacion, SignosVitales, Pago, Expediente
 
 from django.core.paginator import Paginator
 from django.db.models import Q
@@ -205,7 +205,18 @@ def hospitalizacion(request):
 #............................................................................. P A G O S ..................................................................................#
 @login_required
 def pagos(request):
-    return render(request, 'pagos/pagos_lista.html', { 'seccion_activa': 'pagos' })
+    
+    pagos_list = Pago.objects.select_related(
+        'consulta__cita__mascota__propietario',
+        'hospitalizacion'
+    ).order_by('-fecha', '-hora')
+    
+    contexto = {
+        'seccion_activa': 'pagos',
+        'pagos': pagos_list,
+    }
+    
+    return render(request, 'pagos/pagos_lista.html', contexto)
 #............................................................................ S E R V I C I O S ............................................................................#
 
 from django.db.models import Q
