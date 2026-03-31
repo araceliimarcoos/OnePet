@@ -39,7 +39,19 @@ urlpatterns = [
     
     
     path('personal/', views.personal, name='personal'),
+    
+    # Reportes ==================================
     path('reportes/', views.reportes, name='reportes'),
+    path('reportes/citas/',                 views.reporte_citas,          name='reporte_citas'),
+    path('reportes/hospitalizaciones/',     views.reporte_hospitalizaciones, name='reporte_hospitalizaciones'),
+    path('reportes/mascotas/',              views.reporte_mascotas,       name='reporte_mascotas'),
+    path('reportes/demografia/',            views.reporte_demografia,     name='reporte_demografia'),
+    path('reportes/servicios-top/',         views.reporte_servicios_top,  name='reporte_servicios_top'),
+    path('reportes/retencion/',             views.reporte_retencion,      name='reporte_retencion'),
+    path('reportes/ingresos-servicio/',     views.reporte_ingresos_servicio, name='reporte_ingresos_servicio'),
+    path('reportes/carga-laboral/',         views.reporte_carga_laboral,  name='reporte_carga_laboral'),
+    path('reportes/citas-por-mes/',         views.reporte_citas_mes,      name='reporte_citas_mes'),
+    
     
     #Estos son para las ventanitas
     path('mascotas/nueva/', views.nueva_mascota, name='nueva_mascota'),

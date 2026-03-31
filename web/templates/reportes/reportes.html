@@ -3,6 +3,96 @@
 
 {% block titulo %}Reportes{%endblock%}
 
+{% block estilos %}
+
+<style>
+.rep-hub { padding: 1.5rem 0; }
+ 
+/* Header */
+.hub-header { display:flex; justify-content:space-between; align-items:flex-start;
+              flex-wrap:wrap; gap:.75rem; margin-bottom:2rem; }
+.hub-title  { font-size:1.6rem; font-weight:500; margin:0; }
+.hub-sub    { font-size:.85rem; color:var(--color-text-secondary); margin:.2rem 0 0; }
+.hub-fecha  { font-size:.82rem; color:var(--color-text-tertiary); padding-top:.4rem;
+              text-transform:capitalize; }
+ 
+/* KPI strip */
+.kpi-strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+             gap:1rem; margin-bottom:2.5rem; }
+.kpi { display:flex; align-items:center; gap:.9rem;
+       background:var(--color-background-secondary);
+       border:1px solid var(--color-border-tertiary);
+       border-radius:var(--border-radius-lg); padding:1rem 1.25rem; }
+.kpi-ico { width:38px; height:38px; border-radius:9px; flex-shrink:0;
+           display:flex; align-items:center; justify-content:center; }
+.kpi-ico svg { width:20px; height:20px; }
+.kpi-n { font-size:1.4rem; font-weight:500; line-height:1.1; }
+.kpi-l { font-size:.75rem; color:var(--color-text-secondary); margin-top:.15rem; }
+ 
+.kpi-teal   .kpi-ico { background:#E1F5EE; color:#0F6E56; }
+.kpi-green  .kpi-ico { background:#EAF3DE; color:#3B6D11; }
+.kpi-amber  .kpi-ico { background:#FAEEDA; color:#854F0B; }
+.kpi-purple .kpi-ico { background:#EEEDFE; color:#3C3489; }
+.kpi-teal   .kpi-n   { color:#0F6E56; }
+.kpi-green  .kpi-n   { color:#3B6D11; }
+.kpi-amber  .kpi-n   { color:#854F0B; }
+.kpi-purple .kpi-n   { color:#3C3489; }
+@media (prefers-color-scheme:dark){
+  .kpi-teal   .kpi-ico { background:#04342C; color:#9FE1CB; }
+  .kpi-green  .kpi-ico { background:#173404; color:#C0DD97; }
+  .kpi-amber  .kpi-ico { background:#412402; color:#FAC775; }
+  .kpi-purple .kpi-ico { background:#26215C; color:#CECBF6; }
+  .kpi-teal   .kpi-n   { color:#9FE1CB; }
+  .kpi-green  .kpi-n   { color:#C0DD97; }
+  .kpi-amber  .kpi-n   { color:#FAC775; }
+  .kpi-purple .kpi-n   { color:#CECBF6; }
+}
+ 
+/* Section title */
+.sec-title { font-size:.8rem; font-weight:500; letter-spacing:.07em;
+             text-transform:uppercase; color:var(--color-text-secondary);
+             margin:0 0 1rem; }
+ 
+/* Card grid */
+.rep-grid { display:grid;
+            grid-template-columns:repeat(auto-fill,minmax(270px,1fr));
+            gap:1rem; }
+ 
+/* Card base (usada en _card.html) */
+.rep-card { display:flex; align-items:center; gap:1rem; text-decoration:none;
+            color:inherit; background:var(--color-background-secondary);
+            border:1px solid var(--color-border-tertiary);
+            border-radius:var(--border-radius-lg); padding:1.15rem 1.25rem;
+            transition:border-color .17s, transform .15s; }
+.rep-card:hover { border-color:var(--color-border-primary); transform:translateY(-2px); }
+.rc-ico { width:42px; height:42px; border-radius:10px; flex-shrink:0;
+          display:flex; align-items:center; justify-content:center; }
+.rc-ico svg { width:20px; height:20px; }
+.rc-body { flex:1; min-width:0; }
+.rc-body h3 { margin:0 0 .2rem; font-size:.92rem; font-weight:500; }
+.rc-body p  { margin:0; font-size:.78rem; color:var(--color-text-secondary); line-height:1.4; }
+.rc-arr { font-size:1rem; color:var(--color-text-tertiary); transition:transform .15s; }
+.rep-card:hover .rc-arr { transform:translateX(4px); }
+ 
+/* Color variants */
+.rc-teal   .rc-ico { background:#E1F5EE; color:#0F6E56; }
+.rc-blue   .rc-ico { background:#E6F1FB; color:#185FA5; }
+.rc-amber  .rc-ico { background:#FAEEDA; color:#854F0B; }
+.rc-purple .rc-ico { background:#EEEDFE; color:#3C3489; }
+.rc-coral  .rc-ico { background:#FAECE7; color:#993C1D; }
+.rc-green  .rc-ico { background:#EAF3DE; color:#3B6D11; }
+@media (prefers-color-scheme:dark){
+  .rc-teal   .rc-ico { background:#04342C; color:#9FE1CB; }
+  .rc-blue   .rc-ico { background:#042C53; color:#B5D4F4; }
+  .rc-amber  .rc-ico { background:#412402; color:#FAC775; }
+  .rc-purple .rc-ico { background:#26215C; color:#CECBF6; }
+  .rc-coral  .rc-ico { background:#4A1B0C; color:#F5C4B3; }
+  .rc-green  .rc-ico { background:#173404; color:#C0DD97; }
+}
+</style>
+
+{% endblock %}
+
 {% block nav_reportes %}active{% endblock %}
 
 {% block breadcrumb %}
@@ -16,14 +106,68 @@
 
 {% block contenido %}
 
-    <div class="page active" id="page-reportes">
-        <div class="page-header">
-            <h1 class="page-title">Reportes </h1>
+    <div class="rep-hub" id="page-reportes">
+        <div class="hub-header">
+            <div>
+                <h1 class="page-title">Reportes </h1>
+                <p class="page-sub">{{ hoy|date:"l d \d\e F, Y"|capfirst }}</p>                
+            </div>
         </div>
-        <div class="card placeholder-card">
-            <span class="placeholder-icon material-symbols-outlined">person</span>
-            <p>Módulo de Reportes</p>
+
+        <!-- STATS -->
+        <div class="stats-grid">
+          <div class="stat-card blue">
+            <span class="stat-icon material-symbols-outlined">calendar_today</span>
+            <div class="stat-body">
+              <p class="stat-label">Citas este mes</p>
+              <p class="stat-value">00</p>
+              <p class="stat-sub">Mascotas admitidas en las últimas 24 horas</p>
+            </div>
+          </div>
+
+          
+          <div class="stat-card green">
+            <span class="stat-icon material-symbols-outlined">attach_money</span>
+            <div class="stat-body">
+              <p class="stat-label">Ingresos del mes</p>
+              <p class="stat-value">00</p>
+              <p class="stat-sub">Mascotas sin signos vitales registrados hoy</p>
+            </div>
+          </div>
+
+          <div class="stat-card blue">
+            <span class="stat-icon material-symbols-outlined">vital_signs</span>
+            <div class="stat-body">
+              <p class="stat-label">Hospitalizaciones activas</p>
+              <p class="stat-value">00</p>
+              <p class="stat-sub">Mascotas dadas de alta hoy</p>
+            </div>
+          </div>
+
+          <div class="stat-card green">
+            <span class="stat-icon material-symbols-outlined">pets</span>
+            <div class="stat-body">
+              <p class="stat-label">Mascotas registradas</p>
+              <p class="stat-value">00</p>
+              <p class="stat-sub">Mascotas dadas de alta hoy</p>
+            </div>
+          </div>
+
         </div>
+
+        <h3 class="page-subtitle">Reportes disponibles</h2>
+        <div class="rep-grid">
+            {% include "reportes/_card.html" with url="reporte_citas" color="teal" titulo="Citas" desc="Por fecha, estado y veterinario. Tendencia mensual y distribución." icon="calendar" %}
+            {% include "reportes/_card.html" with url="reporte_citas_mes" color="blue" titulo="Citas por mes" desc="Volumen mensual anual, picos, completadas vs canceladas." icon="bar" %}
+            {% include "reportes/_card.html" with url="reporte_hospitalizaciones" color="amber" titulo="Hospitalizaciones" desc="Estancias activas, altas, duración promedio e ingresos." icon="pulse" %}
+            {% include "reportes/_card.html" with url="reporte_mascotas" color="purple" titulo="Mascotas y propietarios" desc="Por especie, estado, sexo y top propietarios." icon="paw" %}
+            {% include "reportes/_card.html" with url="reporte_demografia" color="coral" titulo="Demografía de mascotas" desc="Razas, rangos de edad, peso promedio por especie." icon="pie" %}
+            {% include "reportes/_card.html" with url="reporte_servicios_top" color="green" titulo="Servicios más vendidos" desc="Ranking global de usos e ingresos por servicio." icon="star" %}
+            {% include "reportes/_card.html" with url="reporte_ingresos_servicio" color="blue" titulo="Ingresos por servicio" desc="Desglose financiero por tipo de servicio y período." icon="dollar" %}
+            {% include "reportes/_card.html" with url="reporte_retencion" color="teal" titulo="Retención de clientes" desc="Tasa mensual de retención, nuevos y clientes perdidos." icon="repeat" %}
+            {% include "reportes/_card.html" with url="reporte_carga_laboral" color="amber" titulo="Carga laboral veterinaria" desc="Citas, consultas y hospitalizaciones por veterinario." icon="user" %}
+        </div>
+
     </div>
 
 {% endblock %}
