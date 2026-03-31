@@ -2,7 +2,6 @@ const overlay       = document.getElementById('modalNuevoPropietario');
 const btnAbrir      = document.getElementById('btnNuevoPropietario');
 const btnCerrar     = document.getElementById('btnCerrarModal');
 const btnCancelar   = document.getElementById('btnCancelar');
-const btnLimpiar    = document.getElementById('btnLimpiar');
 const form          = document.getElementById('formNuevoPropietario');
 const folioInput    = document.getElementById('folioAuto');
 
@@ -26,12 +25,7 @@ btnCancelar.addEventListener('click', cerrarModal);
 overlay.addEventListener('click', e => { if (e.target === overlay) cerrarModal(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarModal(); });
 
-// ── Limpiar campos (sin cerrar, sin tocar el folio) ──
-btnLimpiar.addEventListener('click', () => {
-    const folio = folioInput.value; // guardar folio
-    form.reset();
-    folioInput.value = folio;       // restaurar folio
-});
+
 
 
 // ── Enviar formulario a Django ──
