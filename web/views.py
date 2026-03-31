@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 # Importa solo los que necesites para la lista por ahora:
-from .models import Mascota, Propietario, Especie, Raza, Servicio, Medicamento, Usuario, Veterinario, Recepcionista, Administrador, Cita, Hospitalizacion, SignosVitales, Pago, Expediente
+from .models import Mascota, Propietario, Especie, Raza, Servicio, Medicamento, Usuario, Veterinario, Recepcionista, Administrador, Cita, Hospitalizacion, SignosVitales, Especialidad, Telefono, Pago, Expediente
 
 from django.core.paginator import Paginator
 from django.db.models import Q
@@ -106,10 +106,36 @@ def propietarios(request):
     }
 
     return render(request, 'propietarios/propietarios_lista.html', contexto)
-#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
 @login_required
-def detalles_propietario(request):
-    return render(request, 'propietarios/propietarios_detalles.html', { 'seccion_activa': 'propietarios'})
+def propietarios_detalles(request,folio):
+    propietario = get_object_or_404(Propietario,folio=folio)
+    telefonos = Telefono.objects.filter(propietario=propietario).first()
+    mascotas = Mascota.objects.filter(propietario=propietario)
+    citas = Cita.objects.filter(propietario=propietario).select_related('mascota', 'veterinario').order_by('-fecha')[:5]
+    
+    
+    # Edades de las mascotas
+    hoy = timezone.now().date()
+    mascotas_con_edad = []
+    for m in mascotas:
+        anios = hoy.year - m.fechanacimiento.year
+        if (hoy.month, hoy.day) < (m.fechanacimiento.month, m.fechanacimiento.day):
+            anios -= 1
+        m.edad = f"{anios} año{'s' if anios != 1 else ''}"
+        mascotas_con_edad.append(m)
+
+    contexto = {
+        'seccion_activa': 'propietarios',
+        'propietario': propietario,
+        'telefonos': telefonos,
+        'mascotas': mascotas,
+        'mascotas_count': len(mascotas_con_edad),
+        'citas': citas
+    }
+
+    return render(request, 'propietarios/propietarios_detalles.html', contexto)
+    
 
 #------------------------------------------------------------------- C I T A S ---------------------------------------------------------------------#
 @login_required
@@ -360,11 +386,36 @@ def razas(request, clave_especie):
     return render(request, 'especies/razas_lista.html', contexto)
 
 
-#------------------------------------------ PAGOS ------------------------------------------------------------#
+#------------------------------------------ V E T E R I N A R I O S ------------------------------------------------------------#
 
 @login_required
 def personal(request):
-    return render(request, 'personal/personal_lista.html', { 'seccion_activa': 'personal' })
+    query = request.GET.get('q')
+    
+    veterinarios_list = Veterinario.objects.select_related(
+        'especialidad'
+    ).all()
+    
+    if query:
+        veterinarios_list = veterinarios_list.filter(
+            Q(nombrepila__icontains=query) |
+            Q(primerapellido__icontains=query) |
+            Q(segundoapellido__icontains=query) |
+            Q(folio__icontains=query)
+        )
+
+    paginator = Paginator(veterinarios_list, 15)
+    page_number = request.GET.get('page')
+    veterinarios = paginator.get_page(page_number)
+
+    contexto = {
+        'seccion_activa': 'veterinarios',
+        'veterinarios': veterinarios,
+        'total_conteo': paginator.count,
+        'query': query
+    }
+
+    return render(request, 'personal/personal_lista.html', contexto)
 #------------------------------------------ PAGOS ------------------------------------------------------------#
 
 @login_required

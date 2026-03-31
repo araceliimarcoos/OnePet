@@ -850,6 +850,19 @@ body {
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
     animation: modalEntrada 0.25s ease;
 }
+
+.modal-big {
+    background: var(--surface);
+    border-radius: var(--radius);
+    width: 100%;
+    max-width: 720px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    animation: modalEntrada 0.25s ease;
+
+}  
+
 @keyframes modalEntrada {
     from { opacity: 0; transform: translateY(-20px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -895,6 +908,68 @@ body {
     padding: 16px 24px;
     border-top: 1px solid var(--border);
 }
+
+.form-row-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+}
+
+/* ── Sección dentro del modal ── */
+.modal-section {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.modal-section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--text);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+}
+.modal-section-title .material-symbols-outlined {
+    font-size: 20px !important;
+    color: var(--blue-dark);
+}
+
+/* ── Subtítulo del header del modal ── */
+.modal-header-sub {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-weight: 400;
+    margin-top: 2px;
+}
+
+/* ── Campo de folio (no editable) ── */
+.folio-input {
+    background: #eef2f7 !important;
+    color: var(--blue-dark) !important;
+    font-family: 'Courier New', monospace !important;
+    font-weight: 700 !important;
+    font-size: 0.88rem !important;
+    border-color: #c2d4e8 !important;
+    cursor: not-allowed;
+}
+.folio-input:focus {
+    border-color: #c2d4e8 !important;
+    background: #eef2f7 !important;
+}
+
+/* ── Footer con limpiar + guardar ── */
+.modal-footer-full {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+}
+
 
 /* Campos — .form-group (propietarios) */
 .form-group {

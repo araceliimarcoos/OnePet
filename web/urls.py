@@ -19,7 +19,7 @@ urlpatterns = [
     
     # Esta es para 'ver perfil' son los detalles y asi
     path('mascotas/mascotas_detalles/', views.detalles_mascota, name='detalles_mascota'), 
-    path('propietarios/propietarios_detalles/', views.detalles_propietario, name='detalles_propietario'),
+    path('propietarios/perfiles/<str:folio>/', views.propietarios_detalles, name='detalles_propietario'),
     
     path('propietarios/', views.propietarios, name='propietarios'),
     path('citas/', views.citas, name='citas'),
