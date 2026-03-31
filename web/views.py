@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 # Importa solo los que necesites para la lista por ahora:
-from .models import Mascota, Propietario, Especie, Raza, Servicio, Medicamento, Usuario,Veterinario, Recepcionista, Administrador, Cita, Hospitalizacion, SignosVitales, Especialidad
+from .models import Mascota, Propietario, Especie, Raza, Servicio, Medicamento, Usuario,Veterinario, Recepcionista, Administrador, Cita, Hospitalizacion, SignosVitales, Especialidad, Telefono
 
 from django.core.paginator import Paginator
 from django.db.models import Q
@@ -106,10 +106,36 @@ def propietarios(request):
     }
 
     return render(request, 'propietarios/propietarios_lista.html', contexto)
-#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
 @login_required
-def detalles_propietario(request):
-    return render(request, 'propietarios/propietarios_detalles.html', { 'seccion_activa': 'propietarios'})
+def propietarios_detalles(request,folio):
+    propietario = get_object_or_404(Propietario,folio=folio)
+    telefonos = Telefono.objects.filter(propietario=propietario).first()
+    mascotas = Mascota.objects.filter(propietario=propietario)
+    citas = Cita.objects.filter(propietario=propietario).select_related('mascota', 'veterinario').order_by('-fecha')[:5]
+    
+    
+    # Edades de las mascotas
+    hoy = timezone.now().date()
+    mascotas_con_edad = []
+    for m in mascotas:
+        anios = hoy.year - m.fechanacimiento.year
+        if (hoy.month, hoy.day) < (m.fechanacimiento.month, m.fechanacimiento.day):
+            anios -= 1
+        m.edad = f"{anios} año{'s' if anios != 1 else ''}"
+        mascotas_con_edad.append(m)
+
+    contexto = {
+        'seccion_activa': 'propietarios',
+        'propietario': propietario,
+        'telefonos': telefonos,
+        'mascotas': mascotas,
+        'mascotas_count': len(mascotas_con_edad),
+        'citas': citas
+    }
+
+    return render(request, 'propietarios/propietarios_detalles.html', contexto)
+    
 
 #------------------------------------------------------------------- C I T A S ---------------------------------------------------------------------#
 @login_required

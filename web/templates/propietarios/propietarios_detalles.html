@@ -383,15 +383,15 @@
     <span class="material-symbols-outlined">chevron_right</span>
     <a href="{% url 'propietarios' %}">Propietarios</a>
     <span class="material-symbols-outlined">chevron_right</span>
-    <span class="breadcrumb-current">Consultar Propietario</span>
+    <span class="breadcrumb-current">Perfiles</span>
 {% endblock %}
 
-{% block topbar_titulo %}Perfil de Propietario{% endblock %}
+{% block topbar_titulo %}Perfil de propietario{% endblock %}
 
 {% block contenido %}
 <div class="detalle-propietario">
 
-    <!-- ===== TARJETA PRINCIPAL ===== -->
+    <!-- ===== TARJETA PRINCIPAL ===== --> 
     <div class="prop-header-card">
 
         <!-- Foto -->
@@ -399,12 +399,10 @@
 
         <!-- Info -->
         <div class="prop-header-info">
-            <h1 class="prop-nombre">{{ propietario.nombre }}</h1>
+            <h1 class="prop-nombre">{{ propietario.nombrepila }} {{ propietario.primerapellido }} {{ propietario.segundoapellido }}</h1>
             <div class="prop-meta">
                 <span class="material-symbols-outlined">badge</span>
                 ID: {{ propietario.folio }}
-                <span class="prop-meta-sep">•</span>
-                Miembro desde {{ propietario.miembro_desde }}
             </div>
 
             <div class="prop-contacto-grid">
@@ -414,15 +412,21 @@
                 </div>
                 <div class="prop-contacto-item">
                     <div class="prop-contacto-label">Dirección</div>
-                    <div class="prop-contacto-valor" title="{{ propietario.direccion }}">{{ propietario.direccion }}</div>
+                    <div class="prop-contacto-valor" title="{{ propietario.dircalle }} {{ propietario.dirnum }}, {{ propietario.dircolonia }}">{{ propietario.dircalle|add:" "|add:propietario.dirnum|add:", "|add:propietario.dircolonia|truncatechars:20 }}</div>
                 </div>
                 <div class="prop-contacto-item">
                     <div class="prop-contacto-label">Teléfono Principal</div>
-                    <div class="prop-contacto-valor">{{ propietario.tel_principal }}</div>
+                    <div class="prop-contacto-valor">{{ telefonos.numprincipal }}</div>
                 </div>
                 <div class="prop-contacto-item">
                     <div class="prop-contacto-label">Teléfono Secundario</div>
-                    <div class="prop-contacto-valor">{{ propietario.tel_secundario }}</div>
+                    <div class="prop-contacto-valor">
+                        {% if telefonos.numsecundario %}
+                        {{ telefonos.numsecundario }}
+                        {% else %}
+                        <span>No registrado</span>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
@@ -444,12 +448,12 @@
             <h2 class="section-title">Mascotas Registradas</h2>
             <div class="section-count">
                 <span class="material-symbols-outlined">grid_view</span>
-                3 mascotas registradas
+                {{ mascotas_count }} mascota(s) registrada(s)
             </div>
         </div>
 
         <div class="mascotas-grid">
-
+            {% for mascota in mascotas %}
             <!-- Mascota 1 -->
             <div class="mascota-card">
                 <div class="mascota-card-top">
@@ -457,9 +461,9 @@
                         <span class="material-symbols-outlined">pets</span>
                     </div>
                     <div>
-                        <span class="mascota-card-nombre">Bruno</span>
-                        <span class="mascota-card-especie">Perro</span>
-                        <span class="mascota-card-detalle">Beagle • 4 años</span>
+                        <span class="mascota-card-nombre">{{ mascota.nombre }}</span>
+                        <span class="mascota-card-especie">{{ mascota.especie.nombre }}</span>
+                        <span class="mascota-card-detalle">{{ mascota.raza.nombre }} • {{ mascota.edad }}</span>
                     </div>
                 </div>
                 <div class="mascota-card-footer">
@@ -470,7 +474,10 @@
                 </div>
             </div>
 
+            {% endfor %}
+
             <!-- Mascota 2 -->
+            <!-- 
             <div class="mascota-card">
                 <div class="mascota-card-top">
                     <div class="mascota-foto-placeholder" style="background:#fde8ff;">
@@ -488,9 +495,9 @@
                         <span class="material-symbols-outlined">arrow_forward</span>
                     </div>
                 </div>
-            </div>
+            </div> -->
 
-            <!-- Mascota 3 -->
+            <!-- Mascota 3 
             <div class="mascota-card">
                 <div class="mascota-card-top">
                     <div class="mascota-foto-placeholder" style="background:#fff3d6;">
@@ -508,17 +515,17 @@
                         <span class="material-symbols-outlined">arrow_forward</span>
                     </div>
                 </div>
-            </div>
+            </div> -->
 
-            <!-- Tarjeta "Registrar Mascota" -->
+            <!-- Tarjeta "Registrar Mascota" 
             <div class="mascota-card-nueva">
                 <div class="plus-icon">
                     <span class="material-symbols-outlined">add</span>
                 </div>
                 <span class="mascota-card-nueva-label">Registrar Mascota</span>
                 <span class="mascota-card-nueva-sub">Añadir nueva ficha médica</span>
-            </div>
-
+            </div> -->
+            
         </div>
     </div>
 
@@ -540,28 +547,22 @@
                 </tr>
             </thead>
             <tbody>
+                {% for cita in citas %}
                 <tr>
-                    <td>12 Oct 2023</td>
-                    <td><strong>Bruno</strong></td>
-                    <td>Vacunación Anual</td>
-                    <td>Dra. Marta Gómez</td>
+                    <td>{{ cita.fecha|date:"M d, Y" }}</td>
+                    <td><strong>{{ cita.mascota.nombre }}</strong></td>
+                    <td>{{ cita.motivo }}</td>
+                    <td>{{ cita.veterinario.nombrepila }} {{ cita.veterinario.primerapellido }}</td>
                     <td>
-                        <button class="btn-ver-visita" title="Ver detalle">
-                            <span class="material-symbols-outlined">visibility</span>
-                        </button>
+                        <a class="link-historial">Ver detalles</a>
                     </td>
                 </tr>
+                {% empty %}
                 <tr>
-                    <td>05 Oct 2023</td>
-                    <td><strong>Luna</strong></td>
-                    <td>Chequeo General</td>
-                    <td>Dr. Alejandro Sanz</td>
-                    <td>
-                        <button class="btn-ver-visita" title="Ver detalle">
-                            <span class="material-symbols-outlined">visibility</span>
-                        </button>
-                    </td>
+                    <td colspan="4">No hay citas registradas para esta mascota.</td>
                 </tr>
+
+                {% endfor %}
             </tbody>
         </table>
     </div>
