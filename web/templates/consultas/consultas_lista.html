@@ -64,15 +64,16 @@
                             <th>ACCIONES</th>
                         </tr>
                     </thead>
-                    <tbody id="consultasBody">  <!-- pendiente -->
+                    <tbody id="consultasBody">
+                        {% for consulta in consultas %}
                         <tr>
-                            <td><strong>#0001</strong></td>
+                            <td><strong>#{{ consulta.numero|stringformat:"04d" }}</strong></td>
                             <td>
                                 <div class="fecha-cell">
-                                    <span class="fecha-dia">Oct 15, 2025</span>
+                                    <span class="fecha-dia">{{ consulta.cita.fecha|date:"M d, Y" }}</span>
                                     <span class="fecha-hora">
                                         <span class="material-symbols-outlined">schedule</span>
-                                        09:45 AM
+                                        {{ consulta.cita.hora|date:"H:i" }}
                                     </span>
                                 </div>
                             </td>
@@ -80,30 +81,57 @@
                                 <div class="mascota-cell">
                                     <div class="mascota-avatar"><span class="material-symbols-outlined">pets</span></div>
                                     <div>
-                                        <span class="mascota-nombre">Buddy</span>
-                                        <span class="mascota-raza">Labrador • Canino</span>
+                                        <span class="mascota-nombre">{{ consulta.cita.mascota.nombre }}</span>
+                                        <span class="mascota-raza">{{ consulta.cita.mascota.raza.nombre }} • {{ consulta.cita.mascota.raza.especie.nombre }}</span>
 
                                     </div>
                                 </div>
                             </td>
-                            <td>John Doe</td>
-                            <td><span class="motivo-text">Vacunacion Anual</span></td>
+                            <td>{{ consulta.cita.mascota.propietario.nombrepila }} {{ consulta.cita.mascota.propietario.primerapellido }}</td>
+                            <td><span class="motivo-text">{{ consulta.cita.motivo }}</span></td>
                             <td><a href="{% url 'iniciar_consulta' %}" class="link-green">Ver Detalles</a></td>
                         </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6">No hay citas registradas</td>
+                        </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
 
             </div>
 
             <div class="table-footer">
-            <span>Mostrando <strong>1–5</strong> de <strong>24</strong> consultas</span>
+
+            <span>Mostrando <strong>{{ consultas.start_index }}-{{ consultas.end_index }}</strong> de <strong>{{ total_conteo }}</strong> consultas</span>
+            <!-- Controles -->
             <div class="pagination">
-                <button class="page-btn" disabled>‹</button>
-                <button class="page-btn active">1</button>
-                <button class="page-btn">2</button>
-                <button class="page-btn">3</button>
-                <span>…</span>
-                <button class="page-btn">›</button>
+                <!-- boton anterior -->
+                {% if consultas.has_previous %}
+                    <a href="?page={{ consultas.previous_page_number }}{% if query %}&q={{ query }}{% endif %}"
+                        class="page-btn">‹</a>
+                {% else %}
+                    <button class="page-btn" disabled>‹</button>
+                {% endif %}
+                    
+                <!-- numeros de pagina -->
+                {% for num in consultas.paginator.page_range %}
+                    {% if consultas.number == num %}
+                        <button class="page-btn active">{{ num }}</button>
+                    {% elif num >= consultas.number|add:"-2" and num <= consultas.number|add:"2"  %}
+                        <a href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}"
+                            class="page-btn">{{ num }}</a>
+                    {% endif %}
+                {% endfor %}
+
+                <!-- boton siguiente -->
+                {% if consultas.has_next %}
+                    <a href="?page={{ consulta.next_page_number }}{% if query %}&q={{ query }}{% endif %}" 
+                        class="page-btn">›</a>
+                {% else %}
+                    <button class="page-btn" disabled>›</button>
+                {% endif %}
+                
             </div>
         </div>
 

@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 # Importa solo los que necesites para la lista por ahora:
-from .models import Mascota, Propietario, Especie, Raza, Servicio, Medicamento, Usuario, Veterinario, Recepcionista, Administrador, Cita, Hospitalizacion, SignosVitales, Especialidad, Telefono, Pago, Expediente
+from .models import Mascota, Propietario, Especie, Raza, Servicio, Medicamento, Usuario, Veterinario, Recepcionista, Administrador, Cita, Hospitalizacion, SignosVitales, Especialidad, Telefono, Pago, Expediente, Consulta
 
 from django.core.paginator import Paginator
 from django.db.models import Q
@@ -144,7 +144,7 @@ def citas(request):
 
     citas_list = Cita.objects.select_related(
         'mascota__propietario',
-        'mascota__raza__especie',   # ← faltaba esto
+        'mascota__raza__especie',
         'veterinario',
         'estado'
     ).order_by('-fecha', '-hora')
@@ -179,7 +179,31 @@ def citas(request):
 
 @login_required
 def consultas(request):
-    return render(request, 'consultas/consultas_lista.html', { 'seccion_activa': 'consultas' })
+    query = request.GET.get('q', '').strip()
+    
+    consultas_list = Consulta.objects.select_related(
+        'cita__mascota__propietario'
+    ).order_by('-numero')
+    
+    if query:
+        consultas_list = consultas_list.filter(
+            Q(numero__icontains=query) |
+            Q(cita__mascota__nombre__icontains=query) |
+            Q(cita__propietario__primerapellido__icontains=query)
+        )
+    
+    # Paginación
+    paginator = Paginator(consultas_list, 15)
+    page_number = request.GET.get('page')
+    consultas = paginator.get_page(page_number)
+    
+    contexto = {
+        'seccion_activa': 'consultas',
+        'consultas': consultas,
+        'total_conteo': paginator.count,
+    }
+    
+    return render(request, 'consultas/consultas_lista.html', contexto)
 
 @login_required
 def iniciar_consulta(request):
