@@ -243,6 +243,12 @@ def pagos(request):
     }
     
     return render(request, 'pagos/pagos_lista.html', contexto)
+
+@login_required
+def recibos(request):
+    
+    return render(request, 'pagos/pagos_recibo.html', { 'seccion_activa': 'pagos' })
+
 #............................................................................ S E R V I C I O S ............................................................................#
 
 from django.db.models import Q

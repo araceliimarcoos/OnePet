@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block titulo %}Recibo de Pago{% endblock %}
+{% block nav_pagos %}active{% endblock %}
+
+{% block breadcrumb %}
+    <a href="{% url 'dashboard' %}">Inicio</a>
+    <span class="material-symbols-outlined">chevron_right</span>
+    <a href="{% url 'pagos' %}">Pagos</a>
+    <span class="material-symbols-outlined">chevron_right</span>
+    <span class="breadcrumb-current">Recibo de Pago</span>
+{% endblock %}
+
+{% block topbar_titulo %}Recibo de Pago{% endblock %}
+
+{% block contenido %}
+<div class="page active">
+
+    <!-- Tarjeta principal del recibo -->
+    <div class="rw-card">
+
+        <!-- Marca + Estado -->
+        <div class="rw-brand-row">
+            <div class="rw-brand">
+                <div class="rw-logo">
+                    <span class="material-symbols-outlined" style="color: #43C0B0; font-size: 26px;">shield</span>
+                </div>
+                <div>
+                    <div class="rw-brand-name">Nose que poner aqui</div>
+                    <div class="rw-brand-sub">OnePet logo o algo asi</div>
+                </div>
+            </div>
+            <div class="rw-inv-meta">
+                <span class="rw-badge">PAGADO</span>
+                <div class="rw-inv-label">Recibo no.</div>
+                <div class="rw-inv-no">{{ pago.numero_recibo|default:"#P-2026-001" }}</div>
+            </div>
+        </div>
+
+        <hr class="rw-divider">
+
+        <!-- Info: Cliente / Paciente / Pago -->
+        <div class="rw-info-row">
+            <div class="rw-info-cell">
+                <div class="rw-info-lbl"><strong>Cliente</strong></div>
+                <div class="rw-info-main">{{ pago.cliente.nombre|default:"Ricardo Montaner" }}</div>
+                <div class="rw-info-sub">Folio: {{ pago.cliente.id_documento|default:"P-0001" }}</div>
+                <div class="rw-info-sub">{{ pago.cliente.email|default:"ricardo.m@example.com" }}</div>
+            </div>
+            <div class="rw-info-cell">
+                <div class="rw-info-lbl"><strong>Paciente</strong></div>
+                <div class="rw-info-main">
+                    <span class="material-symbols-outlined" style="font-size:16px; color: #43C0B0;">pets</span>
+                    {{ pago.mascota.nombre|default:"Luna" }} ({{ pago.mascota.raza|default:"Golden Retriever" }})
+                </div>
+                <div class="rw-info-sub">Fecha: {{ pago.fecha|date:"d M Y"|default:"14 Oct 2023" }}</div>
+            </div>
+            
+        </div>
+        <div class="table-wrapper">
+        <!-- Tabla de servicios -->
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>SERVICIO / PRODUCTO </th>
+                    <th>PRECIO POR UNIDAD</th>
+                    <th>CANTIDAD</th>
+                    <th>SUBTOTAL</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in pago.items.all %}
+                <tr>
+                    <td>
+                        <div class="rw-svc-name">{{ item.nombre }}</div>
+                        <div class="rw-svc-desc">{{ item.descripcion }}</div>
+                    </td>
+                    <td>${{ item.precio_unitario }}</td>
+                    <td>{{ item.cantidad }}</td>
+                    <td>${{ item.subtotal }}</td>
+                </tr>
+                {% empty %}
+                <!-- Datos de ejemplo si no hay items -->
+                <tr>
+                    <td>
+                        <div class="rw-svc-name">Consulta Veterinaria General</div>
+                        <div class="rw-svc-desc">Evaluación física completa y diagnóstico</div>
+                    </td>
+                    <td>$45.00</td>
+                    <td>1</td>
+                    <td>$45.00</td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="rw-svc-name">Vacuna Nobivac Puppy DP</div>
+                        <div class="rw-svc-desc">Prevención de Moquillo y Parvovirosis</div>
+                    </td>
+                    <td>$28.50</td>
+                    <td>1</td>
+                    <td>$28.50</td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="rw-svc-name">Limpieza Dental Ultrasónica</div>
+                        <div class="rw-svc-desc">Remoción de sarro bajo sedación ligera</div>
+                    </td>
+                    <td>$120.00</td>
+                    <td>1</td>
+                    <td>$120.00</td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="rw-svc-name">Bravecto Masticable (10–20kg)</div>
+                        <div class="rw-svc-desc">Protección pulgas y garrapatas (3 meses)</div>
+                    </td>
+                    <td>$55.00</td>
+                    <td>1</td>
+                    <td>$55.00</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+
+        <hr class="rw-divider">
+
+        <!-- Footer: Nota + Totales -->
+        <div class="rw-footer">
+            <div class="rw-note">
+                <div class="rw-note-lbl">Nota</div>
+                <p class="rw-note-text">
+                    {{ pago.nota|default:"Gracias por confiar la salud de Luna en nuestras manos. Recuerde programar su próxima cita de desparasitación en 3 meses." }}
+                </p>
+            </div>
+            <div class="rw-summary">
+                <div class="rw-sum-row">
+                    <span>Subtotal</span>
+                    <span>${{ pago.subtotal|default:"248.50" }}</span>
+                </div>
+                <div class="rw-sum-row">
+                    <span>Tax (IVA 15%)</span>
+                    <span>${{ pago.impuesto|default:"37.28" }}</span>
+                </div>
+                <div class="rw-total-row">
+                    <span class="rw-total-lbl">Monto Total</span>
+                    <span class="rw-total-amt">${{ pago.total|default:"285.78" }}</span>
+                </div>
+            </div>
+        </div>
+
+
+    </div><!-- /.rw-card -->
+</div><!-- /.page -->
+{% endblock %}
