@@ -140,7 +140,40 @@ def propietarios_detalles(request,folio):
 #------------------------------------------------------------------- C I T A S ---------------------------------------------------------------------#
 @login_required
 def citas(request):
-    return render(request, 'citas/citas_lista.html', { 'seccion_activa': 'citas'})
+    query = request.GET.get('q', '').strip()
+
+    citas_list = Cita.objects.select_related(
+        'mascota__propietario',
+        'mascota__raza__especie',   # ← faltaba esto
+        'veterinario',
+        'estado'
+    ).order_by('-fecha', '-hora')
+
+    if query:
+        citas_list = citas_list.filter(
+            Q(folio__icontains=query) |
+            Q(mascota__nombre__icontains=query) |
+            Q(propietario__primerapellido__icontains=query)
+        )
+
+    # Stats
+    conteos = Cita.objects.values('estado__nombre').annotate(total=Count('folio'))
+    stats = {item['estado__nombre']: item['total'] for item in conteos}
+
+    # Paginación
+    paginator = Paginator(citas_list, 15)
+    page_number = request.GET.get('page')
+    citas = paginator.get_page(page_number)
+
+    contexto = {
+        'seccion_activa': 'citas',
+        'citas': citas,
+        'stats': stats,
+        'total_conteo': paginator.count,
+        'query': query,
+    }
+
+    return render(request, 'citas/citas_lista.html', contexto)
 
 #------------------------------------------------------------------ C O N S U L T A S ------------------------------------------------------------#
 

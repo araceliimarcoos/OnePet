@@ -14,6 +14,7 @@
   --blue-dark: #43C0B0;
   --orange: #f5a623;
   --red: #e05252;
+  --gray: #adb5bd;
 
   --bg: #f4f6f9;
   --surface: #ffffff;
@@ -474,6 +475,8 @@ body {
 .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
 .stat-card.green { border-left-color: var(--green); }
 .stat-card.blue { border-left-color: var(--blue); }
+.stat-card.orange { border-left-color: var(--orange); }
+.stat-card.gray { border-left-color: var(--gray); }
 
 .stat-icon {
   font-size: 1.8rem;
@@ -487,6 +490,8 @@ body {
 }
 .stat-card.green .stat-icon { background: var(--green-light); }
 .stat-card.blue .stat-icon { background: var(--blue-light); }
+.stat-card.orange .stat-icon { background: #fff3d6; }
+.stat-card.gray .stat-icon { background: #f0f1f3; }
 
 .stat-label { font-size: 0.82rem; color: var(--text-muted); font-weight: 600; }
 .stat-value { font-size: 2rem; font-weight: 800; line-height: 1.1; }
@@ -746,7 +751,9 @@ body {
   cursor: pointer;
   font-size: 0.82rem;
   transition: background 0.2s, border-color 0.2s;
+  text-decoration: none;
 }
+
 .page-btn:hover:not(:disabled) { background: var(--blue-dark); }
 .page-btn.active { background: var(--blue); color: #fff; border-color: var(--blue-dark); font-weight: 700; }
 .page-btn:disabled { opacity: 0.4; cursor: default; }
