@@ -18,11 +18,87 @@
 
     <div class="page active" id="page-pagos">
         <div class="page-header">
-            <h1 class="page-title">Pagos</h1>
+            <div>
+                <h1 class="page-title">Pagos</h1>
+                <p class="page-sub">Adminstracion de pagos y generacion de recibos</p>
+            </div>
+            <div class="page-header-right">
+                <button class="btn-primary" id="btnNuevoPago">
+                    <span class="material-symbols-outlined">add_circle</span>
+                    Generar Recibo
+                </button>
+            </div>
         </div>
-        <div class="card placeholder-card">
-            <span class="placeholder-icon material-symbols-outlined">person</span>
-            <p>Módulo de Pagos</p>
+
+        <div class="card">
+            <div class="filters-bar">
+                <div class="search-box">
+                    <span class="material-symbols-outlined">search</span>
+                    <input type="text" id="pagoSearch" placeholder="Buscar por folio o cliente...">
+                </div>
+
+                <div class="filters-right">
+                    <select id="" class="filter-select" id="">
+                        <option value="">Filtro vacio</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table class="data-table" id="pagosTable">
+                    <thead>
+                        <tr>
+                            <th>CODIGO</th>
+                            <th>FECHA Y HORA</th>
+                            <th>PROPIETARIO</th>
+                            <th>MASCOTA</th>
+                            <th>TOTAL</th>
+                            <th>ESTADO</th>
+                            <th>ACCIONES</th>
+                            
+                        </tr>
+                    </thead>
+                    <tbody id="pagosBody">
+                        {% for pago in pagos %}
+                        <tr>
+                            <td><strong>#{{ pago.codigo|stringformat:"04d" }}</strong></td>
+                            <td>
+                                <div class="fecha-cell">
+                                    <span class="fecha-dia">{{ pago.fecha|date:"M d, Y" }}</span>
+                                    <span class="fecha-hora">
+                                        <span class="material-symbols-outlined">schedule</span>
+                                        {{ pago.hora|time:"H:i" }}
+                                    </span>
+                                </div>
+                            </td>
+                            <td>{{ pago.consulta.expediente.mascota.propietario.nombrepila }} {{ pago.consulta.expediente.mascota.propietario.primerapellido }}</td>
+
+                            <td><strong>{{ pago.consulta.expediente.mascota.nombre }}</strong></td>
+
+                            <td><span class="med-price">${{ pago.pagofinal|floatformat:2 }}</span></td>
+
+                            <td>
+                                {% if pago.hospitalizacion %}
+
+                                <div class="badge badge-confirmada">
+                                    {{ pago.hospitalizacion.estado.nombre|upper }}
+                                </div>
+
+                                {% else %}
+                                <div class="badge badge-pendiente">
+                                    {{ pago.consulta.cita.estado.nombre|upper }}
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'recibos' %}" class="link-green">Ver Detalles</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 

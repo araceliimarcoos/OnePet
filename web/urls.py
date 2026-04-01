@@ -29,7 +29,10 @@ urlpatterns = [
     path('citas/buscar/', views.buscar_citas, name='buscar_citas'),
     
     path('hospitalizacion/', views.hospitalizacion, name='hospitalizacion'),
+    
     path('pagos/', views.pagos, name='pagos'),
+    path('pagos/recibos/', views.recibos, name='recibos'),
+    
     path('servicios/', views.servicios, name='servicios'),
     path('catalogo/', views.servicios, name='catalogo'),
     path('medicamentos/', views.medicamentos, name='medicamentos'),
