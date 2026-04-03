@@ -18,7 +18,7 @@ urlpatterns = [
     path('mascotas/', views.mascotas, name='mascotas'),
     
     # Esta es para 'ver perfil' son los detalles y asi
-    path('mascotas/mascotas_detalles/', views.detalles_mascota, name='detalles_mascota'), 
+    path('mascotas/perfiles/<str:folio>/', views.detalles_mascota, name='detalles_mascota'), 
     path('propietarios/perfiles/<str:folio>/', views.propietarios_detalles, name='detalles_propietario'),
     
     path('propietarios/', views.propietarios, name='propietarios'),

@@ -92,7 +92,7 @@
                         </td>
                         <td>{{ m.fechanacimiento|date:"d M, Y" }}</td>
                         <td>
-                            <a href="#" class="link-green">Ver perfil</a>
+                            <a href="{% url 'detalles_mascota' m.folio %}" class="link-green">Ver perfil</a>
                         </td>
                     </tr>
                     {% empty %}
