@@ -20,7 +20,7 @@
     <div class="page-header">
         <div>
             <h1 class="page-title">Propietarios</h1>
-            <p class="page-sub">Información de contacto y datos de los propietarios</p>
+            <p class="page-sub">Información de contacto y datos de propietarios</p>
         </div>
         <div class="page-header-right">
             <button class="btn-primary" id="btnNuevoPropietario">
@@ -50,9 +50,9 @@
             <table class="data-table" id="propietariosTable">
                 <thead>
                     <tr>
-                        <th>NOMBRE</th>
+                        <th>PROPIETARIO</th>
                         <th>CONTACTO</th>
-                        <th>MASCOTAS</th>
+                        <th>MASCOTA(S)</th>
                         <th>ÚLTIMA VISITA</th>
                         <th>ACCIONES</th>
                     </tr>
@@ -66,7 +66,7 @@
                         <!-- NOMBRE -->
                         <td>
                             <div class="user-cell">
-                                <div class="user-avatar-p" style="background-color: #e2c09c;">
+                                <div class="user-avatar-p" style="background-color: #9beed9;color: var(--green-dark);">
                                     {{ propietario.nombrepila|slice:":1" }}{{ propietario.primerapellido|slice:":1" }}
                                 </div>
 

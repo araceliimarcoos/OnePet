@@ -132,7 +132,7 @@ def propietarios(request):
     
     propietarios_list = propietarios_list.order_by('-folio')
 
-    paginator = Paginator(propietarios_list, 15)
+    paginator = Paginator(propietarios_list, 10)
     page_number = request.GET.get('page')
     propietarios = paginator.get_page(page_number)
 
@@ -145,6 +145,7 @@ def propietarios(request):
 
     return render(request, 'propietarios/propietarios_lista.html', contexto)
 # . . . . .  . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .  . . . . . . . . . . . . . . . . . . . .
+
 @login_required
 def propietarios_detalles(request,folio):
     propietario = get_object_or_404(Propietario,folio=folio)
@@ -182,13 +183,17 @@ def crear_propietario(request):
         return JsonResponse({'ok': False, 'error': 'Método no permitido'}, status=405)
 
     try:
+        data = request.POST.copy()
+
         with transaction.atomic():
 
-            valido, error = validar_datos(request.POST)
+            # VALIDACIÓN
+            valido, error = validar_datos(data)
             if not valido:
                 return JsonResponse({'ok': False, 'error': error})
 
-            propietario = crear_propietario_db(request.POST)
+            # CREACIÓN
+            propietario = crear_propietario_db(data)
 
         return JsonResponse({
             'ok': True,
@@ -213,7 +218,7 @@ def crear_propietario(request):
             'ok': False,
             'error': str(e)
         })
-
+        
 def obtener_folio(request):
     if request.method != 'GET':
         return JsonResponse({'ok': False}, status=405)
