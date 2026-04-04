@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 # Importa solo los que necesites para la lista por ahora:
-from .models import Mascota, Propietario, Especie, Raza, Servicio, Medicamento, Usuario, Veterinario, Recepcionista, Administrador, Cita, Hospitalizacion, SignosVitales, Especialidad, Telefono, Pago, Expediente, Consulta
+from .models import Mascota, Propietario, Especie, Raza, Servicio, Medicamento, Usuario, Veterinario, Recepcionista, Administrador, Cita, Hospitalizacion, SignosVitales, Especialidad, Telefono, Pago, Expediente, Consulta, Receta
 
 from django.core.paginator import Paginator
 from django.db.models import Q
@@ -70,8 +70,43 @@ def mascotas(request):
     return render(request, 'mascotas/mascotas_lista.html', contexto)
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 @login_required
-def detalles_mascota(request):
-    return render(request, 'mascotas/mascotas_detalles.html', { 'seccion_activa': 'mascotas' })
+def detalles_mascota(request, folio):
+    mascota = get_object_or_404(
+        Mascota.objects.select_related('propietario', 'especie', 'raza','estado'), 
+        folio=folio
+    )
+    telefonos = Telefono.objects.filter(propietario=mascota.propietario).first()
+    hoy = timezone.now().date()
+    anios = hoy.year - mascota.fechanacimiento.year
+    meses = hoy.month - mascota.fechanacimiento.month
+    
+    if (hoy.month, hoy.day) < (mascota.fechanacimiento.month, mascota.fechanacimiento.day):
+        anios -= 1
+    if meses < 0:
+        meses += 12
+
+    if anios == 0:
+        mascota.edad = f"{meses} mes{'es' if meses != 1 else ''}"
+    else:
+        mascota.edad = f"{anios} año{'s' if anios != 1 else ''}"
+
+    # Expediente y historial
+    expediente = Expediente.objects.filter(mascota=mascota).first()
+    consultas = []
+    if expediente:
+        consultas = Consulta.objects.filter(
+            expediente=expediente
+        ).select_related('cita__veterinario').order_by('-numero')
+
+    contexto = {
+        'seccion_activa': 'mascotas',
+        'mascota': mascota,
+        'expediente': expediente,
+        'consultas': consultas,
+        'telefonos': telefonos
+    }
+
+    return render(request, 'mascotas/mascotas_detalles.html', contexto)
 
 #------------------------------------------------------------ P R O P I E T A R I O S -----------------------------------------------------------------#
 
