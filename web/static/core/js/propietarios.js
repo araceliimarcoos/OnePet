@@ -5,10 +5,22 @@ const btnCancelar   = document.getElementById('btnCancelar');
 const form          = document.getElementById('formNuevoPropietario');
 const folioInput    = document.getElementById('folioAuto');
 
+
+async function cargarFolio() {
+    try {
+        const response = await fetch('/propietarios/folio/');
+        const data = await response.json();
+
+        folioInput.value = data.folio;
+    } catch (error) {
+        console.error('Error al obtener folio:', error);
+    }
+}
 // ── Abrir modal ──
 btnAbrir.addEventListener('click', () => {
     overlay.classList.add('visible');
     document.body.style.overflow = 'hidden';
+    cargarFolio(); // 🔥 aquí generas el folio dinámico
 });
 
 // ── Cerrar modal ──
@@ -16,8 +28,6 @@ function cerrarModal() {
     overlay.classList.remove('visible');
     document.body.style.overflow = '';
     form.reset();
-    // Restaurar el folio (reset lo borra al ser readonly en algunos browsers)
-    folioInput.value = 'VCP-2024-0892';
 }
 
 btnCerrar.addEventListener('click', cerrarModal);
@@ -35,7 +45,7 @@ form.addEventListener('submit', async e => {
     const formData = new FormData(form);
 
     try {
-        const response = await fetch('/propietarios/nuevo/', {
+        const response = await fetch('/propietarios/crear/', {
             method: 'POST',
             body: formData,
             headers: { 'X-CSRFToken': formData.get('csrfmiddlewaretoken') }
@@ -45,6 +55,9 @@ form.addEventListener('submit', async e => {
 
         if (data.ok) {
             cerrarModal();
+            alert(data.message);
+            location.reload();
+
             // TODO: mostrarToast('Propietario registrado correctamente');
         } else {
             alert('Error: ' + data.error);

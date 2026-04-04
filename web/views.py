@@ -1,16 +1,17 @@
-# web/views.py
+#..........................................................................................................................................................
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
-# Importa solo los que necesites para la lista por ahora:
 from .models import Mascota, Propietario, Especie, Raza, Servicio, Medicamento, Usuario, Veterinario, Recepcionista, Administrador, Cita, Hospitalizacion, SignosVitales, Especialidad, Telefono, Pago, Expediente, Consulta, Receta
 
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.db.models import Count
-####################################################################################
+import re
+#........................................................................................................................................................
+
 def inicio(request):
     """Página de inicio pública (landing page)."""
     if request.user.is_authenticated:
@@ -19,9 +20,6 @@ def inicio(request):
 
 @login_required
 def api_citas(request):
-    # Cuando tengas modelos reales, harías:
-    # citas = Cita.objects.all()
-    # y construirías la lista desde la BD
 
     eventos = [
         {
@@ -41,12 +39,12 @@ def api_citas(request):
     ]
     return JsonResponse(eventos, safe=False)
 
-
 @login_required
 def dashboard (request):
     return render(request, 'dashboard.html', { 'seccion_activa': 'dashboard' })
-#------------------------------------------ MASCOTAS ------------------------------------------------#
-
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------- M A S C O T A S --------------------------------------------------------------------------------------------#
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @login_required
 def mascotas(request):
 
@@ -108,7 +106,10 @@ def detalles_mascota(request, folio):
 
     return render(request, 'mascotas/mascotas_detalles.html', contexto)
 
-#------------------------------------------------------------ P R O P I E T A R I O S -----------------------------------------------------------------#
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------- P R O P I E T A R I O S --------------------------------------------------------------------------------------------#
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 @login_required
 def propietarios(request):
@@ -128,6 +129,8 @@ def propietarios(request):
             Q(segundoapellido__icontains=query) |
             Q(folio__icontains=query)
         )
+    
+    propietarios_list = propietarios_list.order_by('-folio')
 
     paginator = Paginator(propietarios_list, 15)
     page_number = request.GET.get('page')
@@ -141,15 +144,13 @@ def propietarios(request):
     }
 
     return render(request, 'propietarios/propietarios_lista.html', contexto)
-
+# . . . . .  . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .  . . . . . . . . . . . . . . . . . . . .
 @login_required
 def propietarios_detalles(request,folio):
     propietario = get_object_or_404(Propietario,folio=folio)
     telefonos = Telefono.objects.filter(propietario=propietario).first()
     mascotas = Mascota.objects.filter(propietario=propietario)
     citas = Cita.objects.filter(propietario=propietario).select_related('mascota', 'veterinario').order_by('-fecha')[:5]
-    
-    
     # Edades de las mascotas
     hoy = timezone.now().date()
     mascotas_con_edad = []
@@ -171,8 +172,58 @@ def propietarios_detalles(request,folio):
 
     return render(request, 'propietarios/propietarios_detalles.html', contexto)
     
+#. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
 
-#------------------------------------------------------------------- C I T A S ---------------------------------------------------------------------#
+from django.db import transaction, IntegrityError
+from .services import validar_datos, crear_propietario_db, generar_folio
+
+def crear_propietario(request):
+    if request.method != 'POST':
+        return JsonResponse({'ok': False, 'error': 'Método no permitido'}, status=405)
+
+    try:
+        with transaction.atomic():
+
+            valido, error = validar_datos(request.POST)
+            if not valido:
+                return JsonResponse({'ok': False, 'error': error})
+
+            propietario = crear_propietario_db(request.POST)
+
+        return JsonResponse({
+            'ok': True,
+            'message': 'Propietario guardado correctamente',
+            'id': propietario.folio
+        })
+
+    except IntegrityError:
+        return JsonResponse({
+            'ok': False,
+            'error': 'El correo ya está registrado'
+        })
+
+    except ValueError as e:
+        return JsonResponse({
+            'ok': False,
+            'error': str(e)
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'ok': False,
+            'error': str(e)
+        })
+
+def obtener_folio(request):
+    if request.method != 'GET':
+        return JsonResponse({'ok': False}, status=405)
+
+    return JsonResponse({'folio': generar_folio()})
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------- C I T A S --------------------------------------------------------------------------------------------#
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 @login_required
 def citas(request):
     query = request.GET.get('q', '').strip()
@@ -537,3 +588,4 @@ def nuevo_propietario(request):
         raza = request.POST.get('correo')
         return JsonResponse({'ok': True})
     return JsonResponse({'ok': False, 'error': 'Método no permitido'})
+
