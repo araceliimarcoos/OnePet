@@ -18,7 +18,7 @@ urlpatterns = [
     path('mascotas/', views.mascotas, name='mascotas'),
     
     # Esta es para 'ver perfil' son los detalles y asi
-    path('mascotas/mascotas_detalles/', views.detalles_mascota, name='detalles_mascota'), 
+    path('mascotas/perfiles/<str:folio>/', views.detalles_mascota, name='detalles_mascota'), 
     path('propietarios/perfiles/<str:folio>/', views.propietarios_detalles, name='detalles_propietario'),
     
     path('propietarios/', views.propietarios, name='propietarios'),
@@ -46,5 +46,9 @@ urlpatterns = [
     
     #Estos son para las ventanitas
     path('mascotas/nueva/', views.nueva_mascota, name='nueva_mascota'),
-    path('propietarios/nuevo/', views.nuevo_propietario, name='nuevo_propietario'),
+    
+    
+    path('propietarios/nuevo/', views.nuevo_propietario, name='nuevo_propietario'), #Este es del modal
+    path('propietarios/folio/', views.obtener_folio, name='obtener_folio'),
+    path('propietarios/crear/', views.crear_propietario, name='crear_propietario')#Este es para crear uno nuevo#Este obtiene el folio
 ]

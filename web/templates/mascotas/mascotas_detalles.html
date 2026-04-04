@@ -22,19 +22,7 @@
 {% block contenido %}
 <div class="page active" id="page-mascotas-detalles">
 
-    <!-- ===== PAGE HEADER ===== -->
-    <div class="page-header">
-        <div>
-            <h1 class="page-title">Mascotas</h1>
-            <p class="page-sub">Pendiente</p>
-        </div>
-        <div class="page-header-right">
-            <button class="btn-primary">
-                <span class="material-symbols-outlined">add_circle</span>
-                Pendiente
-            </button>
-        </div>
-    </div>
+    
 
     <!-- ===== GRID PRINCIPAL ===== -->
     <div class="mascota-grid-container">
@@ -47,44 +35,47 @@
                 <div class="mascota-foto-section">
                     <div class="mascota-avatar-wrapper">
                         <img src="{% static 'core/imagenes/dog.png' %}" alt="Max" class="mascota-img-large">
-                        <button class="edit-photo-btn">
-                            <span class="material-symbols-outlined">edit</span>
-                        </button>
+                        
                     </div>
                 </div>
 
                 <div class="mascota-details-section">
                     <div class="mascota-name-row">
-                        <h1 class="mascota-title">Max</h1>
-                        <span class="chip chip-green-soft">Paciente Activo</span>
-                        <span class="chip chip-orange-soft">Alergia: Penicilina</span>
+                        <h1 class="mascota-title">{{ mascota.nombre }}</h1>
                     </div>
-                    <p class="mascota-meta">Golden Retriever &bull; Male &bull; Neutered &bull; ID: #4402</p>
+                    <p class="mascota-meta">{{ mascota.especie.nombre }} &bull; {{ mascota.raza.nombre }} &bull; {% if mascota.sexo == 'M' %}Macho{% else %}Hembra{% endif %} &bull; Folio: {{ mascota.folio }}</p>
 
                     <div class="mascota-quick-stats">
                         <div class="q-stat">
                             <span class="q-stat-label">EDAD</span>
-                            <strong>5y 4m</strong>
+                            <strong>{{ mascota.edad }}</strong>
                         </div>
                         <div class="q-stat">
                             <span class="q-stat-label">PESO</span>
-                            <strong>32.4 kg</strong>
+                            <strong>{{ mascota.peso }} kg</strong>
                         </div>
+                        
                         <div class="q-stat">
-                            <span class="q-stat-label">ÚLTIMA VISITA</span>
-                            <strong>Oct 12</strong>
+                            <span class="q-stat-label">ALERGIA</span>
+                            {% if mascota.alergias %}
+                            <strong>{{ mascota.alergias }}</strong>
+                            {% else %}
+                            <strong>Sin Alergias</strong>
+                            {% endif %}
                         </div>
+
                         <div class="q-stat">
-                            <span class="q-stat-label">BODY SCORE</span>
-                            <strong>5 / 9</strong>
+                            <span class="q-stat-label">COLOR</span>
+                            <strong>{{ mascota.color }}</strong>
+                        </div>
+
+                        <div class="q-stat">
+                            <span class="q-stat-label">CARACTERISTICA PARTICULAR</span>
+                            <strong>{{ mascota.caracunica }}</strong>
                         </div>
                     </div>
                 </div>
 
-                <div class="mascota-actions-top">
-                    <button class="btn-outline">Exportar Registro</button>
-                    <button class="btn-outline-cyan">Nota rápida</button>
-                </div>
             </div>
 
             <!-- Tabs -->
@@ -227,27 +218,27 @@
                     <h4>Detalles del Propietario</h4>
                 </div>
                 <div class="owner-info">
-                    <div class="owner-avatar">JD</div>
+                    <div class="owner-avatar">{{ mascota.propietario.nombrepila|slice:":1" }}{{ mascota.propietario.primerapellido|slice:":1" }}</div>
                     <div class="owner-text">
-                        <strong>John Doe</strong>
-                        <span>Propietario</span>
+                        <strong>{{ mascota.propietario.nombrepila }} {{ mascota.propietario.primerapellido }}</strong>
+                        <span>{{ mascota.propietario.folio }}</span>
                     </div>
                 </div>
                 <ul class="owner-contact-list">
                     <li>
                         <span class="material-symbols-outlined">call</span>
-                        +1 (555) 123-4567
+                        {{ telefonos.numprincipal }}
                     </li>
                     <li>
                         <span class="material-symbols-outlined">mail</span>
-                        john.doe@example.com
+                        {{ mascota.propietario.correo }}
                     </li>
                     <li>
                         <span class="material-symbols-outlined">home</span>
-                        123 Pine St, Spring City, SC 45678
+                        {{ mascota.propietario.dircalle|add:" "|add:mascota.propietario.dirnum|add:", "|add:mascota.propietario.dircolonia }}
                     </li>
                 </ul>
-                <button class="btn-full-gray">Contacto propietario</button>
+                <a href="{% url 'detalles_propietario' mascota.propietario.folio %}" class="btn-full-gray">Ver Perfil</a>
             </div>
 
             <!-- Widget: Tratamiento -->

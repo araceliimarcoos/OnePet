@@ -70,7 +70,6 @@
                       <th>ESPECIE</th>
                       <th>RAZA</th>
                       <th>PROPIETARIO</th>
-                      <th>FECHA NACIMIENTO</th>
                       <th>ACCIONES</th>
                     </tr>
                   </thead>
@@ -81,7 +80,7 @@
                         <td>
                             <!-- Solo el nombre y folio, sin divs adicionales -->
                             <strong>{{ m.nombre }}</strong><br>
-                            <small>Folio: {{ m.folio }}</small>
+                            <small>{{ m.folio }}</small>
                         </td>
                         <td>{{ m.especie.nombre }}</td>
                         <td>{{ m.raza.nombre }}</td>
@@ -90,9 +89,8 @@
                             {{ m.propietario.nombrepila }} {{ m.propietario.primerapellido }}<br>
                             <small>{{ m.propietario.correo }}</small>
                         </td>
-                        <td>{{ m.fechanacimiento|date:"d M, Y" }}</td>
                         <td>
-                            <a href="#" class="link-green">Ver perfil</a>
+                            <a href="{% url 'detalles_mascota' m.folio %}" class="link-green">Ver perfil</a>
                         </td>
                     </tr>
                     {% empty %}
@@ -129,7 +127,7 @@
 
         </div>
     </div>
-
+<!-- MODAL PARA NUEVA MASCOTA-->
 <div class="modal-overlay" id="modalNuevaMascota">
     <div class="modal">
         <div class="modal-header">
