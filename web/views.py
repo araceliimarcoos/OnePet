@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 # Importa solo los que necesites para la lista por ahora:
-from .models import Mascota, Propietario, Especie, Raza, Servicio, Medicamento, Usuario,Veterinario, Recepcionista, Administrador, Cita, Hospitalizacion, SignosVitales, Especialidad
+from .models import Mascota, Propietario, Especie, Raza, Servicio, Medicamento, Usuario, Veterinario, Recepcionista, Administrador, Cita, Hospitalizacion, SignosVitales, Especialidad, Telefono, Pago, Expediente, Consulta
 
 from django.core.paginator import Paginator
 from django.db.models import Q
@@ -106,21 +106,104 @@ def propietarios(request):
     }
 
     return render(request, 'propietarios/propietarios_lista.html', contexto)
-#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
 @login_required
-def detalles_propietario(request):
-    return render(request, 'propietarios/propietarios_detalles.html', { 'seccion_activa': 'propietarios'})
+def propietarios_detalles(request,folio):
+    propietario = get_object_or_404(Propietario,folio=folio)
+    telefonos = Telefono.objects.filter(propietario=propietario).first()
+    mascotas = Mascota.objects.filter(propietario=propietario)
+    citas = Cita.objects.filter(propietario=propietario).select_related('mascota', 'veterinario').order_by('-fecha')[:5]
+    
+    
+    # Edades de las mascotas
+    hoy = timezone.now().date()
+    mascotas_con_edad = []
+    for m in mascotas:
+        anios = hoy.year - m.fechanacimiento.year
+        if (hoy.month, hoy.day) < (m.fechanacimiento.month, m.fechanacimiento.day):
+            anios -= 1
+        m.edad = f"{anios} año{'s' if anios != 1 else ''}"
+        mascotas_con_edad.append(m)
+
+    contexto = {
+        'seccion_activa': 'propietarios',
+        'propietario': propietario,
+        'telefonos': telefonos,
+        'mascotas': mascotas,
+        'mascotas_count': len(mascotas_con_edad),
+        'citas': citas
+    }
+
+    return render(request, 'propietarios/propietarios_detalles.html', contexto)
+    
 
 #------------------------------------------------------------------- C I T A S ---------------------------------------------------------------------#
 @login_required
 def citas(request):
-    return render(request, 'citas/citas_lista.html', { 'seccion_activa': 'citas'})
+    query = request.GET.get('q', '').strip()
+
+    citas_list = Cita.objects.select_related(
+        'mascota__propietario',
+        'mascota__raza__especie',
+        'veterinario',
+        'estado'
+    ).order_by('-fecha', '-hora')
+
+    if query:
+        citas_list = citas_list.filter(
+            Q(folio__icontains=query) |
+            Q(mascota__nombre__icontains=query) |
+            Q(propietario__primerapellido__icontains=query)
+        )
+
+    # Stats
+    conteos = Cita.objects.values('estado__nombre').annotate(total=Count('folio'))
+    stats = {item['estado__nombre']: item['total'] for item in conteos}
+
+    # Paginación
+    paginator = Paginator(citas_list, 15)
+    page_number = request.GET.get('page')
+    citas = paginator.get_page(page_number)
+
+    contexto = {
+        'seccion_activa': 'citas',
+        'citas': citas,
+        'stats': stats,
+        'total_conteo': paginator.count,
+        'query': query,
+    }
+
+    return render(request, 'citas/citas_lista.html', contexto)
 
 #------------------------------------------------------------------ C O N S U L T A S ------------------------------------------------------------#
 
 @login_required
 def consultas(request):
-    return render(request, 'consultas/consultas_lista.html', { 'seccion_activa': 'consultas' })
+    query = request.GET.get('q', '').strip()
+    
+    consultas_list = Consulta.objects.select_related(
+        'cita__mascota__propietario'
+    ).order_by('-numero')
+    
+    if query:
+        consultas_list = consultas_list.filter(
+            Q(numero__icontains=query) |
+            Q(cita__mascota__nombre__icontains=query) |
+            Q(cita__propietario__primerapellido__icontains=query)
+        )
+    
+    # Paginación
+    paginator = Paginator(consultas_list, 15)
+    page_number = request.GET.get('page')
+    consultas = paginator.get_page(page_number)
+    
+    contexto = {
+        'seccion_activa': 'consultas',
+        'consultas': consultas,
+        'total_conteo': paginator.count,
+    }
+    
+    return render(request, 'consultas/consultas_lista.html', contexto)
 
 @login_required
 def iniciar_consulta(request):
@@ -205,7 +288,24 @@ def hospitalizacion(request):
 #............................................................................. P A G O S ..................................................................................#
 @login_required
 def pagos(request):
-    return render(request, 'pagos/pagos_lista.html', { 'seccion_activa': 'pagos' })
+    
+    pagos_list = Pago.objects.select_related(
+        'consulta__cita__mascota__propietario',
+        'hospitalizacion'
+    ).order_by('-fecha', '-hora')
+    
+    contexto = {
+        'seccion_activa': 'pagos',
+        'pagos': pagos_list,
+    }
+    
+    return render(request, 'pagos/pagos_lista.html', contexto)
+
+@login_required
+def recibos(request):
+    
+    return render(request, 'pagos/pagos_recibo.html', { 'seccion_activa': 'pagos' })
+
 #............................................................................ S E R V I C I O S ............................................................................#
 
 from django.db.models import Q

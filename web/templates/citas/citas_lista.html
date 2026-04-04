@@ -30,37 +30,42 @@
         </div>
     </div>
 
-    <!-- ===== STATS ===== -->
-    <div class="citas-stats">
-        <div class="cita-stat-card verde">
-            <div class="cita-stat-icon"><span class="material-symbols-outlined">event_available</span></div>
-            <div>
-                <div class="cita-stat-label">Confirmadas</div>
-                <div class="cita-stat-value">12</div>
+    <!-- STATS -->
+        <div class="stats-grid">
+
+            <div class="stat-card green">
+                <span class="stat-icon material-symbols-outlined">event_available</span>
+                <div class="stat-body">
+                    <p class="stat-label">Atendidas</p>
+                    <p class="stat-value">{{ stats.Atendida|default:"0" }}</p>
+                </div>
             </div>
-        </div>
-        <div class="cita-stat-card azul">
-            <div class="cita-stat-icon"><span class="material-symbols-outlined">stethoscope</span></div>
-            <div>
-                <div class="cita-stat-label">En Curso</div>
-                <div class="cita-stat-value">3</div>
+
+            <div class="stat-card blue">
+                <span class="stat-icon material-symbols-outlined">assignment_late</span>
+                <div class="stat-body">
+                <p class="stat-label">Pendientes</p>
+                <p class="stat-value">{{ stats.Pendiente|default:"0" }}</p>
+                </div>
             </div>
-        </div>
-        <div class="cita-stat-card naranja">
-            <div class="cita-stat-icon"><span class="material-symbols-outlined">schedule</span></div>
-            <div>
-                <div class="cita-stat-label">Pendientes</div>
-                <div class="cita-stat-value">7</div>
+
+            <div class="stat-card orange">
+                <span class="stat-icon material-symbols-outlined">credit_card</span>
+                <div class="stat-body">
+                <p class="stat-label">Pagadas</p>
+                <p class="stat-value">{{ stats.Pagada|default:"0" }}</p>
+                </div>
             </div>
-        </div>
-        <div class="cita-stat-card gris">
-            <div class="cita-stat-icon"><span class="material-symbols-outlined">event_busy</span></div>
-            <div>
-                <div class="cita-stat-label">Canceladas</div>
-                <div class="cita-stat-value">2</div>
+
+            <div class="stat-card gray">
+                <span class="stat-icon material-symbols-outlined">event_busy</span>
+                <div class="stat-body">
+                <p class="stat-label">Canceladas</p>
+                <p class="stat-value">{{ stats.Cancelada|default:"0" }}</p>
+                </div>
             </div>
+
         </div>
-    </div>
 
     <!-- ===== TABLA ===== -->
     <div class="card">
@@ -106,15 +111,15 @@
                     </tr>
                 </thead>
                 <tbody id="citasBody">
-
+                    {% for cita in citas %}
                     <tr data-estado="Confirmada" data-vet="Dra. Sofia Mendez">
-                        <td><span class="folio-badge">#C-0001</span></td>
+                        <td><span class="folio-badge">#{{ cita.folio }}</span></td>
                         <td>
                             <div class="fecha-cell">
-                                <span class="fecha-dia">Oct 15, 2025</span>
+                                <span class="fecha-dia">{{ cita.fecha|date:"M d, Y" }}</span>
                                 <span class="fecha-hora">
                                     <span class="material-symbols-outlined">schedule</span>
-                                    08:00 - 08:45 AM
+                                    {{ cita.hora|time:"H:i" }}
                                 </span>
                             </div>
                         </td>
@@ -122,150 +127,89 @@
                             <div class="mascota-cell">
                                 <div class="mascota-avatar"><span class="material-symbols-outlined">pets</span></div>
                                 <div>
-                                    <span class="mascota-nombre">Buddy</span>
-                                    <span class="mascota-raza">Labrador • Canino</span>
+                                    <span class="mascota-nombre">{{ cita.mascota.nombre }}</span>
+                                    <span class="mascota-raza">{{ cita.mascota.raza.nombre }} • {{ cita.mascota.raza.especie.nombre }}</span>
                                 </div>
                             </div>
                         </td>
-                        <td>John Doe</td>
-                        <td>Dra. Sofia Mendez</td>
-                        <td><span class="motivo-text">Vacunación anual</span></td>
-                        <td><span class="badge-cita badge-confirmada"><span class="material-symbols-outlined">check_circle</span>Confirmada</span></td>
+                        <td>{{ cita.propietario.nombrepila }} {{ cita.propietario.primerapellido }}</td>
+                        <td>{{ cita.veterinario.nombrepila }} {{ cita.veterinario.primerapellido }}</td>
+                        <td><span class="motivo-text">{{ cita.motivo }}</span></td>
+                        <td>
+                            {% if cita.estado.nombre == "Atendida" %}
+                            <span class="badge-cita badge-confirmada">
+                                <span class="material-symbols-outlined">check_circle</span>
+                                {{ cita.estado.nombre }}
+                            </span>
+                            {% elif cita.estado.nombre == "Pendiente" %}
+                            <span class="badge-cita badge-pendiente">
+                                <span class="material-symbols-outlined">schedule</span>
+                                {{ cita.estado.nombre }}
+                            </span>
+                            {% elif cita.estado.nombre == "Cancelada" %}
+                            <span class="badge-cita badge-cancelada">
+                                <span class="material-symbols-outlined">cancel</span>
+                                {{ cita.estado.nombre }}
+                            </span>
+                            {% else %}
+                            <span class="badge-cita badge-pendiente">
+                                <span class="material-symbols-outlined">schedule</span>
+                                {{ cita.estado.nombre }}
+                            </span>
+                            {% endif %}
+                        </td>
                         <td>
                             <a href="#" class="link-green">Ver Detalles</a>
                         </td>
                     </tr>
+                    {% empty %}
 
-                    <tr data-estado="En curso" data-vet="Carlos Ruiz">
-                        <td><span class="folio-badge">#C-0002</span></td>
-                        <td>
-                            <div class="fecha-cell">
-                                <span class="fecha-dia">Oct 15, 2025</span>
-                                <span class="fecha-hora">
-                                    <span class="material-symbols-outlined">schedule</span>
-                                    09:15 – 10:00 AM
-                                </span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="mascota-cell">
-                                <div class="mascota-avatar" style="background:#fde8ff;"><span class="material-symbols-outlined" style="color:#9b4dc0;">pets</span></div>
-                                <div>
-                                    <span class="mascota-nombre">Luna</span>
-                                    <span class="mascota-raza">Maine Coon • Felino</span>
-                                </div>
-                            </div>
-                        </td>
-                        <td>Emily Smith</td>
-                        <td>Carlos Ruiz</td>
-                        <td><span class="motivo-text">Cirugía dental</span></td>
-                        <td><span class="badge-cita badge-en-curso"><span class="material-symbols-outlined">stethoscope</span>En curso</span></td>
-                        <td>
-                            <a href="#" class="link-green">Ver Detalles</a>
-                        </td>
+                    <tr>
+                        <td colspan="8">No hay citas registradas</td>
                     </tr>
 
-                    <tr data-estado="Pendiente" data-vet="Dra. Elena Blanco">
-                        <td><span class="folio-badge">#C-0003</span></td>
-                        <td>
-                            <div class="fecha-cell">
-                                <span class="fecha-dia">Oct 16, 2025</span>
-                                <span class="fecha-hora">
-                                    <span class="material-symbols-outlined">schedule</span>
-                                    11:00 – 11:30 AM
-                                </span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="mascota-cell">
-                                <div class="mascota-avatar"><span class="material-symbols-outlined">pets</span></div>
-                                <div>
-                                    <span class="mascota-nombre">Max</span>
-                                    <span class="mascota-raza">Golden Retriever • Canino</span>
-                                </div>
-                            </div>
-                        </td>
-                        <td>Carlos García</td>
-                        <td>Dra. Elena Blanco</td>
-                        <td><span class="motivo-text">Revisión de piel</span></td>
-                        <td><span class="badge-cita badge-pendiente"><span class="material-symbols-outlined">schedule</span>Pendiente</span></td>
-                        <td>
-                            <a href="#" class="link-green">Ver Detalles</a>
-                        </td>
-                    </tr>
-
-                    <tr data-estado="Completada" data-vet="Dra. Sofia Mendez">
-                        <td><span class="folio-badge">#C-0004</span></td>
-                        <td>
-                            <div class="fecha-cell">
-                                <span class="fecha-dia">Oct 14, 2025</span>
-                                <span class="fecha-hora">
-                                    <span class="material-symbols-outlined">schedule</span>
-                                    08:00 – 08:30 AM
-                                </span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="mascota-cell">
-                                <div class="mascota-avatar"><span class="material-symbols-outlined">pets</span></div>
-                                <div>
-                                    <span class="mascota-nombre">Cooper</span>
-                                    <span class="mascota-raza">Golden • Canino</span>
-                                </div>
-                            </div>
-                        </td>
-                        <td>Ana López</td>
-                        <td>Dra. Sofia Mendez</td>
-                        <td><span class="motivo-text">Consulta general</span></td>
-                        <td><span class="badge-cita badge-completada"><span class="material-symbols-outlined">task_alt</span>Completada</span></td>
-                        <td>
-                            <a href="#" class="link-green">Ver Detalles</a>
-                        </td>
-                    </tr>
-
-                    <tr data-estado="Cancelada" data-vet="Carlos Ruiz">
-                        <td><span class="folio-badge">#C-0005</span></td>
-                        <td>
-                            <div class="fecha-cell">
-                                <span class="fecha-dia">Oct 14, 2025</span>
-                                <span class="fecha-hora">
-                                    <span class="material-symbols-outlined">schedule</span>
-                                    02:00 – 02:30 PM
-                                </span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="mascota-cell">
-                                <div class="mascota-avatar" style="background:#fff3d6;"><span class="material-symbols-outlined" style="color:var(--orange);">pets</span></div>
-                                <div>
-                                    <span class="mascota-nombre">Milo</span>
-                                    <span class="mascota-raza">Poodle • Canino</span>
-                                </div>
-                            </div>
-                        </td>
-                        <td>Roberto Vega</td>
-                        <td>Carlos Ruiz</td>
-                        <td><span class="motivo-text">Desparasitación</span></td>
-                        <td><span class="badge-cita badge-cancelada"><span class="material-symbols-outlined">cancel</span>Cancelada</span></td>
-                        <td>
-                            <a href="#" class="link-green">Ver Detalles</a>
-                        </td>
-                    </tr>
-
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
 
         <!-- Footer de tabla -->
         <div class="table-footer">
-            <span>Mostrando <strong>1–5</strong> de <strong>24</strong> citas</span>
+            <span>
+                Mostrando 
+                <strong> {{citas.start_index}}-{{citas.end_index}} </strong> 
+                de 
+                <strong>{{ total_conteo }}</strong> citas
+            </span>
+
+            <!-- Controles -->
             <div class="pagination">
-                <button class="page-btn" disabled>‹</button>
-                <button class="page-btn active">1</button>
-                <button class="page-btn">2</button>
-                <button class="page-btn">3</button>
-                <span>…</span>
-                <button class="page-btn">›</button>
+                <!-- boton anterior -->
+                {% if citas.has_previous %}
+                    <a href="?page={{ citas.previous_page_number }}{% if query %}&q={{ query }}{% endif %}"
+                        class="page-btn">‹</a>
+                {% else %}
+                    <button class="page-btn" disabled>‹</button>
+                {% endif %}
+                    
+                <!-- numeros de pagina -->
+                {% for num in citas.paginator.page_range %}
+                    {% if citas.number == num %}
+                        <button class="page-btn active">{{ num }}</button>
+                    {% elif num >= citas.number|add:"-2" and num <= citas.number|add:"2"  %}
+                        <a href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}"
+                            class="page-btn">{{ num }}</a>
+                    {% endif %}
+                {% endfor %}
+
+                <!-- boton siguiente -->
+                {% if citas.has_next %}
+                    <a href="?page={{ citas.next_page_number }}{% if query %}&q={{ query }}{% endif %}" 
+                        class="page-btn">›</a>
+                {% else %}
+                    <button class="page-btn" disabled>›</button>
+                {% endif %}
+                
             </div>
         </div>
 
