@@ -2,14 +2,15 @@
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from .models import Mascota, Propietario, Especie, Raza, Servicio, Medicamento, Usuario, Veterinario, Recepcionista, Administrador, Cita, Hospitalizacion, SignosVitales, Especialidad, Telefono, Pago, Expediente, Consulta, Receta
 
 from django.core.paginator import Paginator
-from django.db.models import Q
-from django.db.models import Count
+from django.db.models import Q, Count
 import re
+import json
 #........................................................................................................................................................
 
 def inicio(request):
@@ -460,6 +461,33 @@ def medicamentos(request):
     }
 
     return render(request, 'medicamentos/medicamentos_lista.html', contexto)
+
+
+from .services import validar_datos_medicamento, crear_medicamento_db
+@require_POST
+def nuevo_medicamento(request):
+    #recibe el post del modal y guard el medicameto
+    try:
+        data = {
+            'nombre': request.POST.get('nombre', ''),
+            'precio': request.POST.get('precio', ''),
+            'descripcion': request.POST.get('descripcion', '')
+        }
+        
+        ok, error = validar_datos_medicamento(data)
+        if not ok:
+            return JsonResponse({'ok': False, 'error': error})
+        
+        medicamento = crear_medicamento_db(data)
+        return JsonResponse({
+            'ok': True, 
+            'clave': medicamento.clave, 
+            'nombre': medicamento.nombre,
+        })
+    
+    except Exception as e:
+        return JsonResponse({'ok': False, 'error': f'Error interno: {str(e)}'})
+    
 
 #.............................................................. U S U A R I O S  ..............................................................................................................................#
 
