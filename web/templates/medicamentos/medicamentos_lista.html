@@ -9,7 +9,6 @@
     <a href="{% url 'dashboard' %}">Inicio</a>
     <span class="material-symbols-outlined">chevron_right</span>
     <span class="breadcrumb-current">Medicamentos</span>
-    
 {% endblock %}
 
 {% block topbar_titulo %}Lista de Medicamentos{% endblock %}
@@ -23,98 +22,230 @@
                 <p class="page-sub">Medicamentos en el Sistema</p>
             </div>
             <div class="page-header-right">
-                <button class="btn-primary" id="btnNuevaMascota">
+                <button class="btn-primary" id="btnNuevoMedicamento">
                     <span class="material-symbols-outlined">add_circle</span>
                     Nuevo Medicamento
                 </button>
             </div>
         </div>
-        
-        <!-- AQUI INICIA LA TABLA -->
+
         <div class="card">
 
             <div class="filters-bar">
-            <form method="GET">
-                <div class="search-box">
-                    <span class="material-symbols-outlined style="color: #7a8899"">search</span>
-                    <input 
-                        type="text" 
-                        name="q"
-                        value="{{ query|default:'' }}"
-                        placeholder="Buscar por nombre o clave..."
-                    >
-                </div>
-            </form>
-        </div>
+                <form method="GET">
+                    <div class="search-box">
+                        <span class="material-symbols-outlined" style="color: #7a8899">search</span>
+                        <input
+                            type="text"
+                            name="q"
+                            value="{{ query|default:'' }}"
+                            placeholder="Buscar por nombre o clave..."
+                        >
+                    </div>
+                </form>
+            </div>
 
             <div class="table-wrapper">
                 <table class="data-table">
                     <thead>
                         <tr>
                             <th>CLAVE</th>
-                            <th>MEDICAMENTO</th> 
+                            <th>MEDICAMENTO</th>
                             <th>PRECIO</th>
                             <th>ACCIONES</th>
                         </tr>
                     </thead>
 
-<!--...............................................................................................................................................-->
                     <tbody id="catalogoBody">
                         {% for medicamento in medicamentos %}
                         <tr>
-
-                            <!-- CLAVE -->
                             <td>
                                 <code class="med-key">{{ medicamento.clave }}</code>
                             </td>
-
-                            <!-- NOMBRE + DESCRIPCIÓN -->
                             <td>
                                 <div class="med-cell">
-                                    <div>
-                                        <span class="med-name">{{ medicamento.nombre }}</span>
-                                        <small class="med-desc">{{ medicamento.descripcion }}</small>
-                                    </div>  
+                                    <span class="med-name">{{ medicamento.nombre }}</span>
+                                    <small class="med-desc">{{ medicamento.descripcion }}</small>
                                 </div>
                             </td>
-
-                            <!-- COSTO -->
                             <td>
-                                <span class="med-price">${{ medicamento.precio }}</span>
+                                <span class="med-price">${{ medicamento.precio|stringformat:".2f" }}</span>
                             </td>
-
-                            <!-- DETALLES -->
-                            <td><div><a href="#" class="link-green">Ver Detalles</a></div></td>
+                            <td>
+                                <div class="menu-wrap">
+                                    <button class="menu-btn"
+                                            aria-label="Acciones"
+                                            data-id="{{ medicamento.id }}"
+                                            data-clave="{{ medicamento.clave }}"
+                                            data-nombre="{{ medicamento.nombre }}"
+                                            data-precio="{{ medicamento.precio|stringformat:'.2f' }}"
+                                            data-descripcion="{{ medicamento.descripcion }}">
+                                        <span class="material-symbols-outlined">more_horiz</span>
+                                    </button>
+                                    <div class="dropdown-menu" role="menu">
+                                        <button class="dropdown-item" role="menuitem" data-accion="detalles">
+                                            <span class="material-symbols-outlined">info</span>
+                                            Ver detalles
+                                        </button>
+                                        <button class="dropdown-item" role="menuitem" data-accion="editar">
+                                            <span class="material-symbols-outlined">edit</span>
+                                            Editar
+                                        </button>
+                                        <div class="dropdown-divider"></div>
+                                        <button class="dropdown-item danger" role="menuitem"
+                                                data-id="{{ medicamento.id }}"
+                                                data-nombre="{{ medicamento.nombre }}">
+                                            <span class="material-symbols-outlined">delete</span>
+                                            Eliminar
+                                        </button>
+                                    </div>
+                                </div>
+                            </td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="5">No hay medicamentos registrados</td>
+                            <td colspan="4">No hay medicamentos registrados</td>
                         </tr>
                         {% endfor %}
-
                     </tbody>
                 </table>
             </div>
-            
-            <div class="table-footer">
-            
-                <div class="pagination">
 
+            <div class="table-footer">
+                <div class="pagination">
                     {% if medicamentos.has_previous %}
                         <a href="?page={{ medicamentos.previous_page_number }}" class="page-btn">‹</a>
                     {% endif %}
-
-                    <span class="page-btn active">
-                        {{ medicamentos.number }}
-                    </span>
-
+                    <span class="page-btn active">{{ medicamentos.number }}</span>
                     {% if medicamentos.has_next %}
                         <a href="?page={{ medicamentos.next_page_number }}" class="page-btn">›</a>
                     {% endif %}
-
                 </div>
             </div>
-
+        </div>
     </div>
 
+    <!-- ══════════════════════════ MODAL: NUEVO MEDICAMENTO ══════════════════════════ -->
+    <div class="modal-overlay" id="modalNuevoMedicamento">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Registrar Nuevo Medicamento</h2>
+                <button class="modal-close" id="btnCerrarModal">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <form id="formNuevoMedicamento" novalidate>
+                {% csrf_token %}
+                <div class="modal-body">
+
+                    <!-- Contenedor de error: siempre presente, oculto por defecto -->
+                    <p class="modal-error" style="display:none; color:#c0392b; font-size:13px; margin:0 0 12px; padding:8px 12px; background:#fff5f5; border-radius:6px; border:1px solid #f5c6c6;"></p>
+
+                    <div class="form-group">
+                        <label for="nombre">Nombre del Medicamento</label>
+                        <input type="text" id="nombre" name="nombre" placeholder="Ej: Amoxicilina 500mg" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="precio">Precio de Venta</label>
+                        <div class="money">
+                            <input type="number" id="precio" name="precio" placeholder="0.00" step="0.01" min="0" required>
+                        </div>
+                    </div>
+                    <div class="form-field">
+                        <label for="descripcion">Descripción y Posología</label>
+                        <textarea id="descripcion" name="descripcion" placeholder="Ingrese detalles del medicamento, indicaciones de uso o precauciones especiales" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancelar" id="btnCancelar">Cancelar</button>
+                    <button type="submit" class="btn-primary">
+                        <span class="material-symbols-outlined">save</span> Agregar Medicamento
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════ MODAL: VER DETALLES ══════════════════════════════ -->
+    <div class="modal-overlay" id="modalVerDetalles">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Detalles del Medicamento</h2>
+                <button class="modal-close" id="btnCerrarDetalles">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="detalle-grid">
+                    <div class="detalle-item">
+                        <span class="detalle-label">Clave</span>
+                        <code class="med-key" id="detalle-clave">—</code>
+                    </div>
+                    <div class="detalle-item">
+                        <span class="detalle-label">Precio</span>
+                        <span class="med-price" id="detalle-precio">—</span>
+                    </div>
+                    <div class="detalle-item detalle-full">
+                        <span class="detalle-label">Nombre</span>
+                        <span class="detalle-valor" id="detalle-nombre">—</span>
+                    </div>
+                    <div class="detalle-item detalle-full">
+                        <span class="detalle-label">Descripción</span>
+                        <span class="detalle-valor detalle-desc" id="detalle-descripcion">—</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancelar" id="btnCerrarDetalles2">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════ MODAL: EDITAR MEDICAMENTO ════════════════════════ -->
+    <div class="modal-overlay" id="modalEditarMedicamento">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Editar Medicamento</h2>
+                <button class="modal-close" id="btnCerrarEditar">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <form id="formEditarMedicamento" method="POST">
+                {% csrf_token %}
+                <input type="hidden" id="editar-id" name="id">
+                <div class="modal-body">
+
+                    <p class="modal-error" style="display:none; color:#c0392b; font-size:13px; margin:0 0 12px; padding:8px 12px; background:#fff5f5; border-radius:6px; border:1px solid #f5c6c6;"></p>
+
+                    <div class="form-group">
+                        <label for="editar-nombre">Nombre del Medicamento</label>
+                        <input type="text" id="editar-nombre" name="nombre" placeholder="Ej: Amoxicilina 500mg" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editar-precio">Precio de Venta</label>
+                        <div class="money">
+                            <input type="number" id="editar-precio" name="precio" placeholder="0.00" step="0.01" min="0" required>
+                        </div>
+                    </div>
+                    <div class="form-field">
+                        <label for="editar-descripcion">Descripción y Posología</label>
+                        <textarea id="editar-descripcion" name="descripcion" placeholder="Ingrese detalles del medicamento..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancelar" id="btnCancelarEditar">Cancelar</button>
+                    <button type="submit" class="btn-primary">
+                        <span class="material-symbols-outlined">save</span> Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+{% endblock %}
+
+{% block scripts %}
+    <script src="{% static 'core/js/medicamentos.js' %}"></script>
 {% endblock %}

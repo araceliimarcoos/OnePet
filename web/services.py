@@ -1,4 +1,4 @@
-from .models import Propietario, Telefono
+from .models import Propietario, Telefono, Medicamento
 import re
 
 from .utils.validaciones import (
@@ -99,3 +99,63 @@ def formatear_telefono(numero):
         raise ValueError("El teléfono debe tener 10 dígitos")
 
     return f"({numeros[:3]}) {numeros[3:6]}-{numeros[6:]}"
+
+
+
+#--------------------------------------------- M E D I C A M E N T O S -----------------------------------------------------------------------------------
+def generar_clave_medicamento():
+    #claves : MED-001
+    claves = Medicamento.objects.values_list('clave', flat=True)
+    
+    max_num = 0
+    for c in claves:
+        try:
+            num = int(c.split('-')[1])
+            if num > max_num:
+                max_num = num
+        except:
+            continue
+
+    return f"MED-{max_num + 1:03d}"
+
+def validar_datos_medicamento(data):
+    #  Campos obligatorios
+    nombre = data.get('nombre', '').strip()
+    precio = data.get('precio', '').strip()
+    descripcion = data.get('descripcion', '').strip()
+    
+    if not nombre:
+        return False, "El nombre del medicamento es obligatorio"
+    
+    if len(nombre) > 50:
+        return False, "El nombre no puede superar 50 caracteres"
+    
+    if not precio:
+        return False, "El precio es obligatorio"
+    
+    try:
+        precio_num = float(precio)
+        if precio_num < 0:
+            return False, 'El precio no puede ser negativo'
+    except ValueError:
+        return False, 'El precio debe ser un número válido'
+    
+    
+    if not descripcion:
+        return False, "La descripción es obligatoria"
+
+    # Verifica que el med no este registrado ya
+    if Medicamento.objects.filter(nombre__iexact=nombre).exists():
+        return False, f'Ya existe un medicamento con el nombre "{nombre}"'
+    
+    return True, None
+
+def crear_medicamento_db(data):
+    #crea el med y lo guarda en la db
+    medicamento = Medicamento.objects.create(
+        clave=generar_clave_medicamento(),
+        nombre = data.get('nombre').strip().title(),
+        descripcion = data.get('descripcion').strip(),
+        precio = float(data.get('precio')) 
+    )
+    return medicamento

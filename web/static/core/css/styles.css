@@ -1007,6 +1007,27 @@ body {
     background: var(--surface);
 }
 
+/* Estos son para que el input de dinero tenga signo de dinero*/
+.money {
+  display: flex;
+  position: relative;
+}
+
+.money::before{
+  content: "$";
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #757575;
+}
+
+.money input{
+  padding-left: 20px;
+  width: 100%;
+}
+
+
 /* Grilla unificada */
 .form-row {
     display: grid;
@@ -2506,6 +2527,179 @@ rw-footer {
     color: var(--text);
 }
 
+/* ==== Menu de 3 puntitos ==== */
+.menu-wrap {
+    position: static;
+    display: inline-block;
+}
+ 
+.menu-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+    color: #7a8899;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, color 0.15s;
+}
+ 
+.menu-btn:hover {
+    background: #f0f4f8;
+    color: #2d3a45;
+}
+ 
+/* fixed = relativo al viewport, ignora overflow de la tabla */
+.dropdown-menu {
+    display: none;
+    position: fixed;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    min-width: 170px;
+    z-index: 9999;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+ 
+.dropdown-menu.open {
+    display: block;
+}
+ 
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 14px;
+    font-size: 13.5px;
+    color: #2d3a45;
+    text-decoration: none;
+    background: none;
+    border: none;
+    width: 100%;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.12s;
+}
+ 
+.dropdown-item:hover {
+    background: #f5f8fa;
+}
+ 
+.dropdown-item .material-symbols-outlined {
+    font-size: 17px;
+    color: #7a8899;
+    flex-shrink: 0;
+}
+ 
+.dropdown-item.danger {
+    color: #c0392b;
+}
+ 
+.dropdown-item.danger .material-symbols-outlined {
+    color: #c0392b;
+}
+ 
+.dropdown-item.danger:hover {
+    background: #fff5f5;
+}
+ 
+.dropdown-divider {
+    height: 1px;
+    background: #f0f4f8;
+    margin: 4px 0;
+}
+
+/* TOAST NOTIFICACIONES */
+/* ── TOAST NOTIFICATION ─────────────────────────── */
+#toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.toast {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-left: 3px solid #1D9E75;
+    border-radius: 10px;
+    min-width: 260px;
+    max-width: 340px;
+    pointer-events: all;
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.22s ease, transform 0.22s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.toast.show  { opacity: 1; transform: translateY(0); }
+.toast.hide  { opacity: 0; transform: translateY(12px); }
+
+.toast-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #EAF3DE;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toast-icon .material-symbols-outlined {
+    font-size: 17px;
+    color: #3B6D11;
+}
+
+.toast-title {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: #2d3a45;
+    margin: 0 0 2px;
+}
+
+.toast-msg {
+    font-size: 12px;
+    color: #7a8899;
+    margin: 0;
+}
+
+.toast-close {
+    margin-left: auto;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #7a8899;
+    padding: 2px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    font-size: 18px;
+}
+
+.toast-close:hover { color: #2d3a45; }
+
+.toast-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    width: 100%;
+    background: #1D9E75;
+    transform-origin: left;
+}
 
 
 /* ===== RESPONSIVE ===== */

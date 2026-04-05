@@ -36,6 +36,8 @@ urlpatterns = [
     path('servicios/', views.servicios, name='servicios'),
     path('catalogo/', views.servicios, name='catalogo'),
     path('medicamentos/', views.medicamentos, name='medicamentos'),
+    path('medicamentos/nuevo/', views.nuevo_medicamento, name='nuevo_medicamento'),
+    
     path('usuarios/', views.usuarios, name='usuarios'),
     path('especies/', views.especies, name='especies'),
     path('especies/<str:clave_especie>/', views.razas, name='razas'),
