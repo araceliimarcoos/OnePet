@@ -663,7 +663,7 @@ body {
 }
 
 /* Precio */
-.med-price {
+.cell-prices {
     font-weight: 800;
     color: var(--green); /* Color éxito para precios */
     font-size: 1rem;

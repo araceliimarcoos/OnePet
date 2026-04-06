@@ -429,6 +429,32 @@ def servicios(request):
     }
 
     return render(request, 'servicios/servicios_lista.html', contexto)
+
+from .services import validar_datos_servicio, crear_servicio_db
+@require_POST
+def nuevo_servicio(request):
+    try:
+        data = {
+            'nombre': request.POST.get('nombre', ''),
+            'costo': request.POST.get('costo', ''),
+            'descripcion': request.POST.get('descripcion', ''),
+        }
+        
+        ok, error = validar_datos_servicio(data)
+        if not ok:
+            return JsonResponse({'ok': False, 'error': error})
+
+        servicio = crear_servicio_db(data)
+
+        return JsonResponse({
+            'ok': True,
+            'clave': servicio.clave,
+            'nombre': servicio.nombre
+        })
+    
+    except Exception as e:
+        return JsonResponse({'ok': False, 'error': f'Error interno: {str(e)}'})    
+
 #.............................................................. M E D I C A M E N T O S ..............................................................................................................................-#
 
 @login_required

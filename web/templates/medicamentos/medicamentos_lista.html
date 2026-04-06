@@ -69,7 +69,7 @@
                                 </div>
                             </td>
                             <td>
-                                <span class="med-price">${{ medicamento.precio|stringformat:".2f" }}</span>
+                                <span class="cell-prices">$ {{ medicamento.precio|stringformat:".2f" }}</span>
                             </td>
                             <td>
                                 <div class="menu-wrap">
@@ -91,6 +91,7 @@
                                             <span class="material-symbols-outlined">edit</span>
                                             Editar
                                         </button>
+                                        <!--
                                         <div class="dropdown-divider"></div>
                                         <button class="dropdown-item danger" role="menuitem"
                                                 data-id="{{ medicamento.id }}"
@@ -98,6 +99,7 @@
                                             <span class="material-symbols-outlined">delete</span>
                                             Eliminar
                                         </button>
+                                        --> 
                                     </div>
                                 </div>
                             </td>

@@ -1,4 +1,4 @@
-from .models import Propietario, Telefono, Medicamento
+from .models import Propietario, Telefono, Medicamento, Servicio
 import re
 
 from .utils.validaciones import (
@@ -144,6 +144,9 @@ def validar_datos_medicamento(data):
     if not descripcion:
         return False, "La descripción es obligatoria"
 
+    if len(descripcion) > 90:
+        return False, "La descripción no puede superar 90 caracteres"
+    
     # Verifica que el med no este registrado ya
     if Medicamento.objects.filter(nombre__iexact=nombre).exists():
         return False, f'Ya existe un medicamento con el nombre "{nombre}"'
@@ -159,3 +162,63 @@ def crear_medicamento_db(data):
         precio = float(data.get('precio')) 
     )
     return medicamento
+
+#--------------------------------------------- S E R V I C I O S -----------------------------------------------------------------------------------
+def generar_clave_servicio():
+    #claves : SERV-01
+    claves = Servicio.objects.values_list('clave', flat=True)
+    
+    max_num = 0
+    for c in claves:
+        try:
+            num = int(c.split('-')[1])
+            if num > max_num:
+                max_num = num
+        except:
+            continue
+
+    return f"SERV-{max_num + 1:02d}"
+
+def validar_datos_servicio(data):
+    #  Campos obligatorios
+    nombre = data.get('nombre', '').strip()
+    costo = data.get('costo', '').strip()
+    descripcion = data.get('descripcion', '').strip()
+    
+    if not nombre:
+        return False, "El nombre del servicio es obligatorio"
+    
+    if len(nombre) > 35:
+        return False, "El nombre no puede superar 35 caracteres"
+    
+    if not costo:
+        return False, "El costo es obligatorio"
+    
+    try:
+        costo_num = float(costo)
+        if costo_num < 0:
+            return False, 'El costo no puede ser negativo'
+    except ValueError:
+        return False, 'El costo debe ser un número valido'
+    
+    if not descripcion:
+        return False, "La descripción es obligatoria"
+
+    if len(descripcion) > 150:
+        return False, "La descripción no puede superar 150 caracteres"
+
+    # Verifica que el servicios no este registrado ya
+    if Servicio.objects.filter(nombre__iexact=nombre).exists():
+        return False, f'Ya existe un servicio con el nombre "{nombre}"'
+    
+    return True, None
+
+def crear_servicio_db(data):
+    #crea el servicio y lo guarda en la db
+    servicio = Servicio.objects.create(
+        clave=generar_clave_servicio(),
+        nombre = data.get('nombre').strip().title(),
+        descripcion = data.get('descripcion').strip(),
+        costo = float(data.get('costo')) 
+    )
+    return servicio

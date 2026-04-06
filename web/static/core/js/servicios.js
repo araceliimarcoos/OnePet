@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    // ─── UTILIDADES ───────────────────────────────────────────────────────────
-
+    // Reutilizables
     function abrirOverlay(overlay) {
         overlay.classList.add('visible');
         document.body.style.overflow = 'hidden';
@@ -52,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
             id:          menuBtn?.dataset.id,
             clave:       menuBtn?.dataset.clave,
             nombre:      menuBtn?.dataset.nombre,
-            precio:      menuBtn?.dataset.precio,
+            costo:      menuBtn?.dataset.costo,
             descripcion: menuBtn?.dataset.descripcion,
         };
     }
@@ -61,12 +60,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return document.querySelector('[name=csrfmiddlewaretoken]')?.value;
     }
 
-    // ─── MODAL: NUEVO MEDICAMENTO ─────────────────────────────────────────────
+    // Modal de Nuevo Servicio ──────────────────────────────────────────────────
+    const overlayNuevo = document.getElementById('modalNuevoServicio');
+    const formNuevo    = document.getElementById('formNuevoServicio');
 
-    const overlayNuevo = document.getElementById('modalNuevoMedicamento');
-    const formNuevo    = document.getElementById('formNuevoMedicamento');
-
-    document.getElementById('btnNuevoMedicamento')
+    document.getElementById('btnNuevoServicio')
         ?.addEventListener('click', () => abrirOverlay(overlayNuevo));
     document.getElementById('btnCerrarModal')
         ?.addEventListener('click', () => cerrarOverlay(overlayNuevo, formNuevo));
@@ -87,7 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnGuardar.innerHTML = '<span class="material-symbols-outlined">hourglass_top</span> Guardando...';
 
         try {
-            const resp = await fetch('/medicamentos/nuevo/', {
+            const resp = await fetch('/servicios/nuevo/', {
                 method:  'POST',
                 headers: { 'X-CSRFToken': getCsrfToken() },
                 body:    new FormData(formNuevo),
@@ -111,14 +109,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // ─── MODAL: VER DETALLES ──────────────────────────────────────────────────
-
+    // Modal de Ver detalles ──────────────────────────────────────────────────
     const overlayDetalles = document.getElementById('modalVerDetalles');
 
     function abrirDetalles(datos) {
         document.getElementById('detalle-clave').textContent       = datos.clave       || '—';
         document.getElementById('detalle-nombre').textContent      = datos.nombre      || '—';
-        document.getElementById('detalle-precio').textContent      = datos.precio ? `$${datos.precio}` : '—';
+        document.getElementById('detalle-costo').textContent      = datos.costo ? `$${datos.costo}` : '—';
         document.getElementById('detalle-descripcion').textContent = datos.descripcion || '—';
         abrirOverlay(overlayDetalles);
     }
@@ -133,15 +130,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ─── MODAL: EDITAR MEDICAMENTO ────────────────────────────────────────────
 
-    const overlayEditar = document.getElementById('modalEditarMedicamento');
-    const formEditar    = document.getElementById('formEditarMedicamento');
+    const overlayEditar = document.getElementById('modalEditarServicio');
+    const formEditar    = document.getElementById('formEditarServicio');
 
     function abrirEditar(datos) {
         document.getElementById('editar-id').value          = datos.id          || '';
         document.getElementById('editar-nombre').value      = datos.nombre      || '';
-        document.getElementById('editar-precio').value      = datos.precio      || '';
+        document.getElementById('editar-costo').value      = datos.costo      || '';
         document.getElementById('editar-descripcion').value = datos.descripcion || '';
-        formEditar.action = `/medicamentos/${datos.id}/editar/`;
+        formEditar.action = `/servicios/${datos.id}/editar/`;
         abrirOverlay(overlayEditar);
     }
 
@@ -153,7 +150,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target === overlayEditar) cerrarOverlay(overlayEditar, formEditar);
     });
 
-    // ─── MENÚ DE ACCIONES ⋯ ───────────────────────────────────────────────────
+
+    // ─── MENÚ DE ACCIONES ───────────────────────────────────────────────────
 
     document.addEventListener('click', (e) => {
 

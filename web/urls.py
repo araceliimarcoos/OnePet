@@ -34,7 +34,8 @@ urlpatterns = [
     path('pagos/recibos/', views.recibos, name='recibos'),
     
     path('servicios/', views.servicios, name='servicios'),
-    path('catalogo/', views.servicios, name='catalogo'),
+    path('servicios/nuevo/', views.nuevo_servicio, name='nuevo_servicio'),
+    
     path('medicamentos/', views.medicamentos, name='medicamentos'),
     path('medicamentos/nuevo/', views.nuevo_medicamento, name='nuevo_medicamento'),
     
