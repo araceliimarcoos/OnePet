@@ -28,7 +28,16 @@ document.addEventListener('DOMContentLoaded', () => {
         return document.querySelector('[name=csrfmiddlewaretoken]')?.value;
     }
 
-    // Modal de Nuevo Servicio ──────────────────────────────────────────────────
+    // ─── BÚSQUEDA EN TABLA ────────────────────────────────────────────────────
+ 
+    document.getElementById('especieSearch')?.addEventListener('input', function () {
+        const q = this.value.toLowerCase();
+        document.querySelectorAll('#especiesBody tr').forEach(row => {
+            row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+        });
+    });
+
+    // Modal de Nuevo Especie ──────────────────────────────────────────────────
     const overlayNuevo = document.getElementById('modalNuevaEspecie');
     const formNuevo    = document.getElementById('formNuevaEspecie');
 
@@ -46,14 +55,13 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         limpiarError(overlayNuevo);
 
-        // Se busca aquí dentro para garantizar que el elemento existe
         const btnGuardar = formNuevo.querySelector('[type=submit]');
         const textoOriginal  = btnGuardar.innerHTML;
         btnGuardar.disabled  = true;
         btnGuardar.innerHTML = '<span class="material-symbols-outlined">hourglass_top</span> Guardando...';
 
         try {
-            const resp = await fetch('/especie/nueva/', {
+            const resp = await fetch('/especies/nueva/', {
                 method:  'POST',
                 headers: { 'X-CSRFToken': getCsrfToken() },
                 body:    new FormData(formNuevo),
@@ -77,17 +85,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // ─── ESCAPE cierra todo ────────────────────────────────────────────────────
+    // ─── ESCAPE ────────────────────────────────────────────────────
 
     document.addEventListener('keydown', (e) => {
         if (e.key !== 'Escape') return;
-        cerrarDropdowns();
-        if (overlayNuevo?.classList.contains('visible'))    cerrarOverlay(overlayNuevo, formNuevo);
-        if (overlayDetalles?.classList.contains('visible')) cerrarOverlay(overlayDetalles);
-        if (overlayEditar?.classList.contains('visible'))   cerrarOverlay(overlayEditar, formEditar);
+        if (overlayNuevo?.classList.contains('visible')) cerrarOverlay(overlayNuevo, formNuevo);
     });
-
-    document.addEventListener('scroll', cerrarDropdowns, true);
 
     // ─── TOAST ────────────────────────────────────────────────────
     function mostrarToast(titulo, mensaje, duracion = 8000) {
