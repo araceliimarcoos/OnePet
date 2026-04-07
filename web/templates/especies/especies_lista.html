@@ -110,13 +110,11 @@
                 </button>
             </div>
 
-            <form id="formNuevaEspecie">
+            <form id="formNuevaEspecie" novalidate>
                 {% csrf_token %}
                 <div class="modal-body">
-                    <div class="form-group">
-                        <label for="nombre">Clave (auto-generada)</label>
-                        <input class= "folio-input"type="text" id="clave" name="clave" placeholder="Ej. Esp-001" required readonly tabindex="-1">
-                    </div>
+
+                    <p class="modal-error" style="display:none; color:#c0392b; font-size:13px; margin:0 0 12px; padding:8px 12px; background:#fff5f5; border-radius:6px; border:1px solid #f5c6c6;"></p>
 
                     <div class="form-group form-field">
                         <label for="precio">Nombre de la Especie</label>
@@ -124,7 +122,7 @@
                     </div>
                 </div> 
                 <div class="modal-footer">
-                    <button type="button" class="btn-cancelar" id="btnCancelar">Cancelar</button>
+                    <button type="button" class="btn-secondary" id="btnCancelar">Cancelar</button>
                     <button type="submit" class="btn-primary">
                         <span class="material-symbols-outlined">save</span> Agregar Especie
                     </button>
@@ -132,6 +130,8 @@
             </form>
         </div>
      </div>
+
+     <div id="toast-container"></div>
 
 {% endblock %}
 

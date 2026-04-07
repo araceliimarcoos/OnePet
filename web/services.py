@@ -1,4 +1,4 @@
-from .models import Propietario, Telefono, Medicamento, Servicio
+from .models import Propietario, Telefono, Medicamento, Servicio, Especie
 import re
 
 from .utils.validaciones import (
@@ -222,3 +222,44 @@ def crear_servicio_db(data):
         costo = float(data.get('costo')) 
     )
     return servicio
+
+#--------------------------------------------- E S P E C I E S -----------------------------------------------------------------------------------
+
+def generar_clave_especie():
+    #claves : ESPE-01
+    claves = Especie.objects.values_list('clave', flat=True)
+    
+    max_num = 0
+    for c in claves:
+        try:
+            num = int(c.split('-')[1])
+            if num > max_num:
+                max_num = num
+        except:
+            continue
+
+    return f"ESPE-{max_num + 1:02d}"
+
+def validar_datos_especie(data):
+    nombre = data.get('nombre', '').strip()
+    
+    if not nombre:
+        return False, "El nombre de la especie es obligatorio"
+    
+    if len(nombre) > 25:
+        return False, "El nombre no puede superar 25 caracteres"
+    
+    # Verifica que la especie no este registrado ya
+    if Especie.objects.filter(nombre__iexact=nombre).exists():
+        return False, f'Ya existe una especie con el nombre "{nombre}"'
+    
+    return True, None
+
+def crear_especie_db(data):
+    #crea la especie y lo guarda en la db
+    especie = Especie.objects.create(
+        clave=generar_clave_especie(),
+        nombre = data.get('nombre').strip().title()
+    )
+    return especie
+
