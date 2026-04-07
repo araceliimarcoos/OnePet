@@ -557,7 +557,7 @@ def usuarios(request):
 def especies(request):
     
     especies_list = Especie.objects.annotate(
-        total_mascotas=Count('mascota'),
+        total_mascotas=Count('mascota', distinct=True),
         total_razas=Count('raza', distinct=True)
     ).order_by('nombre')
     
@@ -570,8 +570,31 @@ def especies(request):
         'especie_top': especie_top
     }
     
-    
     return render(request, 'especies/especies_lista.html', contexto)
+
+from .services import validar_datos_especie, crear_especie_db
+@require_POST
+def nueva_especie(request):
+    try:
+        data = {
+            'nombre': request.POST.get('nombre', '')
+        }
+        
+        ok, error = validar_datos_especie(data)
+        if not ok:
+            return JsonResponse({'ok': False, 'error': error})
+        
+        especie = crear_especie_db(data)
+        
+        return JsonResponse({
+            'ok': True, 
+            'clave': especie.clave, 
+            'nombre': especie.nombre,
+        })
+    
+    except Exception as e:
+        return JsonResponse({'ok': False, 'error': f'Error interno: {str(e)}'})
+
 
 #------------------------------------------ RAZAS ------------------------------------------------------------#
 
@@ -593,7 +616,30 @@ def razas(request, clave_especie):
     
     return render(request, 'especies/razas_lista.html', contexto)
 
-
+from .services import validar_datos_raza, crear_raza_db
+@require_POST
+def nueva_raza(request):
+    try:
+        data = {
+            'especie': request.POST.get('especie', ''),
+            'nombre': request.POST.get('nombre', ''),
+        }
+        
+        ok, error = validar_datos_raza(data)
+        if not ok:
+            return JsonResponse({'ok': False, 'error': error})
+        
+        raza = crear_raza_db(data)
+        
+        return JsonResponse({
+            'ok': True, 
+            'clave': raza.clave, 
+            'nombre': raza.nombre,
+        })
+    
+    except Exception as e:
+        return JsonResponse({'ok': False, 'error': f'Error interno: {str(e)}'})
+    
 #------------------------------------------ V E T E R I N A R I O S ------------------------------------------------------------#
 
 @login_required

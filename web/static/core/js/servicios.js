@@ -95,8 +95,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (data.ok) {
                 cerrarOverlay(overlayNuevo, formNuevo);
-                mostrarToast('Medicamento agregado', `${data.nombre} — ${data.clave}`);
-                setTimeout(() => window.location.reload(), 1500); // espera a que se vea el toast
+                mostrarToast('Servicio agregado', `${data.nombre} — ${data.clave}`);
+                setTimeout(() => window.location.reload(), 2500); // espera a que se vea el toast
             } else {
                 mostrarError(overlayNuevo, data.error || 'Ocurrió un error al guardar');
             }

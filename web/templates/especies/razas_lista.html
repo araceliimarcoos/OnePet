@@ -21,7 +21,7 @@
         <div class="page-header">
             <div>
                 <h1 class="page-title">Razas - {{ especie.nombre }}</h1>
-                <p class="page-sub">{{ total_razas }} razas registradas para esta especie</p>
+                <p class="page-sub">{{ total_razas }} raza{{ total_razas|pluralize:"s" }} registrada{{ total_razas|pluralize:"s" }} para esta especie</p>
             </div>
 
             <div class="page-header-right">
@@ -33,30 +33,35 @@
         </div>
 
         <div class="card">
+
+            <div class="filters-bar">
+                <div class="search-box">
+                    <span class="material-symbols-outlined">search</span>
+                    <input type="text" id="razaSearch" placeholder="Buscar por nombre...">    
+                </div>
+            </div>
             <div class="table-wrapper">
-                <table class="data-table">
+                <table class="data-table" id="razasTable">
                     <thead>
                         <tr>
                             <th>CLAVE</th>
                             <th>NOMBRE</th>
                             <th>MASCOTAS REGISTRADAS</th>
-                            <th>ACCIONES</th>
+                            
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="razasBody">
                         {% for raza in razas %}
                         <tr>
                             <td><strong>{{ raza.clave }}</strong></td>
                             <td>{{ raza.nombre }}</td>
                             <td>{{ raza.total_mascotas }}</td>
-                            <td><a href="#" class="link-green">Ver Detalles</a></td>
                         </tr>
                         {% empty %}
                         <tr>
                             <td colspan="3">No hay razas registradas para esta especie.</td>
                         </tr>
                         
-
                         {% endfor %}
                     </tbody>
                 </table>
@@ -74,17 +79,23 @@
                 </button>
             </div>
 
-            <form id="formNuevaRaza">
+            <form id="formNuevaRaza" novalidate>
                 {% csrf_token %}
+
+                <input type="hidden" name="especie" value="{{ especie.clave }}">
+
                 <div class="modal-body">
+
+                    <p class="modal-error" style="display:none; color:#c0392b; font-size:13px; margin:0 0 12px; padding:8px 12px; background:#fff5f5; border-radius:6px; border:1px solid #f5c6c6;"></p>
+
                     <div class="form-group">
-                        <label for="nombre">Clave (auto-generada)</label>
-                        <input class= "folio-input"type="text" id="clave" name="clave" placeholder="Ej. RAZ-001" required readonly tabindex="-1">
+                        <label>Especie</label>
+                        <input class="folio-input" type="text" value="{{ especie.nombre }}" readonly tabindex="-1">
                     </div>
 
-                    <div class="form-group form-field">
-                        <label for="precio">Nombre de la Raza</label>
-                        <input type="text" id="nombre" name="nombre" placeholder="Ej. Labrador, Pastor alemán..." required>
+                    <div class="form-group">
+                        <label for="nombreRaza">Nombre de la Raza</label>
+                        <input type="text" id="nombreRaza" name="nombre" placeholder="Ej. Labrador, Pastor alemán..." required>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -96,6 +107,8 @@
             </form>
         </div>
      </div>
+
+     <div id="toast-container"></div>
 
 {% endblock %}
 

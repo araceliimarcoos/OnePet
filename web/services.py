@@ -1,4 +1,4 @@
-from .models import Propietario, Telefono, Medicamento, Servicio
+from .models import Propietario, Telefono, Medicamento, Servicio, Especie, Raza
 import re
 
 from .utils.validaciones import (
@@ -222,3 +222,92 @@ def crear_servicio_db(data):
         costo = float(data.get('costo')) 
     )
     return servicio
+
+#--------------------------------------------- E S P E C I E S -----------------------------------------------------------------------------------
+
+def generar_clave_especie():
+    #claves : ESPE-01
+    claves = Especie.objects.values_list('clave', flat=True)
+    
+    max_num = 0
+    for c in claves:
+        try:
+            num = int(c.split('-')[1])
+            if num > max_num:
+                max_num = num
+        except:
+            continue
+
+    return f"ESPE-{max_num + 1:02d}"
+
+def validar_datos_especie(data):
+    nombre = data.get('nombre', '').strip()
+    
+    if not nombre:
+        return False, "El nombre de la especie es obligatorio"
+    
+    if len(nombre) > 25:
+        return False, "El nombre no puede superar 25 caracteres"
+    
+    # Verifica que la especie no este registrado ya
+    if Especie.objects.filter(nombre__iexact=nombre).exists():
+        return False, f'Ya existe una especie con el nombre "{nombre}"'
+    
+    return True, None
+
+def crear_especie_db(data):
+    #crea la especie y lo guarda en la db
+    especie = Especie.objects.create(
+        clave=generar_clave_especie(),
+        nombre = data.get('nombre').strip().title()
+    )
+    return especie
+
+#--------------------------------------------- R A Z A S -----------------------------------------------------------------------------------
+def generar_clave_raza():
+    #claves : RAZ-001
+    claves = Raza.objects.values_list('clave', flat=True)
+    
+    max_num = 0
+    for c in claves:
+        try:
+            num = int(c.split('-')[1])
+            if num > max_num:
+                max_num = num
+        except:
+            continue
+
+    return f"RAZ-{max_num + 1:03d}"
+
+def validar_datos_raza(data):
+    nombre =        data.get('nombre', '').strip()
+    clave_especie = data.get('especie', '').strip()
+    
+    if not nombre:
+        return False, "El nombre de la raza es obligatorio"
+    
+    if len(nombre) > 25:
+        return False, "El nombre no puede superar 25 caracteres"
+    
+    if not clave_especie:
+        return False, "La especie es obligatoria"
+    
+    if not Especie.objects.filter(clave=clave_especie).exists():
+        return False, "La especie no existe"
+    
+    # Verifica que la raza no este registrado ya
+    if Raza.objects.filter(nombre__iexact=nombre).exists():
+        return False, f'Ya existe una raza con el nombre "{nombre}"'
+    
+    return True, None
+
+def crear_raza_db(data):
+    especie = Especie.objects.get(clave=data.get('especie'))
+    
+    #crea la raza y lo guarda en la db
+    raza = Raza.objects.create(
+        clave=generar_clave_raza(),
+        nombre = data.get('nombre').strip().title(),
+        especie = especie
+    )
+    return raza

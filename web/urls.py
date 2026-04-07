@@ -40,9 +40,11 @@ urlpatterns = [
     path('medicamentos/nuevo/', views.nuevo_medicamento, name='nuevo_medicamento'),
     
     path('usuarios/', views.usuarios, name='usuarios'),
-    path('especies/', views.especies, name='especies'),
-    path('especies/<str:clave_especie>/', views.razas, name='razas'),
     
+    path('especies/', views.especies, name='especies'),                     # para acceder a la lista de especies
+    path('especies/nueva/', views.nueva_especie, name='nueva_especie'),     # para crear una nueva especie
+    path('especies/razas/nueva/', views.nueva_raza, name='nueva_raza'),     # para crear una nueva raza
+    path('especies/razas/<str:clave_especie>/', views.razas, name='razas'), # para acceder a la lista de razas
     
     path('personal/', views.personal, name='personal'),
     path('reportes/', views.reportes, name='reportes'),
@@ -50,8 +52,7 @@ urlpatterns = [
     #Estos son para las ventanitas
     path('mascotas/nueva/', views.nueva_mascota, name='nueva_mascota'),
     
-    
     path('propietarios/nuevo/', views.nuevo_propietario, name='nuevo_propietario'), #Este es del modal
-    path('propietarios/folio/', views.obtener_folio, name='obtener_folio'),
-    path('propietarios/crear/', views.crear_propietario, name='crear_propietario')#Este es para crear uno nuevo#Este obtiene el folio
+    path('propietarios/folio/', views.obtener_folio, name='obtener_folio'),#Este obtiene el folio
+    path('propietarios/crear/', views.crear_propietario, name='crear_propietario')#Este es para crear uno nuevo
 ]
