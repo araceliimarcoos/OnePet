@@ -1,0 +1,24 @@
+{% extends "reportes/pdf/base_pdf.html" %}
+    {% load humanize %}
+
+    {% block pdf_period %}
+    <div class="pdf-period">Período: {{ fi|date:"d/m/Y" }} — {{ ff|date:"d/m/Y" }}</div>
+    {% endblock %}
+
+    {% block pdf_content %}
+      {# KPIs #}
+      <div class="kpi-row">
+        <div class="kpi-box"><div class="kpi-n">{{ total }}</div><div class="kpi-l">Total</div></div>
+      </div>
+
+      {# Tabla #}
+      <div class="sec">Detalle</div>
+      <table>
+        <thead><tr><th>Columna 1</th><th>Columna 2</th></tr></thead>
+        <tbody>
+          {% for item in queryset %}
+          <tr><td>{{ item.campo1 }}</td><td>{{ item.campo2 }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endblock %}

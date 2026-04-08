@@ -1,0 +1,85 @@
+{% extends "reportes/base_reporte.html" %}
+{% load humanize %}
+ 
+{% block filtros_extra %}
+<div class="fg">
+  <label>Veterinario</label>
+  <select name="veterinario" class="fi">
+    <option value="">Todos</option>
+    {% for v in veterinarios %}
+    <option value="{{ v.folio }}" {% if vet_id == v.folio %}selected{% endif %}>
+      {{ v.nombrepila }} {{ v.primerapellido }}
+    </option>
+    {% endfor %}
+  </select>
+</div>
+<div class="fg">
+  <label>Estado</label>
+  <select name="estado" class="fi">
+    <option value="">Todos</option>
+    {% for e in estados %}
+    <option value="{{ e.clave }}" {% if estado_id == e.clave %}selected{% endif %}>
+      {{ e.nombre }}
+    </option>
+    {% endfor %}
+  </select>
+</div>
+{% endblock %}
+ 
+{% block kpis %}
+<div class="kpi-row">
+  <div class="kpi-box"><div class="kn">{{ total }}</div><div class="kl">Total</div></div>
+  <div class="kpi-box kpi-amber"><div class="kn">{{ activas }}</div><div class="kl">Activas ahora</div></div>
+  <div class="kpi-box kpi-green"><div class="kn">{{ con_alta }}</div><div class="kl">Con alta</div></div>
+  <div class="kpi-box"><div class="kn">{{ dur_prom }} días</div><div class="kl">Estancia promedio</div></div>
+  <div class="kpi-box kpi-green"><div class="kn">${{ ingresos|floatformat:2|intcomma }}</div><div class="kl">Ingresos</div></div>
+</div>
+{% endblock %}
+ 
+{% block charts %}
+<div class="charts-row">
+  <div class="chart-box chart-wide">
+    <p class="chart-title">Hospitalizaciones por mes</p>
+    <canvas id="cTend" height="80"></canvas>
+  </div>
+</div>
+<div class="charts-row">
+  <div class="chart-box chart-wide">
+    <p class="chart-title">Por veterinario</p>
+    <canvas id="cVet" height="80"></canvas>
+  </div>
+</div>
+{% endblock %}
+ 
+{% block tabla %}
+<div class="tbl-wrap">
+  <table class="dt">
+    <thead><tr>
+      <th>#</th><th>Mascota</th><th>Propietario</th>
+      <th>Ingreso</th><th>Alta</th><th>Veterinario</th><th>Estado</th><th class="tr">Total</th>
+    </tr></thead>
+    <tbody>
+      {% for h in hospitalizaciones %}
+      <tr>
+        <td><code>{{ h.numero }}</code></td>
+        <td>{{ h.expediente.mascota.nombre }}</td>
+        <td>{{ h.expediente.mascota.propietario.nombrepila }} {{ h.expediente.mascota.propietario.primerapellido }}</td>
+        <td>{{ h.fechaingreso|date:"d/m/Y" }}</td>
+        <td>{% if h.fechaalta %}{{ h.fechaalta|date:"d/m/Y" }}{% else %}<span class="badge b-amber">Activa</span>{% endif %}</td>
+        <td>{{ h.veterinario.nombrepila }} {{ h.veterinario.primerapellido }}</td>
+        <td><span class="badge">{{ h.estado.nombre }}</span></td>
+        <td class="tr tw">${{ h.total|floatformat:2 }}</td>
+      </tr>
+      {% empty %}<tr><td colspan="8" class="empty">Sin registros.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+ 
+{% block scripts %}
+<script>
+lineChart('cTend', {{ chart_tendencia|safe }}, 'mes', 'total', 'Hospitalizaciones', 'amber');
+const vd = {{ chart_vet|safe }};
+barChart('cVet', vd, 'label', 'val', 'Hospitalizaciones', 'amber');
+</script>
+{% endblock %}

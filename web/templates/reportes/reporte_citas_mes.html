@@ -1,0 +1,83 @@
+{% extends "reportes/base_reporte.html" %}
+{% load humanize %}
+ 
+{% block filtros %}
+<form method="get" class="filtros">
+  <div class="fg">
+    <label>Año</label>
+    <select name="anio" class="fi">
+      {% for a in anios %}
+      <option value="{{ a }}" {% if a == anio %}selected{% endif %}>{{ a }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="fg">
+    <label>Veterinario</label>
+    <select name="veterinario" class="fi">
+      <option value="">Todos</option>
+      {% for v in veterinarios %}
+      <option value="{{ v.folio }}" {% if vet_id == v.folio %}selected{% endif %}>
+        {{ v.nombrepila }} {{ v.primerapellido }}
+      </option>
+      {% endfor %}
+    </select>
+  </div>
+  <button type="submit" class="btn btn-primary">Filtrar</button>
+</form>
+{% endblock %}
+ 
+{% block kpis %}
+<div class="kpi-row">
+  <div class="kpi-box kpi-teal"><div class="kn">{{ total_anual|intcomma }}</div><div class="kl">Total anual</div></div>
+  <div class="kpi-box"><div class="kn">{{ prom_mensual }}</div><div class="kl">Promedio mensual</div></div>
+  {% if mes_pico %}
+  <div class="kpi-box"><div class="kn">{{ mes_pico.mes_str }}</div><div class="kl">Mes pico ({{ mes_pico.total }} citas)</div></div>
+  {% endif %}
+</div>
+{% endblock %}
+ 
+{% block charts %}
+<div class="charts-row">
+  <div class="chart-box chart-wide">
+    <p class="chart-title">Citas por mes — {{ anio }}</p>
+    <canvas id="cMes" height="80"></canvas>
+  </div>
+</div>
+<div class="charts-row">
+  <div class="chart-box">
+    <p class="chart-title">Por estado</p>
+    <canvas id="cEst" height="150"></canvas>
+  </div>
+  <div class="chart-box">
+    <p class="chart-title">Detalle mensual</p>
+    <div class="rank-list">
+      {% for m in por_mes %}
+      <div class="rank-row">
+        <span class="rank-name">{{ m.mes_str }}</span>
+        <span class="rank-sub">✓ {{ m.completadas }} ✕ {{ m.canceladas }}</span>
+        <span class="rank-badge">{{ m.total }}</span>
+      </div>
+      {% empty %}<p class="empty">Sin datos</p>{% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+ 
+{% block scripts %}
+<script>
+var mesData  = {{ chart_mes|safe }};
+var estData  = {{ chart_estado|safe }};
+multiBarChart('cMes',
+  [
+    { label: 'Total', data: mesData.map(d=>d.total),
+      backgroundColor: PAL.teal+'bb', borderRadius:4, borderSkipped:false },
+    { label: 'Completadas', data: mesData.map(d=>d.completadas),
+      backgroundColor: PAL.green+'bb', borderRadius:4, borderSkipped:false },
+    { label: 'Canceladas', data: mesData.map(d=>d.canceladas),
+      backgroundColor: PAL.red+'bb', borderRadius:4, borderSkipped:false },
+  ],
+  mesData.map(d=>d.mes)
+);
+doughnut('cEst', estData.map(d=>d.label), estData.map(d=>d.val));
+</script>
+{% endblock %}

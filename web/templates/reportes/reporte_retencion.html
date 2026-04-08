@@ -1,0 +1,71 @@
+{% extends "reportes/base_reporte.html" %}
+{% load humanize %}
+ 
+{% block filtros %}{% endblock %}{# sin filtros de fecha, siempre últimos 12 meses #}
+ 
+{% block kpis %}
+<div class="kpi-row">
+  <div class="kpi-box kpi-teal">
+    <div class="kn">{{ tasa_prom }}%</div>
+    <div class="kl">Retención promedio (últimos 6m)</div>
+  </div>
+  {% with datos|last as ult %}
+  <div class="kpi-box"><div class="kn">{{ ult.total_act }}</div><div class="kl">Clientes activos (último mes)</div></div>
+  <div class="kpi-box kpi-green"><div class="kn">{{ ult.nuevos }}</div><div class="kl">Nuevos el último mes</div></div>
+  <div class="kpi-box kpi-red"><div class="kn">{{ ult.perdidos }}</div><div class="kl">Perdidos el último mes</div></div>
+  {% endwith %}
+</div>
+{% endblock %}
+ 
+{% block charts %}
+<div class="charts-row">
+  <div class="chart-box chart-wide">
+    <p class="chart-title">Tasa de retención mensual (%)</p>
+    <canvas id="cRet" height="80"></canvas>
+  </div>
+</div>
+<div class="charts-row">
+  <div class="chart-box chart-wide">
+    <p class="chart-title">Detalle mensual — últimos 12 meses</p>
+    <div class="tbl-wrap" style="margin-top:0;border:none">
+      <table class="dt">
+        <thead><tr>
+          <th>Mes</th><th class="tr">Clientes activos</th>
+          <th class="tr">Retenidos</th><th class="tr">Nuevos</th>
+          <th class="tr">Perdidos</th><th class="tr">Tasa</th>
+        </tr></thead>
+        <tbody>
+          {% for d in datos %}
+          <tr>
+            <td>{{ d.mes }}</td>
+            <td class="tr">{{ d.total_act }}</td>
+            <td class="tr">{{ d.retenidos }}</td>
+            <td class="tr tw" style="color:{% if d.nuevos > 0 %}#3B6D11{% endif %}">{{ d.nuevos }}</td>
+            <td class="tr" style="color:{% if d.perdidos > 0 %}#A32D2D{% endif %}">{{ d.perdidos }}</td>
+            <td class="tr tw">
+              {% if d.tasa >= 70 %}<span class="badge b-green">{% elif d.tasa >= 40 %}<span class="badge b-amber">{% else %}<span class="badge b-red">{% endif %}
+              {{ d.tasa }}%</span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+ 
+{% block scripts %}
+<script>
+const retData = {{ chart_retencion|safe }};
+multiBarChart('cRet',
+  [
+    { label: 'Tasa retención %', data: retData.map(d=>d.tasa),
+      backgroundColor: PAL.teal+'bb', borderRadius:4, borderSkipped:false, yAxisID:'y' },
+    { label: 'Nuevos', data: retData.map(d=>d.nuevos),
+      backgroundColor: PAL.green+'88', borderRadius:4, borderSkipped:false, yAxisID:'y2' },
+  ],
+  retData.map(d=>d.mes)
+);
+</script>
+{% endblock %}

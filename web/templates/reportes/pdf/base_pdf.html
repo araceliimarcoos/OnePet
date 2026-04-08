@@ -1,0 +1,136 @@
+{# templates/reportes/pdf/base_pdf.html #}
+{# Template base para todos los PDFs. WeasyPrint renderiza este HTML a PDF. #}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ titulo }}</title>
+  <style>
+    /* ── Reset y tipografía ─────────────────────────────────────────────── */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, 'Segoe UI', Arial, sans-serif;
+      font-size: 10pt;
+      color: #1a1a1a;
+      line-height: 1.5;
+    }
+
+    /* ── Página ─────────────────────────────────────────────────────────── */
+    @page {
+      size: A4;
+      margin: 2cm 2cm 2.5cm 2cm;
+      @bottom-center {
+        content: "Página " counter(page) " de " counter(pages);
+        font-size: 8pt;
+        color: #888;
+      }
+    }
+
+    /* ── Header ─────────────────────────────────────────────────────────── */
+    .pdf-header {
+      border-bottom: 2px solid #1D9E75;
+      padding-bottom: 12px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    .pdf-clinic  { font-size: 14pt; font-weight: 600; color: #1D9E75; }
+    .pdf-subtitle{ font-size: 8pt;  color: #666; margin-top: 2px; }
+    .pdf-meta    { text-align: right; font-size: 8pt; color: #666; }
+    .pdf-meta .pdf-fecha { font-size: 9pt; color: #333; }
+
+    /* ── Título del reporte ──────────────────────────────────────────────── */
+    .pdf-title { font-size: 16pt; font-weight: 700; color: #111;
+                 margin-bottom: 4px; }
+    .pdf-period{ font-size: 9pt; color: #555; margin-bottom: 20px; }
+
+    /* ── KPI boxes ───────────────────────────────────────────────────────── */
+    .kpi-row { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+    .kpi-box {
+      flex: 1; min-width: 100px;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 10px 14px;
+    }
+    .kpi-n  { font-size: 16pt; font-weight: 700; color: #1D9E75; line-height: 1; }
+    .kpi-l  { font-size: 7.5pt; color: #666; margin-top: 3px; }
+    .kpi-amber .kpi-n { color: #BA7517; }
+    .kpi-red   .kpi-n { color: #A32D2D; }
+    .kpi-blue  .kpi-n { color: #185FA5; }
+
+    /* ── Tablas ──────────────────────────────────────────────────────────── */
+    table { width: 100%; border-collapse: collapse; margin-top: 16px;
+            font-size: 8.5pt; }
+    thead { background: #f5f5f3; }
+    th { padding: 7px 10px; text-align: left; font-weight: 600;
+         font-size: 7.5pt; text-transform: uppercase; letter-spacing: .04em;
+         color: #555; border-bottom: 2px solid #e0e0e0; }
+    td { padding: 6px 10px; border-bottom: 1px solid #ececec; }
+    tr:nth-child(even) td { background: #fafaf8; }
+    tr:last-child td { border-bottom: none; }
+    .tr { text-align: right; }
+    .tw { font-weight: 600; }
+    code { font-family: monospace; font-size: 8pt;
+           background: #f0f0ee; padding: 1px 4px; border-radius: 3px; }
+
+    /* ── Badges ──────────────────────────────────────────────────────────── */
+    .badge { display: inline-block; padding: 1px 7px;
+             border-radius: 20px; font-size: 7.5pt; font-weight: 600;
+             background: #f0f0ee; color: #555; }
+    .b-green { background: #d4edda; color: #155724; }
+    .b-amber { background: #fff3cd; color: #856404; }
+    .b-red   { background: #f8d7da; color: #721c24; }
+
+    /* ── Ranking list ────────────────────────────────────────────────────── */
+    .rank-list { margin-top: 8px; }
+    .rank-row { display: flex; align-items: center; gap: 8px;
+                padding: 5px 0; border-bottom: 1px solid #ececec; }
+    .rank-pos  { width: 18px; font-size: 8pt; color: #999; text-align: right; }
+    .rank-name { flex: 1; font-size: 9pt; }
+    .rank-sub  { font-size: 8pt; color: #666; }
+    .rank-val  { font-weight: 600; font-size: 9pt; }
+
+    /* ── Sección ─────────────────────────────────────────────────────────── */
+    .sec { margin: 18px 0 8px; font-size: 8pt; font-weight: 600;
+           text-transform: uppercase; letter-spacing: .06em;
+           color: #888; border-bottom: 1px solid #e8e8e8; padding-bottom: 4px; }
+
+    /* ── Footer ──────────────────────────────────────────────────────────── */
+    .pdf-footer { margin-top: 28px; padding-top: 10px;
+                  border-top: 1px solid #e0e0e0;
+                  font-size: 7.5pt; color: #999; }
+
+    /* ── Salto de página ─────────────────────────────────────────────────── */
+    .page-break { page-break-after: always; }
+  </style>
+</head>
+<body>
+
+  {# ── Header ────────────────────────────────────────────────────────────── #}
+  <div class="pdf-header">
+    <div>
+      <div class="pdf-clinic">Hospital de Mascotas</div>
+      <div class="pdf-subtitle">Sistema de gestión veterinaria</div>
+    </div>
+    <div class="pdf-meta">
+      <div class="pdf-fecha">{% now "d/m/Y H:i" %}</div>
+      <div>Generado automáticamente</div>
+    </div>
+  </div>
+
+  {# ── Título ────────────────────────────────────────────────────────────── #}
+  <div class="pdf-title">{{ titulo }}</div>
+  {% block pdf_period %}{% endblock %}
+
+  {# ── Contenido del reporte ─────────────────────────────────────────────── #}
+  {% block pdf_content %}{% endblock %}
+
+  {# ── Footer ────────────────────────────────────────────────────────────── #}
+  <div class="pdf-footer">
+    Reporte generado por el sistema de gestión veterinaria &mdash;
+    Confidencial, solo para uso administrativo.
+  </div>
+
+</body>
+</html>

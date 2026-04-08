@@ -1,0 +1,65 @@
+{% extends "reportes/base_reporte.html" %}
+{% load humanize %}
+ 
+{% block kpis %}
+<div class="kpi-row">
+  <div class="kpi-box kpi-teal"><div class="kn">{{ total_citas|intcomma }}</div><div class="kl">Total citas período</div></div>
+  <div class="kpi-box"><div class="kn">{{ citas_vet|length }}</div><div class="kl">Veterinarios activos</div></div>
+</div>
+{% endblock %}
+ 
+{% block charts %}
+<div class="charts-row">
+  <div class="chart-box chart-wide">
+    <p class="chart-title">Citas y hospitalizaciones por veterinario</p>
+    <canvas id="cBarras" height="90"></canvas>
+  </div>
+</div>
+<div class="charts-row">
+  <div class="chart-box chart-wide">
+    <p class="chart-title">Citas diarias en el período</p>
+    <canvas id="cLinea" height="70"></canvas>
+  </div>
+</div>
+{% endblock %}
+ 
+{% block tabla %}
+<div class="tbl-wrap">
+  <table class="dt">
+    <thead><tr>
+      <th>Veterinario</th><th>Especialidad</th>
+      <th class="tr">Citas</th><th class="tr">Consultas</th>
+      <th class="tr">Hospitalizaciones</th><th class="tr">Carga total</th>
+    </tr></thead>
+    <tbody>
+      {% for v in citas_vet %}
+      <tr>
+        <td>{{ v.veterinario__nombrepila }} {{ v.veterinario__primerapellido }}</td>
+        <td><span class="badge">{{ v.veterinario__especialidad__nombre }}</span></td>
+        <td class="tr">{{ v.total_citas }}</td>
+        <td class="tr">{{ v.consultas }}</td>
+        <td class="tr">{{ v.hospitalizaciones }}</td>
+        <td class="tr tw">{{ v.carga_total }}</td>
+      </tr>
+      {% empty %}<tr><td colspan="6" class="empty">Sin datos.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+ 
+{% block scripts %}
+<script>
+const bData = {{ chart_barras|safe }};
+const lData = {{ chart_linea|safe }};
+multiBarChart('cBarras',
+  [
+    { label: 'Citas', data: bData.map(d=>d.citas),
+      backgroundColor: PAL.teal+'bb', borderRadius:4, borderSkipped:false },
+    { label: 'Hospitalizaciones', data: bData.map(d=>d.hosp),
+      backgroundColor: PAL.amber+'bb', borderRadius:4, borderSkipped:false },
+  ],
+  bData.map(d=>d.label)
+);
+lineChart('cLinea', lData, 'dia', 'total', 'Citas', 'blue');
+</script>
+{% endblock %}

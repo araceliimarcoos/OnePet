@@ -1,0 +1,290 @@
+{# templates/reportes/base_reporte.html #}
+{# Template base del que extienden todos los sub-reportes. #}
+{# Provee: encabezado, filtros de fecha, gráficas Chart.js, botón PDF. #}
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block contenido %}
+<div class="rep-detalle">
+
+  {# ── Encabezado ──────────────────────────────────────────────────────────── #}
+  <div class="rd-top">
+    <div>
+      <a href="{% url 'reportes' %}" class="back-link">← Reportes</a>
+      <h1 class="rd-title">{{ titulo }}</h1>
+    </div>
+    <div class="rd-actions">
+      <a href="?{% if fi %}fecha_inicio={{ fi|date:'Y-m-d' }}&fecha_fin={{ ff|date:'Y-m-d' }}{% endif %}{% block pdf_extra_params %}&{% endblock %}&pdf=1"
+         class="btn btn-pdf" target="_blank">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="9" y1="15" x2="15" y2="15"/>
+          <line x1="9" y1="11" x2="15" y2="11"/>
+        </svg>
+        Exportar PDF
+      </a>
+      <button onclick="window.print()" class="btn btn-outline">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15">
+          <polyline points="6 9 6 2 18 2 18 9"/>
+          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+          <rect x="6" y="14" width="12" height="8"/>
+        </svg>
+        Imprimir
+      </button>
+    </div>
+  </div>
+
+  {# ── Filtros de fecha ────────────────────────────────────────────────────── #}
+  {% block filtros %}
+  <form method="get" class="filtros">
+    <div class="fg">
+      <label>Desde</label>
+      <input type="date" name="fecha_inicio"
+             value="{{ fi|date:'Y-m-d' }}" class="fi">
+    </div>
+    <div class="fg">
+      <label>Hasta</label>
+      <input type="date" name="fecha_fin"
+             value="{{ ff|date:'Y-m-d' }}" class="fi">
+    </div>
+    {% block filtros_extra %}{% endblock %}
+    <button type="submit" class="btn btn-primary">Filtrar</button>
+  </form>
+  {% endblock %}
+
+  {# ── KPIs ────────────────────────────────────────────────────────────────── #}
+  {% block kpis %}{% endblock %}
+
+  {# ── Gráficas ────────────────────────────────────────────────────────────── #}
+  {% block charts %}{% endblock %}
+
+  {# ── Tabla ───────────────────────────────────────────────────────────────── #}
+  {% block tabla %}{% endblock %}
+
+</div>
+
+{# ── Chart.js + helpers globales ─────────────────────────────────────────── #}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const DK = window.matchMedia('(prefers-color-scheme: dark)').matches;
+const PAL = {
+  teal:   DK ? '#5DCAA5' : '#1D9E75',
+  blue:   DK ? '#85B7EB' : '#378ADD',
+  amber:  DK ? '#EF9F27' : '#BA7517',
+  purple: DK ? '#AFA9EC' : '#7F77DD',
+  coral:  DK ? '#F0997B' : '#D85A30',
+  green:  DK ? '#97C459' : '#639922',
+  red:    DK ? '#F09595' : '#E24B4A',
+  grid:   DK ? 'rgba(255,255,255,.07)' : 'rgba(0,0,0,.05)',
+  text:   DK ? '#b0ae a6' : '#3d3d3a',
+};
+const BASE = {
+  responsive: true, maintainAspectRatio: true,
+  plugins: { legend: { display: false } },
+  scales: {
+    x: { grid: { color: PAL.grid }, ticks: { color: PAL.text, font: { size: 11 } } },
+    y: { grid: { color: PAL.grid }, ticks: { color: PAL.text, font: { size: 11 } }, beginAtZero: true },
+  },
+};
+
+/* Gráfica de línea */
+function lineChart(id, data, xk, yk, label, color) {
+  const el = document.getElementById(id);
+  if (!el || !data.length) return;
+  const c = PAL[color] || PAL.teal;
+  new Chart(el, {
+    type: 'line',
+    data: {
+      labels: data.map(d => d[xk]),
+      datasets: [{ label, data: data.map(d => d[yk]),
+        borderColor: c, backgroundColor: c + '28',
+        tension: .35, fill: true, pointRadius: 3, pointHoverRadius: 5 }]
+    },
+    options: { ...BASE }
+  });
+}
+
+/* Gráfica de barras simple */
+function barChart(id, data, xk, yk, label, color) {
+  const el = document.getElementById(id);
+  if (!el || !data.length) return;
+  const c = PAL[color] || PAL.blue;
+  new Chart(el, {
+    type: 'bar',
+    data: {
+      labels: data.map(d => d[xk]),
+      datasets: [{ label, data: data.map(d => d[yk]),
+        backgroundColor: c + 'bb', borderRadius: 4, borderSkipped: false }]
+    },
+    options: { ...BASE }
+  });
+}
+
+/* Gráfica de barras apiladas / multi-dataset */
+function multiBarChart(id, datasets, labels) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  new Chart(el, {
+    type: 'bar',
+    data: { labels, datasets },
+    options: {
+      ...BASE,
+      plugins: { legend: { display: true, labels: { color: PAL.text, font: { size: 11 } } } },
+    }
+  });
+}
+
+/* Doughnut / Pie */
+function doughnut(id, labels, values, colors) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const clrs = colors || Object.values(PAL).slice(0, labels.length).map(c => c + 'cc');
+  new Chart(el, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{ data: values, backgroundColor: clrs, borderWidth: 0 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: {
+        legend: { position: 'right',
+                  labels: { color: PAL.text, padding: 12, font: { size: 11 } } }
+      }
+    }
+  });
+}
+</script>
+
+{% block scripts %}{% endblock %}
+
+<style>
+/* ── Layout ──────────────────────────────────────────────────────────────── */
+.rep-detalle { padding:1.5rem 0; }
+
+.rd-top { display:flex; justify-content:space-between; align-items:flex-start;
+          flex-wrap:wrap; gap:.75rem; margin-bottom:1.5rem; }
+.back-link { font-size:.82rem; color:var(--color-text-secondary);
+             text-decoration:none; display:block; margin-bottom:.3rem; }
+.back-link:hover { color:var(--color-text-primary); }
+.rd-title { font-size:1.4rem; font-weight:500; margin:0; }
+.rd-actions { display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; }
+
+/* Botones */
+.btn { display:inline-flex; align-items:center; gap:.4rem;
+       padding:.42rem .9rem; border-radius:var(--border-radius-md);
+       font-size:.83rem; font-weight:500; cursor:pointer;
+       border:1px solid transparent; text-decoration:none; }
+.btn-outline { background:transparent;
+               border-color:var(--color-border-secondary);
+               color:var(--color-text-primary); }
+.btn-outline:hover { border-color:var(--color-border-primary);
+                     background:var(--color-background-secondary); }
+.btn-primary { background:#1D9E75; color:#fff; border-color:#1D9E75; }
+.btn-primary:hover { background:#0F6E56; }
+.btn-pdf { background:#185FA5; color:#fff; border-color:#185FA5; }
+.btn-pdf:hover { background:#0C447C; }
+
+/* Filtros */
+.filtros { display:flex; align-items:flex-end; flex-wrap:wrap; gap:.65rem;
+           background:var(--color-background-secondary);
+           border:1px solid var(--color-border-tertiary);
+           border-radius:var(--border-radius-lg);
+           padding:.9rem 1.15rem; margin-bottom:1.5rem; }
+.fg { display:flex; flex-direction:column; gap:.2rem; }
+.fg label { font-size:.72rem; font-weight:500; text-transform:uppercase;
+            letter-spacing:.05em; color:var(--color-text-secondary); }
+.fi { padding:.38rem .6rem; border-radius:var(--border-radius-md);
+      border:1px solid var(--color-border-secondary);
+      background:var(--color-background-primary);
+      color:var(--color-text-primary); font-size:.85rem; min-width:140px; }
+
+/* KPI strip */
+.kpi-row { display:flex; flex-wrap:wrap; gap:.75rem; margin-bottom:1.5rem; }
+.kpi-box { background:var(--color-background-secondary);
+           border:1px solid var(--color-border-tertiary);
+           border-radius:var(--border-radius-lg);
+           padding:.85rem 1.2rem; min-width:130px; }
+.kn { font-size:1.35rem; font-weight:500; line-height:1.1; }
+.kl { font-size:.73rem; color:var(--color-text-secondary); margin-top:.15rem; }
+.kpi-green  .kn { color:#3B6D11; } .kpi-amber .kn { color:#854F0B; }
+.kpi-teal   .kn { color:#0F6E56; } .kpi-red   .kn { color:#A32D2D; }
+@media (prefers-color-scheme:dark){
+  .kpi-green  .kn { color:#97C459; } .kpi-amber .kn { color:#EF9F27; }
+  .kpi-teal   .kn { color:#5DCAA5; } .kpi-red   .kn { color:#F09595; }
+}
+
+/* Charts */
+.charts-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+              gap:1rem; margin-bottom:1rem; }
+.chart-box { background:var(--color-background-secondary);
+             border:1px solid var(--color-border-tertiary);
+             border-radius:var(--border-radius-lg); padding:1.15rem; }
+.chart-wide { grid-column:1/-1; }
+.chart-title { font-size:.75rem; font-weight:500; text-transform:uppercase;
+               letter-spacing:.05em; color:var(--color-text-secondary);
+               margin:0 0 .9rem; }
+
+/* Ranking list */
+.rank-list { display:flex; flex-direction:column; gap:.4rem; }
+.rank-row { display:flex; align-items:center; gap:.55rem; padding:.35rem .45rem;
+            border-radius:6px; background:var(--color-background-primary); }
+.rank-pos  { width:18px; font-size:.75rem; color:var(--color-text-tertiary);
+             text-align:right; flex-shrink:0; }
+.rank-name { flex:1; font-size:.82rem; min-width:0;
+             overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.rank-sub  { font-size:.75rem; color:var(--color-text-secondary); white-space:nowrap; }
+.rank-badge { background:var(--color-background-secondary);
+              border:1px solid var(--color-border-tertiary);
+              border-radius:20px; padding:.1rem .5rem;
+              font-size:.75rem; white-space:nowrap; flex-shrink:0; }
+
+/* Tabla */
+.tbl-wrap { overflow-x:auto; margin-top:1.5rem;
+            border:1px solid var(--color-border-tertiary);
+            border-radius:var(--border-radius-lg); }
+.dt { width:100%; border-collapse:collapse; font-size:.83rem; }
+.dt thead { background:var(--color-background-secondary); }
+.dt th { padding:.6rem .95rem; text-align:left; font-weight:500; font-size:.72rem;
+         text-transform:uppercase; letter-spacing:.04em;
+         color:var(--color-text-secondary);
+         border-bottom:1px solid var(--color-border-tertiary); }
+.dt td { padding:.55rem .95rem;
+         border-bottom:1px solid var(--color-border-tertiary); }
+.dt tbody tr:last-child td { border-bottom:none; }
+.dt tbody tr:hover { background:var(--color-background-secondary); }
+.tr { text-align:right; }
+.tw { font-weight:500; }
+code { font-family:var(--font-mono); font-size:.78em;
+       background:var(--color-background-tertiary);
+       padding:.08rem .32rem; border-radius:4px; }
+
+/* Badges */
+.badge { display:inline-block; padding:.12rem .5rem; border-radius:20px;
+         font-size:.72rem; font-weight:500;
+         background:var(--color-background-tertiary);
+         color:var(--color-text-secondary); }
+.b-green  { background:#EAF3DE; color:#3B6D11; }
+.b-amber  { background:#FAEEDA; color:#854F0B; }
+.b-red    { background:#FCEBEB; color:#A32D2D; }
+.b-teal   { background:#E1F5EE; color:#0F6E56; }
+@media (prefers-color-scheme:dark){
+  .b-green  { background:#173404; color:#97C459; }
+  .b-amber  { background:#412402; color:#EF9F27; }
+  .b-red    { background:#501313; color:#F09595; }
+  .b-teal   { background:#04342C; color:#5DCAA5; }
+}
+
+.empty { text-align:center; color:var(--color-text-tertiary);
+         font-size:.85rem; padding:2rem 0; }
+
+/* Print */
+@media print {
+  .filtros, .rd-actions, .back-link { display:none; }
+  canvas { max-height:200px; }
+}
+</style>
+{% endblock %}

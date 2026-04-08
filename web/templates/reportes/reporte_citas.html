@@ -1,0 +1,97 @@
+{% extends "reportes/base_reporte.html" %}
+{% load humanize %}
+ 
+{% block filtros_extra %}
+<div class="fg">
+  <label>Veterinario</label>
+  <select name="veterinario" class="fi">
+    <option value="">Todos</option>
+    {% for v in veterinarios %}
+    <option value="{{ v.folio }}" {% if vet_id == v.folio %}selected{% endif %}>
+      {{ v.nombrepila }} {{ v.primerapellido }}
+    </option>
+    {% endfor %}
+  </select>
+</div>
+<div class="fg">
+  <label>Estado</label>
+  <select name="estado" class="fi">
+    <option value="">Todos</option>
+    {% for e in estados %}
+    <option value="{{ e.clave }}" {% if estado_id == e.clave %}selected{% endif %}>
+      {{ e.nombre }}
+    </option>
+    {% endfor %}
+  </select>
+</div>
+{% endblock %}
+ 
+{% block kpis %}
+<div class="kpi-row">
+  <div class="kpi-box kpi-teal"><div class="kn">{{ total|intcomma }}</div><div class="kl">Total citas</div></div>
+  {% for e in por_estado %}
+  <div class="kpi-box"><div class="kn">{{ e.total }}</div><div class="kl">{{ e.estado__nombre }}</div></div>
+  {% endfor %}
+</div>
+{% endblock %}
+ 
+{% block charts %}
+<div class="charts-row">
+  <div class="chart-box chart-wide">
+    <p class="chart-title">Tendencia mensual de citas</p>
+    <canvas id="cTend" height="80"></canvas>
+  </div>
+</div>
+<div class="charts-row">
+  <div class="chart-box">
+    <p class="chart-title">Por estado</p>
+    <canvas id="cEst" height="140"></canvas>
+  </div>
+  <div class="chart-box">
+    <p class="chart-title">Por veterinario</p>
+    <div class="rank-list">
+      {% for v in por_vet %}
+      <div class="rank-row">
+        <span class="rank-pos">{{ forloop.counter }}</span>
+        <span class="rank-name">{{ v.veterinario__nombrepila }} {{ v.veterinario__primerapellido }}</span>
+        <span class="rank-badge">{{ v.total }}</span>
+      </div>
+      {% empty %}<p class="empty">Sin datos</p>{% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+ 
+{% block tabla %}
+<div class="tbl-wrap">
+  <table class="dt">
+    <thead><tr>
+      <th>Folio</th><th>Fecha</th><th>Hora</th><th>Mascota</th>
+      <th>Propietario</th><th>Veterinario</th><th>Motivo</th><th>Estado</th>
+    </tr></thead>
+    <tbody>
+      {% for c in citas %}
+      <tr>
+        <td><code>{{ c.folio }}</code></td>
+        <td>{{ c.fecha|date:"d/m/Y" }}</td>
+        <td>{{ c.hora|time:"H:i" }}</td>
+        <td>{{ c.mascota.nombre }}</td>
+        <td>{{ c.mascota.propietario.nombrepila }} {{ c.mascota.propietario.primerapellido }}</td>
+        <td>{{ c.veterinario.nombrepila }} {{ c.veterinario.primerapellido }}</td>
+        <td>{{ c.motivo }}</td>
+        <td><span class="badge">{{ c.estado.nombre }}</span></td>
+      </tr>
+      {% empty %}<tr><td colspan="8" class="empty">Sin citas en el período.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+ 
+{% block scripts %}
+<script>
+const tendData  = {{ chart_tendencia|safe }};
+const estData   = {{ chart_estados|safe }};
+lineChart('cTend', tendData, 'mes', 'total', 'Citas', 'teal');
+doughnut('cEst', estData.map(d=>d.label), estData.map(d=>d.val));
+</script>
+{% endblock %}
