@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
-from .models import Mascota, Propietario, Especie, Raza, Servicio, Medicamento, Usuario, Veterinario, Recepcionista, Administrador, Cita, Hospitalizacion, SignosVitales, Especialidad, Telefono, Pago, Expediente, Consulta, Receta
+from .models import Mascota, Propietario, Especie, Raza, Servicio, Medicamento, Usuario, Veterinario, Recepcionista, Administrador, Cita, Hospitalizacion, SignosVitales, Especialidad, Telefono, Pago, Expediente, Consulta, Receta, EdoCita
 
 from django.core.paginator import Paginator
 from django.db.models import Q, Count
@@ -232,11 +232,12 @@ def obtener_folio(request):
 
 @login_required
 def citas(request):
-    query = request.GET.get('q', '').strip()
+    query = request.GET.get('q', '')
+    estado = request.GET.get('estado', '')
 
     citas_list = Cita.objects.select_related(
-        'mascota__propietario',
         'mascota__raza__especie',
+        'propietario',
         'veterinario',
         'estado'
     ).order_by('-fecha', '-hora')
@@ -245,9 +246,13 @@ def citas(request):
         citas_list = citas_list.filter(
             Q(folio__icontains=query) |
             Q(mascota__nombre__icontains=query) |
+            Q(veterinario__nombrepila__icontains=query) |
             Q(propietario__primerapellido__icontains=query)
         )
 
+    if estado:
+        citas_list = citas_list.filter(estado__nombre=estado)
+    
     # Stats
     conteos = Cita.objects.values('estado__nombre').annotate(total=Count('folio'))
     stats = {item['estado__nombre']: item['total'] for item in conteos}
@@ -257,15 +262,88 @@ def citas(request):
     page_number = request.GET.get('page')
     citas = paginator.get_page(page_number)
 
+    # Datos para los selects del modal — listas independientes
+    propietarios = Propietario.objects.order_by('primerapellido', 'nombrepila')
+    veterinarios = Veterinario.objects.order_by('primerapellido', 'nombrepila')
+    estados_cita = EdoCita.objects.all()
+    
+    # Mascotas en JSON para el filtro dinámico por propietario
+    mascotas_json = list(
+        Mascota.objects.select_related('propietario').values(
+            'folio', 'nombre', 'propietario__folio'
+        )
+    )
+    
     contexto = {
         'seccion_activa': 'citas',
         'citas': citas,
         'stats': stats,
         'total_conteo': paginator.count,
         'query': query,
+        'propietarios': propietarios,
+        'veterinarios': veterinarios,
+        'estados_cita': estados_cita,
+        'mascotas_json': mascotas_json,
     }
 
     return render(request, 'citas/citas_lista.html', contexto)
+
+@require_POST
+def nueva_cita(request):
+    from .services import validar_datos_cita, crear_cita_db
+    try:
+        data = {
+            'propietario': request.POST.get('propietario', ''),
+            'mascota':     request.POST.get('mascota', ''),
+            'veterinario': request.POST.get('veterinario', ''),
+            'fecha':       request.POST.get('fecha', ''),
+            'hora':        request.POST.get('hora', ''),
+            'motivo':      request.POST.get('motivo', ''),
+        }
+ 
+        ok, error = validar_datos_cita(data)
+        if not ok:
+            return JsonResponse({'ok': False, 'error': error})
+ 
+        cita = crear_cita_db(data)
+ 
+        return JsonResponse({
+            'ok':    True,
+            'folio': cita.folio,
+            'fecha': str(cita.fecha),
+        })
+ 
+    except Exception as e:
+        return JsonResponse({'ok': False, 'error': f'Error interno: {str(e)}'})
+    
+@require_POST
+def editar_cita(request, folio):
+    from .services import validar_datos_editar_cita
+    try:
+        cita = get_object_or_404(Cita, folio=folio)
+        data = {
+            'fecha':       request.POST.get('fecha', ''),
+            'hora':        request.POST.get('hora', ''),
+            'veterinario': request.POST.get('veterinario', ''),
+            'estado':      request.POST.get('estado', ''),
+            'motivo':      request.POST.get('motivo', ''),
+        }
+
+        ok, error = validar_datos_editar_cita(data, folio_actual=folio)
+        if not ok:
+            return JsonResponse({'ok': False, 'error': error})
+
+        cita.fecha    = data['fecha']
+        cita.hora     = data['hora']
+        cita.motivo   = data['motivo'].strip()
+        cita.veterinario = Veterinario.objects.get(folio=data['veterinario'])
+        cita.estado      = EdoCita.objects.get(clave=data['estado'])
+        cita.save()
+
+        return JsonResponse({'ok': True, 'folio': cita.folio})
+
+    except Exception as e:
+        return JsonResponse({'ok': False, 'error': f'Error interno: {str(e)}'})
 
 #------------------------------------------------------------------ C O N S U L T A S ------------------------------------------------------------#
 
