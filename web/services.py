@@ -1,5 +1,5 @@
 from .models import Propietario, Telefono, Medicamento, Servicio, Especie, Raza, Cita, Mascota, Veterinario, EdoCita
-from datetime import date
+from datetime import date, time, datetime, timedelta
 import re
 
 from .utils.validaciones import (
@@ -155,13 +155,22 @@ def validar_datos_cita(data):
     except ValueError:
         return False, 'Formato de fecha inválido'
  
-    # Verificar que no haya otra cita con el mismo vet, fecha y hora
-    if Cita.objects.filter(
+    # Verificar que no haya otra cita con el mismo vet, fecha y hora, Verifica rango de 30 minutos
+    hora_nueva  = datetime.strptime(hora_str, '%H:%M').time()
+    dt_nueva    = datetime.combine(date.today(), hora_nueva)
+    hora_min    = (dt_nueva - timedelta(minutes=30)).time()
+    hora_max    = (dt_nueva + timedelta(minutes=30)).time()
+    
+    conflicto = Cita.objects.filter(
         veterinario__folio=veterinario_folio,
         fecha=fecha_str,
-        hora=hora_str
-    ).exists():
-        return False, 'El veterinario ya tiene una cita en esa fecha y hora'
+        hora__gt=hora_min,
+        hora__lt=hora_max,
+    ).exclude(estado__nombre='Cancelada')  # las canceladas no bloquean el horario
+    
+    if conflicto.exists():
+        cita_conf = conflicto.first()
+        return False, f'El veterinario ya tiene una cita a las {cita_conf.hora.strftime("%H:%M")} — debe haber al menos 30 minutos de diferencia'
  
     return True, None
 
@@ -182,6 +191,47 @@ def crear_cita_db(data):
         estado=estado,
     )
     return cita
+
+def validar_datos_editar_cita(data, folio_actual):
+    if not data.get('fecha'):
+        return False, 'La fecha es obligatoria'
+    if not data.get('hora'):
+        return False, 'La hora es obligatoria'
+    if not data.get('veterinario'):
+        return False, 'Selecciona un veterinario'
+    if not data.get('estado'):
+        return False, 'El estado es obligatorio'
+    if not data.get('motivo', '').strip():
+        return False, 'El motivo es obligatorio'
+
+    try:
+        fecha    = date.fromisoformat(data['fecha'])
+        hora_str = data['hora']
+
+        hora_nueva = datetime.strptime(hora_str, '%H:%M').time()
+        dt_nueva   = datetime.combine(date.today(), hora_nueva)
+        hora_min   = (dt_nueva - timedelta(minutes=30)).time()
+        hora_max   = (dt_nueva + timedelta(minutes=30)).time()
+
+        conflicto = Cita.objects.filter(
+            veterinario__folio=data['veterinario'],
+            fecha=data['fecha'],
+            hora__gt=hora_min,
+            hora__lt=hora_max,
+        ).exclude(
+            estado__nombre='Cancelada'  # las canceladas no bloquean el horario
+        ).exclude(
+            folio=folio_actual  # excluye la cita que se está editando
+        )
+
+        if conflicto.exists():
+            cita_conf = conflicto.first()
+            return False, f'El veterinario ya tiene una cita a las {cita_conf.hora.strftime("%H:%M")} — debe haber al menos 30 minutos de diferencia'
+
+    except ValueError:
+        return False, 'Formato de fecha u hora inválido'
+
+    return True, None
 
 #--------------------------------------------- M E D I C A M E N T O S -----------------------------------------------------------------------------------
 def generar_clave_medicamento():

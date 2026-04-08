@@ -315,6 +315,35 @@ def nueva_cita(request):
  
     except Exception as e:
         return JsonResponse({'ok': False, 'error': f'Error interno: {str(e)}'})
+    
+@require_POST
+def editar_cita(request, folio):
+    from .services import validar_datos_editar_cita
+    try:
+        cita = get_object_or_404(Cita, folio=folio)
+        data = {
+            'fecha':       request.POST.get('fecha', ''),
+            'hora':        request.POST.get('hora', ''),
+            'veterinario': request.POST.get('veterinario', ''),
+            'estado':      request.POST.get('estado', ''),
+            'motivo':      request.POST.get('motivo', ''),
+        }
+
+        ok, error = validar_datos_editar_cita(data, folio_actual=folio)
+        if not ok:
+            return JsonResponse({'ok': False, 'error': error})
+
+        cita.fecha    = data['fecha']
+        cita.hora     = data['hora']
+        cita.motivo   = data['motivo'].strip()
+        cita.veterinario = Veterinario.objects.get(folio=data['veterinario'])
+        cita.estado      = EdoCita.objects.get(clave=data['estado'])
+        cita.save()
+
+        return JsonResponse({'ok': True, 'folio': cita.folio})
+
+    except Exception as e:
+        return JsonResponse({'ok': False, 'error': f'Error interno: {str(e)}'})
 
 #------------------------------------------------------------------ C O N S U L T A S ------------------------------------------------------------#
 

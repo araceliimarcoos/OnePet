@@ -63,7 +63,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ─── FILTRO DINÁMICO: mascotas por propietario ────────────────────────────
 
-// ✅ json_script ya genera JSON válido, solo parsea el textContent
     const mascotas = JSON.parse(document.getElementById('mascotas-data').textContent) ?? [];    
     const propietarioSel = document.getElementById('propietario');
     const mascotaSel     = document.getElementById('mascota');
@@ -198,6 +197,40 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target === overlayEditar) cerrarOverlay(overlayEditar, formEditar);
     });
 
+    formEditar?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    limpiarError(overlayEditar);
+
+    const folio         = document.getElementById('editar-folio').value;
+    const btnGuardar    = formEditar.querySelector('[type=submit]');
+    const textoOriginal = btnGuardar.innerHTML;
+    btnGuardar.disabled = true;
+    btnGuardar.innerHTML = '<span class="material-symbols-outlined">hourglass_top</span> Guardando...';
+
+    try {
+        const resp = await fetch(`/citas/${folio}/editar/`, {
+            method:  'POST',
+            headers: { 'X-CSRFToken': getCsrfToken() },
+            body:    new FormData(formEditar),
+        });
+        const data = await resp.json();
+
+        if (data.ok) {
+            cerrarOverlay(overlayEditar, formEditar);
+            mostrarToast('Cita actualizada', `Folio #${data.folio}`);
+            setTimeout(() => window.location.reload(), 2500);
+        } else {
+            mostrarError(overlayEditar, data.error || 'Error al guardar');
+        }
+    } catch {
+        mostrarError(overlayEditar, 'No se pudo conectar con el servidor');
+    } finally {
+        btnGuardar.disabled  = false;
+        btnGuardar.innerHTML = textoOriginal;
+    }
+    
+    });
+
     // ─── FILTROS DE TABLA ─────────────────────────────────────────────────────
 
     const searchInput   = document.getElementById('citasSearch');
@@ -226,7 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
     filterEstado?.addEventListener('change', filtrarTabla);
     filterFecha?.addEventListener('change',  filtrarTabla);
 
-    // ─── MENÚ DE ACCIONES ⋯ ───────────────────────────────────────────────────
+    // ─── MENÚ DE ACCIONES ───────────────────────────────────────────────────
 
     document.addEventListener('click', (e) => {
 

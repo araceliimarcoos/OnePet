@@ -22,8 +22,10 @@ urlpatterns = [
     path('propietarios/perfiles/<str:folio>/', views.propietarios_detalles, name='detalles_propietario'),
     
     path('propietarios/', views.propietarios, name='propietarios'),
+    
     path('citas/', views.citas, name='citas'),
     path('citas/nueva/', views.nueva_cita, name='nueva_cita'),
+    path('citas/<str:folio>/editar/', views.editar_cita, name='editar_cita'),
     
     path('consultas/', views.consultas, name='consultas'),
     path('consultas/iniciar_consulta/', views.iniciar_consulta, name='iniciar_consulta'),   # Iniciar consulta
