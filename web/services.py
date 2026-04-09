@@ -460,74 +460,60 @@ def generar_folio_veterinario():
     return f"VET-{max_num + 1:03d}"
 
 def validar_datos_veterinario(data, folio_actual=None):
+    import re
+    from .models import Veterinario, Especialidad
+ 
     nombre    = data.get('nombre', '').strip()
     ap_pat    = data.get('apellido_paterno', '').strip()
     correo    = data.get('correo', '').strip()
     telefono  = re.sub(r'\D', '', data.get('telefono', ''))
-    cedula    = data.get('cedula', '').strip()
     especialidad = data.get('especialidad', '').strip()
-    
+ 
     if not nombre:
-        return False, "El nombre del veterinario es obligatorio"
-    
+        return False, 'El nombre es obligatorio'
     if not re.match(r'^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$', nombre):
         return False, 'El nombre solo debe contener letras'
-    
-    if len(nombre) > 30:
-        return False, "El nombre no puede superar 30 caracteres"
-    
+ 
     if not ap_pat:
         return False, 'El apellido paterno es obligatorio'
-    
     if not re.match(r'^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$', ap_pat):
         return False, 'El apellido paterno solo debe contener letras'
-    
-    if len(ap_pat) > 30:
-        return False, "El apellido paterno no puede superar 30 caracteres"
-    
+ 
     if not correo:
-        return False, "El correo es obligatorio"
-    
-    if not re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', correo):
-        return False, "El formato del correo no es válido"
-    
-    # Correo único (excluyendo al mismo vet en edición)
+        return False, 'El correo es obligatorio'
+    if not re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', correo.lower()):
+        return False, 'El formato del correo no es válido'
+ 
     qs_correo = Veterinario.objects.filter(correo__iexact=correo)
     if folio_actual:
         qs_correo = qs_correo.exclude(folio=folio_actual)
-        
     if qs_correo.exists():
         return False, f'El correo "{correo}" ya está registrado'
-    
-    if not telefono:
-        return False, "El teléfono es obligatorio"
-    
+ 
     if len(telefono) != 10:
         return False, 'El teléfono debe tener exactamente 10 dígitos'
-    
-    # Teléfono único
+ 
     qs_tel = Veterinario.objects.filter(telefono__icontains=telefono)
     if folio_actual:
         qs_tel = qs_tel.exclude(folio=folio_actual)
-        
     if qs_tel.exists():
         return False, 'Este número de teléfono ya está registrado'
-    
-    if not re.match(r'^[0-9]+$', telefono):
-        return False, "El teléfono solo debe contener números"
-    
-    if not cedula:
-        return False, 'La cédula profesional es obligatoria'
-    
-    if not re.match(r'^\d{7,8}$', cedula):
-        return False, 'La cédula debe tener 7 u 8 dígitos numéricos'
-    
+ 
+    # Cédula solo se valida al CREAR (folio_actual=None)
+    if not folio_actual:
+        cedula = data.get('cedula', '').strip()
+        if not cedula:
+            return False, 'La cédula profesional es obligatoria'
+        if not re.match(r'^\d{7,8}$', cedula):
+            return False, 'La cédula debe tener 7 u 8 dígitos numéricos'
+        if Veterinario.objects.filter(cedula=cedula).exists():
+            return False, f'La cédula "{cedula}" ya está registrada'
+ 
     if not especialidad:
         return False, 'La especialidad es obligatoria'
-    
     if not Especialidad.objects.filter(clave=especialidad).exists():
         return False, 'La especialidad seleccionada no existe'
-    
+ 
     return True, None
 
 def crear_veterinario_db(data):
