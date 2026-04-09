@@ -9,6 +9,7 @@ from .models import Mascota, Propietario, Especie, Raza, Servicio, Medicamento, 
 
 from django.core.paginator import Paginator
 from django.db.models import Q, Count
+from datetime import date, timedelta
 import re
 import json
 #........................................................................................................................................................
@@ -722,11 +723,9 @@ def nueva_raza(request):
 
 @login_required
 def personal(request):
-    query = request.GET.get('q')
+    query = request.GET.get('q', '')
     
-    veterinarios_list = Veterinario.objects.select_related(
-        'especialidad'
-    ).all()
+    veterinarios_list = Veterinario.objects.select_related('especialidad').all()
     
     if query:
         veterinarios_list = veterinarios_list.filter(
@@ -736,18 +735,146 @@ def personal(request):
             Q(folio__icontains=query)
         )
 
+    veterinarios_list = veterinarios_list.order_by('primerapellido', 'nombrepila')
     paginator = Paginator(veterinarios_list, 15)
     page_number = request.GET.get('page')
     veterinarios = paginator.get_page(page_number)
 
+    especialidades = Especialidad.objects.order_by('nombre')
+
+    #Citas de la semana actuaal
+    hoy        = date.today()
+    inicio_sem = hoy - timedelta(days=hoy.weekday())   # lunes
+    fin_sem    = inicio_sem + timedelta(days=6)          # domingo
+    
+    citas_semana = Cita.objects.select_related(
+        'mascota', 'propietario', 'veterinario', 'estado'
+    ).filter(
+        fecha__range=(inicio_sem, fin_sem)
+    ).order_by('fecha', 'hora')
+    
+    # Serializar citas para la agenda en JS
+    citas_json = []
+    for c in citas_semana:
+        dia = (c.fecha - inicio_sem).days   # 0=lun … 6=dom
+        hora_h = c.hora.hour - 8            # índice en HORAS (08:00 = 0)
+        if 0 <= hora_h <= 8:
+            citas_json.append({
+                'dia':         dia,
+                'hora':        hora_h,
+                'titulo':      f"{c.mascota.nombre}",
+                'sub':         f"{c.motivo} • {c.propietario.nombrepila} {c.propietario.primerapellido}",
+                'tiempo':      f"{c.hora.strftime('%H:%M')}",
+                'estado':      c.estado.nombre,
+                'veterinario': c.veterinario.folio,
+            })
+    
     contexto = {
         'seccion_activa': 'veterinarios',
         'veterinarios': veterinarios,
         'total_conteo': paginator.count,
-        'query': query
+        'total_especialidades': especialidades.count(),
+        'especialidades': especialidades,
+        'query': query,
+        'inicio': inicio_sem.isoformat(),
+        'citas_json': json.dumps(citas_json),
     }
 
     return render(request, 'personal/personal_lista.html', contexto)
+
+@require_POST
+def nuevo_veterinario(request):
+    from .services import validar_datos_veterinario, crear_veterinario_db
+    try:
+        data = {
+            'nombre':           request.POST.get('nombre', ''),
+            'apellido_paterno': request.POST.get('apellido_paterno', ''),
+            'apellido_materno': request.POST.get('apellido_materno', ''),
+            'correo':           request.POST.get('correo', ''),
+            'telefono':         request.POST.get('telefono', ''),
+            'cedula':           request.POST.get('cedula', ''),
+            'especialidad':     request.POST.get('especialidad', ''),
+        }
+ 
+        ok, error = validar_datos_veterinario(data)
+        if not ok:
+            return JsonResponse({'ok': False, 'error': error})
+ 
+        vet = crear_veterinario_db(data)
+        return JsonResponse({
+            'ok':     True,
+            'folio':  vet.folio,
+            'nombre': f"{vet.nombrepila} {vet.primerapellido}",
+        })
+ 
+    except Exception as e:
+        return JsonResponse({'ok': False, 'error': f'Error interno: {str(e)}'})
+    
+@require_POST
+def editar_veterinario(request, folio):
+    from .services import validar_datos_veterinario, editar_veterinario_db
+    try:
+        vet = get_object_or_404(Veterinario, folio=folio)
+        data = {
+            'nombre':           request.POST.get('nombre', ''),
+            'apellido_paterno': request.POST.get('apellido_paterno', ''),
+            'apellido_materno': request.POST.get('apellido_materno', ''),
+            'correo':           request.POST.get('correo', ''),
+            'telefono':         request.POST.get('telefono', ''),
+            'especialidad':     request.POST.get('especialidad', ''),
+        }
+ 
+        ok, error = validar_datos_veterinario(data, folio_actual=folio)
+        if not ok:
+            return JsonResponse({'ok': False, 'error': error})
+ 
+        vet = editar_veterinario_db(vet, data)
+        return JsonResponse({
+            'ok':     True,
+            'folio':  vet.folio,
+            'nombre': f"{vet.nombrepila} {vet.primerapellido}",
+        })
+ 
+    except Exception as e:
+        return JsonResponse({'ok': False, 'error': f'Error interno: {str(e)}'})
+    
+@require_POST
+def baja_veterinario(request, folio):
+    from .services import dar_de_baja_veterinario
+    try:
+        ok, error = dar_de_baja_veterinario(folio)
+        if not ok:
+            return JsonResponse({'ok': False, 'error': error})
+        return JsonResponse({'ok': True})
+    except Exception as e:
+        return JsonResponse({'ok': False, 'error': f'Error interno: {str(e)}'})
+
+#------------------------------------------ E S P E C I A L I D A D ------------------------------------------------------------#
+
+@require_POST
+def nueva_especialidad(request):
+    from .services import validar_datos_especialidad, crear_especialidad_db
+    try:
+        data = {
+            'clave': request.POST.get('clave', ''),
+            'nombre': request.POST.get('nombre', ''),
+            'descripcion': request.POST.get('descripcion', ''),
+        }
+ 
+        ok, error = validar_datos_especialidad(data)
+        if not ok:
+            return JsonResponse({'ok': False, 'error': error})
+ 
+        esp = crear_especialidad_db(data)
+        return JsonResponse({
+            'ok': True,
+            'clave': esp.clave,
+            'nombre': esp.nombre,
+        })
+ 
+    except Exception as e:
+        return JsonResponse({'ok': False, 'error': f'Error interno: {str(e)}'})
+
 #------------------------------------------ PAGOS ------------------------------------------------------------#
 
 @login_required

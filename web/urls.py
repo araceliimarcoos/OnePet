@@ -50,6 +50,11 @@ urlpatterns = [
     path('especies/razas/<str:clave_especie>/', views.razas, name='razas'), # para acceder a la lista de razas
     
     path('personal/', views.personal, name='personal'),
+    path('personal/nuevo/', views.nuevo_veterinario, name='nuevo_veterinario'),
+    path('personal/especialidades/nueva/', views.nueva_especialidad, name='nueva_especialidad'),
+    path('personal/<str:folio>/editar/', views.editar_veterinario, name='editar_veterinario'),
+    path('personal/<str:folio>/baja/', views.baja_veterinario,   name='baja_veterinario'),
+        
     path('reportes/', views.reportes, name='reportes'),
     
     #Estos son para las ventanitas
