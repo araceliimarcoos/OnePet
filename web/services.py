@@ -1,4 +1,4 @@
-from .models import Propietario, Telefono, Medicamento, Servicio, Especie, Raza, Cita, Mascota, Veterinario, EdoCita
+from .models import Propietario, Telefono, Medicamento, Servicio, Especie, Raza, Cita, Mascota, Veterinario, EdoCita, Especialidad, EdoUsuario, Usuario
 from datetime import date, time, datetime, timedelta
 import re
 
@@ -442,3 +442,190 @@ def crear_raza_db(data):
         especie = especie
     )
     return raza
+
+#--------------------------------------------- V E T E R I N A R I O S -----------------------------------------------------------------------------------
+def generar_folio_veterinario():
+    # folios: VET-001
+    folios = Veterinario.objects.values_list('folio', flat=True)
+    
+    max_num = 0
+    for f in folios:
+        try:
+            num = int(f.split('-')[1])
+            if num > max_num:
+                max_num = num
+        except:
+            continue
+
+    return f"VET-{max_num + 1:03d}"
+
+def validar_datos_veterinario(data, folio_actual=None):
+    nombre    = data.get('nombre', '').strip()
+    ap_pat    = data.get('apellido_paterno', '').strip()
+    correo    = data.get('correo', '').strip()
+    telefono  = re.sub(r'\D', '', data.get('telefono', ''))
+    cedula    = data.get('cedula', '').strip()
+    especialidad = data.get('especialidad', '').strip()
+    
+    if not nombre:
+        return False, "El nombre del veterinario es obligatorio"
+    
+    if not re.match(r'^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$', nombre):
+        return False, 'El nombre solo debe contener letras'
+    
+    if len(nombre) > 30:
+        return False, "El nombre no puede superar 30 caracteres"
+    
+    if not ap_pat:
+        return False, 'El apellido paterno es obligatorio'
+    
+    if not re.match(r'^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$', ap_pat):
+        return False, 'El apellido paterno solo debe contener letras'
+    
+    if len(ap_pat) > 30:
+        return False, "El apellido paterno no puede superar 30 caracteres"
+    
+    if not correo:
+        return False, "El correo es obligatorio"
+    
+    if not re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', correo):
+        return False, "El formato del correo no es válido"
+    
+    # Correo único (excluyendo al mismo vet en edición)
+    qs_correo = Veterinario.objects.filter(correo__iexact=correo)
+    if folio_actual:
+        qs_correo = qs_correo.exclude(folio=folio_actual)
+        
+    if qs_correo.exists():
+        return False, f'El correo "{correo}" ya está registrado'
+    
+    if not telefono:
+        return False, "El teléfono es obligatorio"
+    
+    if len(telefono) != 10:
+        return False, 'El teléfono debe tener exactamente 10 dígitos'
+    
+    # Teléfono único
+    qs_tel = Veterinario.objects.filter(telefono__icontains=telefono)
+    if folio_actual:
+        qs_tel = qs_tel.exclude(folio=folio_actual)
+        
+    if qs_tel.exists():
+        return False, 'Este número de teléfono ya está registrado'
+    
+    if not re.match(r'^[0-9]+$', telefono):
+        return False, "El teléfono solo debe contener números"
+    
+    if not cedula:
+        return False, 'La cédula profesional es obligatoria'
+    
+    if not re.match(r'^\d{7,8}$', cedula):
+        return False, 'La cédula debe tener 7 u 8 dígitos numéricos'
+    
+    if not especialidad:
+        return False, 'La especialidad es obligatoria'
+    
+    if not Especialidad.objects.filter(clave=especialidad).exists():
+        return False, 'La especialidad seleccionada no existe'
+    
+    return True, None
+
+def crear_veterinario_db(data):
+    numeros   = re.sub(r'\D', '', data.get('telefono', ''))
+    tel_fmt   = f"({numeros[:3]}) {numeros[3:6]}-{numeros[6:]}"
+    especialidad = Especialidad.objects.get(clave=data['especialidad'])
+ 
+    veterinario = Veterinario.objects.create(
+        folio=generar_folio_veterinario(),
+        nombrepila=data['nombre'].strip().title(),
+        primerapellido=data['apellido_paterno'].strip().title(),
+        segundoapellido=data.get('apellido_materno', '').strip().title() or None,
+        correo=data['correo'].strip().lower(),
+        telefono=tel_fmt,
+        cedula=data['cedula'].strip(),
+        especialidad=especialidad,
+    )
+    return veterinario
+ 
+ 
+def editar_veterinario_db(veterinario, data):
+    numeros = re.sub(r'\D', '', data.get('telefono', ''))
+    tel_fmt = f"({numeros[:3]}) {numeros[3:6]}-{numeros[6:]}"
+ 
+    veterinario.nombrepila      = data['nombre'].strip().title()
+    veterinario.primerapellido  = data['apellido_paterno'].strip().title()
+    veterinario.segundoapellido = data.get('apellido_materno', '').strip().title() or None
+    veterinario.correo          = data['correo'].strip().lower()
+    veterinario.telefono        = tel_fmt
+    veterinario.especialidad    = Especialidad.objects.get(clave=data['especialidad'])
+    veterinario.save()
+    return veterinario
+ 
+ 
+def dar_de_baja_veterinario(folio):
+    #Cambia el estado del usuario asociado al veterinario a Inactivo
+    inactivo = EdoUsuario.objects.get(clave='I')
+    # Busca el usuario asociado a este veterinario
+    usuario = Usuario.objects.filter(veterinario__folio=folio).first()
+    if not usuario:
+        return False, 'No se encontró un usuario asociado a este veterinario'
+    usuario.estado = inactivo
+    usuario.save()
+    return True, None
+
+#--------------------------------------------- E S P E C I A L I D A D -----------------------------------------------------------------------------------
+def generar_clave_especialidad():
+    #claves: SPEC-01
+    claves = Especialidad.objects.values_list('clave', flat=True)
+    
+    max_num = 0
+    for c in claves:
+        try:
+            num = int(c.split('-')[1])
+            if num > max_num:
+                max_num = num
+        except:
+            continue
+
+    return f"SPEC-{max_num + 1:02d}"
+
+def validar_datos_especialidad(data):
+    nombre = data.get('nombre', '').strip()
+    descripcion = data.get('descripcion', '').strip()
+    
+    if not nombre:
+        return False, 'El nombre de la especialidad es obligatorio'
+    
+    #Validar nombre
+    ok, msg = validar_texto(nombre, "nombre")
+    if not ok:
+        return False, msg
+    
+    if len(nombre) > 30:
+        return False, 'El nombre no puede superar 30 caracteres'
+    
+    if not descripcion:
+        return False, 'La descripción de la especialidad es obligatoria'
+    
+    if len(descripcion) > 100:
+        return False, 'La descripción no puede superar 100 caracteres'
+    
+    #Validar descripción
+    ok, msg = validar_texto(descripcion, "descripción")
+    if not ok:
+        return False, msg
+    
+    #Verifica que la especialidad no este registrada ya
+    if Especialidad.objects.filter(nombre__iexact=nombre).exists():
+        return False, f'Ya existe la especialidad "{nombre}"'
+    
+    return True, None
+
+def crear_especialidad_db(data):
+    
+    especialidad = Especialidad.objects.create(
+        clave=generar_clave_especialidad(),
+        nombre=data.get('nombre').strip().title(),
+        descripcion=data.get('descripcion').strip(),
+    )
+    return especialidad
