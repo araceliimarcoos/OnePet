@@ -1,6 +1,8 @@
-from .models import Propietario, Telefono, Medicamento, Servicio, Especie, Raza, Cita, Mascota, Veterinario, EdoCita, Especialidad, EdoUsuario, Usuario
+from .models import Propietario, Telefono, Medicamento, Servicio, Especie, Raza, Cita, Mascota, Veterinario, EdoCita, Especialidad, EdoUsuario, Usuario, Consulta, Expediente, Receta, Tratamiento
+from django.utils import timezone
 from datetime import date, time, datetime, timedelta
-import re
+import re, json
+from django.db import connection
 
 from .utils.validaciones import (
     validar_texto,
@@ -232,6 +234,111 @@ def validar_datos_editar_cita(data, folio_actual):
         return False, 'Formato de fecha u hora inválido'
 
     return True, None
+
+#--------------------------------------------- C O N S U L T A S -----------------------------------------------------------------------------------
+def validar_datos_consulta(data):
+    sintomas    = data.get('sintomas', '').strip()
+    diagnostico = data.get('diagnostico', '').strip()
+    observaciones = data.get('observaciones', '').strip()
+
+    try:
+        temp = float(data.get('temperatura', 0))
+        fc   = int(data.get('freccardiaca', 0))
+        fr   = int(data.get('frecrespiratoria', 0))
+    except (ValueError, TypeError):
+        return False, 'Los signos vitales deben ser valores numéricos'
+    
+    if not sintomas:
+        return False, 'Los síntomas son obligatorios'
+    if len(sintomas) > 150:
+        return False, 'Los síntomas no pueden superar 150 caracteres'
+    if not diagnostico:
+        return False, 'El diagnóstico es obligatorio'
+    if len(diagnostico) > 150:
+        return False, 'El diagnóstico no puede superar 150 caracteres'
+    if not observaciones:
+        return False, 'Las observaciones son obligatorias'
+    if temp <= 0:
+        return False, 'La temperatura es obligatoria'
+    if fc <= 0:
+        return False, 'La frecuencia cardíaca es obligatoria'
+    if fr <= 0:
+        return False, 'La frecuencia respiratoria es obligatoria'
+ 
+    return True, None
+
+def guardar_consulta_db(cita, data):
+    """
+    Crea Expediente (si no existe), Consulta, actualiza estado de cita,
+    y opcionalmente crea Receta + Tratamientos.
+    """
+    # 1. Expediente — crear si la mascota no tiene uno
+    expediente, _ = Expediente.objects.get_or_create(
+        mascota=cita.mascota,
+        defaults={'fechaapertura': timezone.now().date()}
+    )
+    
+    # 2. Consulta
+    consulta = Consulta.objects.create(
+        sintomas=data['sintomas'].strip(),
+        freccardiaca=int(data['freccardiaca']),
+        frecrespiratoria=int(data['frecrespiratoria']),
+        temperatura=float(data['temperatura']),
+        observaciones=data['observaciones'].strip(),
+        diagnostico=data['diagnostico'].strip(),
+        total=0,
+        cita=cita,
+        expediente=expediente,
+    )
+    
+    # 3. Marcar cita como Atendida
+    try:
+        cita.estado = EdoCita.objects.get(nombre='Atendida')
+        cita.save()
+    except EdoCita.DoesNotExist:
+        pass
+    
+    # 4. Receta + Tratamientos (si se agregaron medicamentos)
+    medicamentos_json = data.get('medicamentos_json', '[]')
+    try:
+        medicamentos_list = json.loads(medicamentos_json)
+    except (json.JSONDecodeError, TypeError):
+        medicamentos_list = []
+ 
+    if medicamentos_list:
+        instrugenerales = data.get('instrugenerales', '').strip()
+        receta = Receta.objects.create(
+            fecha=timezone.now().date(),
+            instrugenerales=instrugenerales or 'Ver indicaciones por medicamento',
+            consulta=consulta,
+        )
+        
+        # Insertar tratamientos con SQL pa evitar el id
+        with connection.cursor() as cursor:
+            for item in medicamentos_list:
+                cursor.execute("""
+                    INSERT INTO tratamiento
+                    (receta, medicamento, cantidad, dosis, frecuencia, duracion, notas)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """, [
+                    receta.numero,
+                    item['clave'],
+                    int(item.get('cantidad', 1)),
+                    item.get('dosis', ''),
+                    item.get('frecuencia', ''),
+                    item.get('duracion', ''),
+                    item.get('notas', ''),    
+                ])
+        
+    return consulta
+
+def actualizar_consulta_db(consulta, data):
+    """Edita sintomas, diagnostico y observaciones de una consulta existente."""
+    consulta.sintomas     = data['sintomas'].strip()
+    consulta.diagnostico  = data['diagnostico'].strip()
+    consulta.observaciones = data['observaciones'].strip()
+    consulta.save()
+    return consulta
 
 #--------------------------------------------- M E D I C A M E N T O S -----------------------------------------------------------------------------------
 def generar_clave_medicamento():

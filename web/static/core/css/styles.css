@@ -1858,10 +1858,10 @@ body {
 .page-content {
   flex: 1;
   overflow-y: auto;
-  padding: 24px 28px;
+  
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
 }
 
 .page-content::-webkit-scrollbar { width: 5px; }
@@ -2078,7 +2078,12 @@ body {
   gap: 12px;
 }
  
-.vital-field { display: flex; flex-direction: column; gap: 5px; }
+.vital-field { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 5px; 
+    min-width: 0;
+}
  
 .vital-label {
   font-size: 0.72rem;
@@ -2225,6 +2230,7 @@ body {
   justify-content: flex-end;
   gap: 12px;
   flex-shrink: 0;
+  width: 100%;
 }
  
 /* Reutiliza .btn-secondary de styles.css para Cancelar */

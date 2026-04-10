@@ -9,6 +9,7 @@ from .models import Mascota, Propietario, Especie, Raza, Servicio, Medicamento, 
 
 from django.core.paginator import Paginator
 from django.db.models import Q, Count
+from django.db import connection
 from datetime import date, timedelta
 import re
 import json
@@ -353,14 +354,16 @@ def consultas(request):
     query = request.GET.get('q', '').strip()
     
     consultas_list = Consulta.objects.select_related(
-        'cita__mascota__propietario'
+        'cita__mascota__raza__especie',
+        'cita__mascota__propietario',
+        'cita__veterinario',
     ).order_by('-numero')
     
     if query:
         consultas_list = consultas_list.filter(
-            Q(numero__icontains=query) |
             Q(cita__mascota__nombre__icontains=query) |
-            Q(cita__propietario__primerapellido__icontains=query)
+            Q(cita__propietario__primerapellido__icontains=query) |
+            Q(diagnostico__icontains=query)
         )
     
     # Paginación
@@ -368,17 +371,205 @@ def consultas(request):
     page_number = request.GET.get('page')
     consultas = paginator.get_page(page_number)
     
+    #Citas pendientes para el selec del modal :)
+    citas_pendientes = Cita.objects.select_related(
+        'mascota',
+        'propietario',
+        'veterinario',
+        'estado',
+    ).filter(
+        estado__nombre='Pendiente'
+    ).order_by('fecha', 'hora')
+    
     contexto = {
         'seccion_activa': 'consultas',
         'consultas': consultas,
         'total_conteo': paginator.count,
+        'query': query,
+        'citas_pendientes': citas_pendientes,
     }
     
     return render(request, 'consultas/consultas_lista.html', contexto)
 
 @login_required
-def iniciar_consulta(request):
-    return render(request, 'consultas/consultas_inicio.html', {'seccion_activa': 'consultas'})
+def iniciar_consulta(request, folio_cita):
+    """
+    GET  → muestra el formulario de nueva consulta para la cita indicada.
+    POST → guarda la consulta y redirige a la lista.
+    """
+    from .services import validar_datos_consulta, guardar_consulta_db
+ 
+    cita = get_object_or_404(
+        Cita.objects.select_related(
+            'mascota__raza__especie', 'mascota__propietario',
+            'veterinario', 'estado'
+        ),
+        folio=folio_cita
+    )
+ 
+    # Consultas previas de esta mascota (historial)
+    expediente = Expediente.objects.filter(mascota=cita.mascota).first()
+    consultas_previas = []
+    if expediente:
+        consultas_previas = Consulta.objects.filter(
+            expediente=expediente
+        ).select_related('cita__veterinario').exclude(
+            cita=cita
+        ).order_by('-cita__fecha')[:5]
+ 
+    medicamentos_disponibles = Medicamento.objects.order_by('nombre')
+ 
+    if request.method == 'POST':
+        from .services import validar_datos_consulta, guardar_consulta_db
+        data = {
+            'sintomas':          request.POST.get('sintomas', ''),
+            'diagnostico':       request.POST.get('diagnostico', ''),
+            'observaciones':     request.POST.get('observaciones', ''),
+            'temperatura':       request.POST.get('temperatura', ''),
+            'freccardiaca':      request.POST.get('freccardiaca', ''),
+            'frecrespiratoria':  request.POST.get('frecrespiratoria', ''),
+            'instrugenerales':   request.POST.get('instrugenerales', ''),
+            'medicamentos_json': request.POST.get('medicamentos_json', '[]'),
+        }
+        ok, error = validar_datos_consulta(data)
+        if not ok:
+            return render(request, 'consultas/consultas_inicio.html', {
+                'seccion_activa': 'consultas',
+                'cita': cita,
+                'modo': 'iniciar',
+                'error': error,
+                'consultas_previas': consultas_previas,
+                'medicamentos_disponibles': medicamentos_disponibles,
+                'data': data,
+            })
+ 
+        consulta = guardar_consulta_db(cita, data)
+        return redirect(f'/consultas/{consulta.numero}/ver/?guardado=1')
+ 
+    return render(request, 'consultas/consultas_inicio.html', {
+        'seccion_activa': 'consultas',
+        'cita': cita,
+        'modo': 'iniciar',
+        'consultas_previas': consultas_previas,
+        'medicamentos_disponibles': medicamentos_disponibles,
+    })
+    
+@login_required
+def ver_consulta(request, numero):
+    """Vista de solo lectura de una consulta."""
+    consulta = get_object_or_404(
+        Consulta.objects.select_related(
+            'cita__mascota__raza__especie',
+            'cita__mascota__propietario',
+            'cita__veterinario',
+            'expediente',
+        ),
+        numero=numero
+    )
+    
+    receta = Receta.objects.filter(consulta=consulta).first()
+    tratamientos = []
+
+    if receta:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT m.nombre, m.clave, t.dosis, t.frecuencia, 
+                    t.duracion, t.notas, t.cantidad
+                FROM tratamiento t
+                JOIN medicamento m ON t.medicamento = m.clave
+                WHERE t.receta = %s
+            """, [receta.numero])
+            cols = [col[0] for col in cursor.description]
+            tratamientos = [dict(zip(cols, row)) for row in cursor.fetchall()]
+ 
+    expediente = consulta.expediente
+    consultas_previas = Consulta.objects.filter(
+        expediente=expediente
+    ).select_related('cita__veterinario').exclude(
+        numero=numero
+    ).order_by('-cita__fecha')[:5]
+ 
+    guardado = request.GET.get('guardado') == '1'
+ 
+    return render(request, 'consultas/consultas_inicio.html', {
+        'seccion_activa':   'consultas',
+        'cita':             consulta.cita,
+        'consulta':         consulta,
+        'receta':           receta,
+        'tratamientos':     tratamientos,
+        'modo':             'ver',
+        'consultas_previas': consultas_previas,
+        'guardado':         guardado,
+    })
+ 
+ 
+@login_required
+def editar_consulta(request, numero):
+    """Editar síntomas, diagnóstico y observaciones de una consulta."""
+    from .services import actualizar_consulta_db
+ 
+    consulta = get_object_or_404(
+        Consulta.objects.select_related(
+            'cita__mascota__raza__especie',
+            'cita__mascota__propietario',
+            'cita__veterinario',
+        ),
+        numero=numero
+    )
+    
+    # obtener receta y tratamiento
+    receta = Receta.objects.filter(consulta=consulta).first()
+    tratamientos = []
+    if receta:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT m.nombre, m.clave, t.dosis, t.frecuencia, 
+                    t.duracion, t.notas, t.cantidad
+                FROM tratamiento t
+                JOIN medicamento m ON t.medicamento = m.clave
+                WHERE t.receta = %s
+            """, [receta.numero])
+            cols = [col[0] for col in cursor.description]
+            tratamientos = [dict(zip(cols, row)) for row in cursor.fetchall()]
+    # ------------------------------------------------------------------
+    
+    expediente = consulta.expediente
+    consultas_previas = Consulta.objects.filter(
+        expediente=expediente
+    ).select_related('cita__veterinario').exclude(
+        numero=numero
+    ).order_by('-cita__fecha')[:5]
+
+    if request.method == 'POST':
+        data = {
+            'sintomas':      request.POST.get('sintomas', ''),
+            'diagnostico':   request.POST.get('diagnostico', ''),
+            'observaciones': request.POST.get('observaciones', ''),
+        }
+        if not data['sintomas'] or not data['diagnostico'] or not data['observaciones']:
+            return render(request, 'consultas/consultas_inicio.html', {
+                'seccion_activa': 'consultas',
+                'cita': consulta.cita,
+                'consulta': consulta,
+                'modo': 'editar',
+                'error': 'Todos los campos de texto son obligatorios',
+                'consultas_previas': consultas_previas,
+                'receta': receta,
+                'tratamientos': tratamientos
+            })
+ 
+        consulta = actualizar_consulta_db(consulta, data)
+        return redirect(f'/consultas/{consulta.numero}/ver/?guardado=1')
+ 
+    return render(request, 'consultas/consultas_inicio.html', {
+        'seccion_activa': 'consultas',
+        'cita':           consulta.cita,
+        'consulta':       consulta,
+        'modo':           'editar',
+        'consultas_previas': consultas_previas,
+        'receta': receta,
+        'tratamientos': tratamientos
+    })
 
 @login_required
 def buscar_citas(request):                  # Para la busqueda de citas en 'Iniciar consulta'
