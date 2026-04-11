@@ -476,7 +476,7 @@ body {
 .stat-card.green { border-left-color: var(--green); }
 .stat-card.blue { border-left-color: var(--blue); }
 .stat-card.orange { border-left-color: var(--orange); }
-.stat-card.gray { border-left-color: var(--gray); }
+.stat-card.red { border-left-color: var(--red); }
 
 .stat-icon {
   font-size: 1.8rem;
@@ -491,7 +491,7 @@ body {
 .stat-card.green .stat-icon { background: var(--green-light); }
 .stat-card.blue .stat-icon { background: var(--blue-light); }
 .stat-card.orange .stat-icon { background: #fff3d6; }
-.stat-card.gray .stat-icon { background: #f0f1f3; }
+.stat-card.red .stat-icon { background: #ffdede; }
 
 .stat-label { font-size: 0.82rem; color: var(--text-muted); font-weight: 600; }
 .stat-value { font-size: 2rem; font-weight: 800; line-height: 1.1; }

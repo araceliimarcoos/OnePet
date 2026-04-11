@@ -1,153 +1,231 @@
-
-
 {% extends 'base.html' %}
 {% load static %}
-
-{% block titulo %}hospitalizacion{%endblock%}
-
+ 
+{% block titulo %}Hospitalización{% endblock %}
 {% block nav_hospitalizacion %}active{% endblock %}
-
+ 
 {% block breadcrumb %}
     <a href="{% url 'dashboard' %}">Inicio</a>
     <span class="material-symbols-outlined">chevron_right</span>
-    <span class="breadcrumb-current">Hospitalizacion</span>
-    
+    <span class="breadcrumb-current">Hospitalización</span>
 {% endblock %}
-
+ 
 {% block topbar_titulo %}Lista de Hospitalizaciones{% endblock %}
-
-{% block contenido %} 
-
-    <div class="page active" id="page-hospitalizacion">
-        <div class="page-header">
-            <div>
-                <h1 class="page-title">Hospitalizaciones</h1>
-                <p class="page-sub">Gestiona y supervisa el estado de las mascotas hospitalizadas y tratamientos en curso</p>
-            </div>
-        
-            <div class="page-header-right">
-                <button class="btn-primary">
-                    <span class="material-symbols-outlined">add_circle</span>
-                    iniciar Hospitalización
-                </button>
-            </div>
+ 
+{% block contenido %}
+<div class="page active" id="page-hospitalizacion">
+ 
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Hospitalizaciones</h1>
+            <p class="page-sub">Gestiona y supervisa el estado de las mascotas hospitalizadas</p>
         </div>
-
-        <!-- STATS -->
-        <div class="stats-grid">
-          <div class="stat-card blue">
-            <span class="stat-icon material-symbols-outlined">vital_signs</span>
-            <div class="stat-body">
-              <p class="stat-label">Mascotas Hospitalizadas</p>
-              <p class="stat-value">{{ activas }}</p>
-              <p class="stat-sub">{{ admitidas_hoy }} Mascotas admitidas en las últimas 24 horas</p>
-            </div>
-          </div>
-
-          
-          <div class="stat-card green">
-            <span class="stat-icon material-symbols-outlined">assignment_late</span>
-            <div class="stat-body">
-              <p class="stat-label">Revisiones Pendientes</p>
-              <p class="stat-value">{{ pendientes }}</p>
-              <p class="stat-sub">Mascotas sin signos vitales registrados hoy</p>
-            </div>
-          </div>
-
-          <div class="stat-card blue">
-            <span class="stat-icon material-symbols-outlined">logout</span>
-            <div class="stat-body">
-              <p class="stat-label">Altas del dia</p>
-              <p class="stat-value">{{ altas_hoy }}</p>
-              <p class="stat-sub">Mascotas dadas de alta hoy</p>
-            </div>
-          </div>
-
-        </div>
-
-        
-        <!-- TABLA -->
-        <div class="card">
-            <div class="filters-bar">
-                <div class="search-box">
-                    <span class="material-symbols-outlined">search</span>
-                    <input type="text" placeholder="Buscar por numero o mascota ..." id="hospitalizacionSearch" />
-                </div>
-
-                <div class="filters-right">
-                
-                <select class="filter-select" id="filterEstado">
-                    <option value="">Todos los estados</option>
-                    <option value="Confirmada">De Alta</option>
-                    <option value="En curso">En curso</option>
-                    <option value="Pendiente">Morido</option>
-                </select>
-                </div>
-
-            </div>
-
-            <div class="table-wrapper">
-                <table class="data-table" id="consultasTable">
-                    <thead>
-                        <tr>
-                            <th>NUMERO</th>
-                            <th>INGRESO</th>
-                            <th>MASCOTA</th>
-                            <th>VETERINARIO</th>
-                            <th>SALIDA</th>
-                            <th>ESTADO</th>
-                            <th>ACCIONES</th>
-                        </tr>
-                    </thead>
-                    <tbody id="hospitalizacionBody">
-                        {% for hosp in hospitalizaciones %}
-                        <tr>
-                            <td><strong>#0{{hosp.numero}}</strong></td>
-                            <td>
-                                <div class="fecha-cell">
-                                    <span class="fecha-dia">{{ hosp.fechaingreso|date:"M d, Y" }}</span>
-                                    <span class="fecha-hora">
-                                        <span class="material-symbols-outlined">schedule</span>
-                                        {{ hosp.horaingreso|time:"H:i" }}
-                                    </span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="mascota-cell">
-                                    <div class="mascota-avatar"><span class="material-symbols-outlined">pets</span></div>
-                                    <div>
-                                        <span class="mascota-nombre">{{ hosp.expediente.mascota.nombre }}</span>
-                                        <span class="mascota-raza"> {{ hosp.expediente.mascota.raza.nombre }} • {{ hosp.expediente.mascota.raza.especie.nombre }}</span>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>{{ hosp.veterinario.nombrepila }} {{ hosp.veterinario.primerapellido }}</td>
-                            <td>
-                                {% if hosp.fechaalta %}
-                                <div class="fecha-cell">
-                                    <span class="fecha-dia">{{ hosp.fechaalta|date:"M d, Y" }}</span>
-                                    <span class="fecha-hora">
-                                        <span class="material-symbols-outlined">schedule</span>
-                                        {{ hosp.horaalta|time:"H:i" }}
-                                    </span>
-                                </div>
-                                {% else %}
-                                <span style="color: var(--color-text-muted);">— En curso —</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <span class="badge-cita badge-confirmada">
-                                    <span class="material-symbols-outlined">schedule</span>
-                                    {{ hosp.estado }}
-                                </span>
-                            </td>
-                            <td><a href="#" class="link-green">Ver Detalles</a></td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>       
+        <div class="page-header-right">
+            <button class="btn-primary" id="btnIniciarHosp">
+                <span class="material-symbols-outlined">add_circle</span>
+                Iniciar Hospitalización
+            </button>
         </div>
     </div>
+ 
+    <!-- STATS -->
+    <div class="stats-grid">
+        <div class="stat-card blue">
+            <span class="stat-icon material-symbols-outlined">vital_signs</span>
+            <div class="stat-body">
+                <p class="stat-label">Hospitalizadas</p>
+                <p class="stat-value">{{ activas }}</p>
+                <p class="stat-sub">{{ admitidas_hoy }} admitida{{ admitidas_hoy|pluralize }} hoy</p>
+            </div>
+        </div>
+        <div class="stat-card green">
+            <span class="stat-icon material-symbols-outlined">assignment_late</span>
+            <div class="stat-body">
+                <p class="stat-label">Revisiones Pendientes</p>
+                <p class="stat-value">{{ pendientes }}</p>
+                <p class="stat-sub">Sin signos vitales registrados hoy</p>
+            </div>
+        </div>
+        <div class="stat-card orange">
+            <span class="stat-icon material-symbols-outlined">logout</span>
+            <div class="stat-body">
+                <p class="stat-label">Altas del día</p>
+                <p class="stat-value">{{ altas_hoy }}</p>
+                <p class="stat-sub">Mascotas dadas de alta hoy</p>
+            </div>
+        </div>
+    </div>
+ 
+    <!-- TABLA -->
+    <div class="card">
+        <div class="filters-bar">
+            <div class="search-box">
+                <span class="material-symbols-outlined">search</span>
+                <input type="text" placeholder="Buscar por número o mascota..." id="hospSearch">
+            </div>
+            <div class="filters-right">
+                <select class="filter-select" id="filterEstadoHosp">
+                    <option value="">Todos</option>
+                    <option value="activa">En curso</option>
+                    <option value="alta">De alta</option>
+                </select>
+            </div>
+        </div>
+ 
+        <div class="table-wrapper">
+            <table class="data-table" id="hospTable">
+                <thead>
+                    <tr>
+                        <th>NÚMERO</th>
+                        <th>INGRESO</th>
+                        <th>MASCOTA</th>
+                        <th>VETERINARIO</th>
+                        <th>SALIDA</th>
+                        <th>ESTADO</th>
+                        <th>ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody id="hospBody">
+                    {% for hosp in hospitalizaciones %}
+                    <tr data-estado="{% if hosp.fechaalta %}alta{% else %}activa{% endif %}">
+                        <td><strong>#{{ hosp.numero|stringformat:"04d" }}</strong></td>
+                        <td>
+                            <div class="fecha-cell">
+                                <span class="fecha-dia">{{ hosp.fechaingreso|date:"M d, Y" }}</span>
+                                <span class="fecha-hora">
+                                    <span class="material-symbols-outlined">schedule</span>
+                                    {{ hosp.horaingreso|time:"H:i" }}
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="mascota-cell">
+                                <div class="mascota-avatar"><span class="material-symbols-outlined">pets</span></div>
+                                <div>
+                                    <span class="mascota-nombre">{{ hosp.expediente.mascota.nombre }}</span>
+                                    <span class="mascota-raza">{{ hosp.expediente.mascota.raza.nombre }} • {{ hosp.expediente.mascota.raza.especie.nombre }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ hosp.veterinario.nombrepila }} {{ hosp.veterinario.primerapellido }}</td>
+                        <td>
+                            {% if hosp.fechaalta %}
+                            <div class="fecha-cell">
+                                <span class="fecha-dia">{{ hosp.fechaalta|date:"M d, Y" }}</span>
+                                <span class="fecha-hora">
+                                    <span class="material-symbols-outlined">schedule</span>
+                                    {{ hosp.horaalta|time:"H:i" }}
+                                </span>
+                            </div>
+                            {% else %}
+                            <span style="color:var(--text-muted); font-size:0.83rem;">— En curso —</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if hosp.estado.nombre == 'Alta' %}
+                            <span class="badge-cita badge-confirmada">
+                                <span class="material-symbols-outlined">check_circle</span>
+                                De Alta
+                            </span>
+                            {% elif hosp.estado.nombre == 'Hospitalizado' %}
+                            <span class="badge-cita badge-en-curso">
+                                <span class="material-symbols-outlined">vital_signs</span>
+                                {{ hosp.estado.nombre }}
+                            </span>
+                            {% else %}
+                            <span class="badge-cita badge-pendiente">
+                                <span class="material-symbols-outlined">cancel</span>
+                                {{ hosp.estado.nombre }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="menu-wrap">
+                                <button class="menu-btn" aria-label="Acciones"
+                                        data-numero="{{ hosp.numero }}"
+                                        data-tiene-alta="{% if hosp.fechaalta %}1{% else %}0{% endif %}">
+                                    <span class="material-symbols-outlined">more_horiz</span>
+                                </button>
+                                <div class="dropdown-menu" role="menu">
+                                    <a href="{% url 'ver_hospitalizacion' hosp.numero %}" class="dropdown-item">
+                                        <span class="material-symbols-outlined">visibility</span>
+                                        Ver detalles
+                                    </a>
+                                    {% if not hosp.fechaalta %}
+                                    <a href="{% url 'editar_hospitalizacion' hosp.numero %}" class="dropdown-item">
+                                        <span class="material-symbols-outlined">edit</span>
+                                        Actualizar
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7">No hay hospitalizaciones registradas</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+ 
+<!-- MODAL: INICIAR HOSPITALIZACIÓN ─────────────────────────────────────── -->
+<div class="modal-overlay" id="modalIniciarHosp">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>Iniciar Hospitalización</h2>
+            <button class="modal-close" id="btnCerrarHosp" type="button">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:12px;">
+                Solo se pueden hospitalizar mascotas cuya consulta haya sido <strong>Atendida</strong>.
+            </p>
+            <div class="form-group">
+                <label style="font-size:0.82rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; display:block; margin-bottom:8px;">
+                    Consulta
+                </label>
+                <select id="selectConsulta" style="width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-family:inherit; font-size:0.9rem; color:var(--text); background:var(--surface);">
+                    <option value="">Seleccionar consulta...</option>
+                    {% for c in consultas_atendidas %}
+                    <option value="{{ c.numero }}"
+                            data-mascota="{{ c.cita.mascota.nombre }}"
+                            data-propietario="{{ c.cita.propietario.nombrepila }} {{ c.cita.propietario.primerapellido }}"
+                            data-fecha="{{ c.cita.fecha|date:'d/m/Y' }}"
+                            data-motivo="{{ c.cita.motivo }}">
+                        #{{ c.numero|stringformat:"04d" }} · {{ c.cita.mascota.nombre }} · {{ c.cita.fecha|date:"d/m/Y" }}
+                    </option>
+                    {% empty %}
+                    <option value="" disabled>No hay consultas atendidas disponibles</option>
+                    {% endfor %}
+                </select>
+            </div>
+ 
+            <!-- Resumen -->
+            <div id="resumenHosp" style="display:none; margin-top:14px; background:var(--bg); border-radius:var(--radius-sm); padding:14px; border:1px solid var(--border);">
+                <p style="font-size:0.78rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:10px; letter-spacing:0.04em;">Resumen</p>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:0.85rem;">
+                    <div><span style="color:var(--text-muted);">Mascota:</span> <strong id="h-mascota"></strong></div>
+                    <div><span style="color:var(--text-muted);">Fecha:</span> <span id="h-fecha"></span></div>
+                    <div style="grid-column:1/-1;"><span style="color:var(--text-muted);">Propietario:</span> <span id="h-propietario"></span></div>
+                    <div style="grid-column:1/-1;"><span style="color:var(--text-muted);">Motivo consulta:</span> <span id="h-motivo"></span></div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-cancelar" id="btnCancelarHosp">Cancelar</button>
+            <button type="button" class="btn-primary" id="btnConfirmarHosp" disabled>
+                <span class="material-symbols-outlined">vital_signs</span>
+                Iniciar Hospitalización
+            </button>
+        </div>
+    </div>
+</div>
+ 
+{% endblock %}
 
+{% block scripts %}
+    <script src="{% static 'core/js/hospitalizacion.js' %}"></script>
 {% endblock %}

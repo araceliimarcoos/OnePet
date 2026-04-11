@@ -1,4 +1,4 @@
-from .models import Propietario, Telefono, Medicamento, Servicio, Especie, Raza, Cita, Mascota, Veterinario, EdoCita, Especialidad, EdoUsuario, Usuario, Consulta, Expediente, Receta, Tratamiento
+from .models import Propietario, Telefono, Medicamento, Servicio, Especie, Raza, Cita, Mascota, Veterinario, EdoCita, Especialidad, EdoUsuario, Usuario, Consulta, Expediente, Receta, Tratamiento, Hospitalizacion, EdoHosp, ServCons, ServHosp, SignosVitales
 from django.utils import timezone
 from datetime import date, time, datetime, timedelta
 import re, json
@@ -339,6 +339,202 @@ def actualizar_consulta_db(consulta, data):
     consulta.observaciones = data['observaciones'].strip()
     consulta.save()
     return consulta
+
+def guardar_servicios_consulta(consulta, servicios_json_str):
+    """Inserta filas en serv_cons usando SQL directo (tabla compuesta sin id en Django)."""
+    try:
+        servicios_list = json.loads(servicios_json_str)
+    except (json.JSONDecodeError, TypeError):
+        return
+    
+    if not servicios_list:
+        return
+    
+    with connection.cursor() as cursor:
+        for item in servicios_list:
+            try:
+                cantidad = int(item.get('cantidad', 1))
+                costo    = float(item.get('costo', 0))
+                subtotal = round(cantidad * costo, 2)
+                cursor.execute("""
+                    INSERT INTO serv_cons (servicio, consulta, cantidad, subtotal)
+                    VALUES (%s, %s, %s, %s)
+                """, [
+                    item['clave'],
+                    consulta.numero,
+                    cantidad,
+                    subtotal,
+                ])
+            except (KeyError, ValueError):
+                continue
+
+def obtener_servicios_consulta(consulta_numero):
+    """Lee serv_cons con SQL directo."""
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT s.clave, s.nombre, s.descripcion, s.costo,
+                   sc.cantidad, sc.subtotal
+            FROM serv_cons sc
+            JOIN servicio s ON sc.servicio = s.clave
+            WHERE sc.consulta = %s
+        """, [consulta_numero])
+        cols = [col[0] for col in cursor.description]
+        return [dict(zip(cols, row)) for row in cursor.fetchall()]
+
+#--------------------------------------------- H O S P I T A L I Z A C I O N -----------------------------------------------------------------------------------
+def validar_datos_hospitalizacion(data):
+    diagno  = data.get('diagnoingreso', '').strip()
+    obs     = data.get('obsergenerales', '').strip()
+    vet     = data.get('veterinario', '').strip()
+ 
+    if not diagno:
+        return False, 'El diagnóstico de ingreso es obligatorio'
+    if len(diagno) > 150:
+        return False, 'El diagnóstico no puede superar 150 caracteres'
+    if not obs:
+        return False, 'Las observaciones generales son obligatorias'
+    if len(obs) > 200:
+        return False, 'Las observaciones no pueden superar 200 caracteres'
+    if not vet:
+        return False, 'El veterinario responsable es obligatorio'
+ 
+    return True, None
+
+def crear_hospitalizacion_db(consulta, data):
+    """
+    Crea la hospitalización a partir de una consulta existente.
+    - La hospitalización referencia la consulta y el expediente.
+    - Estado inicial: 'Hospitalizado' (o el nombre que tenga en edo_hosp).
+    - fechaalta / horaalta quedan NULL hasta dar de alta.
+    """
+ 
+    estado_inicial = EdoHosp.objects.filter(
+        nombre__icontains='Hospitalizado'
+    ).first() or EdoHosp.objects.first()
+    
+    veterinario = Veterinario.objects.get(folio=data['veterinario'])
+ 
+    now = timezone.now()
+ 
+    hosp = Hospitalizacion.objects.create(
+        diagnoingreso=data['diagnoingreso'].strip(),
+        fechaingreso=now.date(),
+        horaingreso=now.time(),
+        obsergenerales=data['obsergenerales'].strip(),
+        fechaalta=None,
+        horaalta=None,
+        total=0,
+        consulta=consulta,
+        estado=estado_inicial,
+        veterinario=veterinario,
+        expediente=consulta.expediente,
+    )
+ 
+    # Signos vitales iniciales (si se proporcionaron)
+    try:
+        temp = float(data.get('temperatura', 0))
+        fc   = int(data.get('freccardiaca', 0))
+        fr   = int(data.get('frecrespiratoria', 0))
+        if temp > 0 and fc > 0 and fr > 0:
+            SignosVitales.objects.create(
+                fecha=now.date(),
+                freccardiaca=fc,
+                frecrespiratoria=fr,
+                temperatura=temp,
+                hospitalizacion=hosp,
+            )
+    except (ValueError, TypeError):
+        pass
+ 
+    # Receta (si hay medicamentos)
+    medicamentos_json = data.get('medicamentos_json', '[]')
+    try:
+        medicamentos_list = json.loads(medicamentos_json)
+    except (json.JSONDecodeError, TypeError):
+        medicamentos_list = []
+ 
+    if medicamentos_list:
+        from .models import Receta, Medicamento
+        receta = Receta.objects.create(
+            fecha=now.date(),
+            instrugenerales=data.get('instrugenerales', 'Ver indicaciones'),
+            hospitalizacion=hosp,
+        )
+        with connection.cursor() as cursor:
+            for item in medicamentos_list:
+                try:
+                    cursor.execute("""
+                        INSERT INTO tratamiento
+                        (receta, medicamento, cantidad, dosis, frecuencia, duracion, notas)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    """, [
+                        receta.numero,
+                        item['clave'],
+                        int(item.get('cantidad', 1)),
+                        item.get('dosis', ''),
+                        item.get('frecuencia', ''),
+                        item.get('duracion', ''),
+                        item.get('notas', ''),
+                    ])
+                except Exception:
+                    continue
+ 
+    # Servicios
+    servicios_json = data.get('servicios_json', '[]')
+    try:
+        servicios_list = json.loads(servicios_json)
+    except (json.JSONDecodeError, TypeError):
+        servicios_list = []
+ 
+    if servicios_list:
+        with connection.cursor() as cursor:
+            for item in servicios_list:
+                try:
+                    cantidad = int(item.get('cantidad', 1))
+                    costo    = float(item.get('costo', 0))
+                    subtotal = round(cantidad * costo, 2)
+                    cursor.execute("""
+                        INSERT INTO serv_hosp (servicio, hospitalizacion, cantidad, subtotal)
+                        VALUES (%s, %s, %s, %s)
+                    """, [item['clave'], hosp.numero, cantidad, subtotal])
+                except Exception:
+                    continue
+ 
+    return hosp
+
+def dar_de_alta_hospitalizacion(hosp, data):
+    from django.utils import timezone
+    now = timezone.now()
+ 
+    estado_alta = EdoHosp.objects.filter(
+        nombre__icontains='Alta'
+    ).first() or EdoHosp.objects.last()
+ 
+    hosp.fechaalta  = now.date()
+    hosp.horaalta   = now.time()
+    hosp.estado     = estado_alta
+    hosp.save()
+    return hosp
+ 
+ 
+def obtener_servicios_hosp(hosp_numero):
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT s.clave, s.nombre, s.costo, sh.cantidad, sh.subtotal
+            FROM serv_hosp sh
+            JOIN servicio s ON sh.servicio = s.clave
+            WHERE sh.hospitalizacion = %s
+        """, [hosp_numero])
+        cols = [col[0] for col in cursor.description]
+        return [dict(zip(cols, row)) for row in cursor.fetchall()]
+ 
+ 
+def obtener_signos_vitales(hosp_numero):
+    vitales = SignosVitales.objects.filter(
+        hospitalizacion__numero=hosp_numero
+    ).order_by('-fecha')
+    return vitales
+
 
 #--------------------------------------------- M E D I C A M E N T O S -----------------------------------------------------------------------------------
 def generar_clave_medicamento():
