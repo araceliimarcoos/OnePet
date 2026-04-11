@@ -28,7 +28,9 @@ urlpatterns = [
     path('citas/<str:folio>/editar/', views.editar_cita, name='editar_cita'),
     
     path('consultas/', views.consultas, name='consultas'),
-    path('consultas/iniciar_consulta/', views.iniciar_consulta, name='iniciar_consulta'),   # Iniciar consulta
+    path('consultas/<str:folio_cita>/iniciar/', views.iniciar_consulta,  name='iniciar_consulta'),
+    path('consultas/<int:numero>/ver/',         views.ver_consulta,      name='ver_consulta'),
+    path('consultas/<int:numero>/editar/',      views.editar_consulta,   name='editar_consulta'),
     path('citas/buscar/', views.buscar_citas, name='buscar_citas'),
     
     path('hospitalizacion/', views.hospitalizacion, name='hospitalizacion'),
