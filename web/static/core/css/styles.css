@@ -97,6 +97,74 @@ body {
   pointer-events: none;
 }
 
+/*Tooltip para el sidebar colapsado*/
+   
+/* El nav necesita overflow visible para que el tooltip
+   no quede cortado por el borde del sidebar */
+.sidebar.collapsed .sidebar-nav {
+    overflow: visible !important;
+}
+
+/* El nav-item necesita position relative para anclar el tooltip */
+.nav-item {
+    position: relative;
+}
+
+/* Tooltip — oculto por defecto */
+.sidebar.collapsed .nav-item .nav-label {
+    /* Reset de los estilos que lo colapsan normalmente */
+    opacity: 0 !important;
+    width: auto !important;
+    overflow: visible !important;
+    pointer-events: none;
+
+    /* Posicionamiento */
+    position: absolute;
+    left: calc(var(--sidebar-collapsed) - 8px);
+    top: 50%;
+    transform: translateY(-50%) translateX(8px);
+
+    /* Aspecto */
+    background: var(--text);
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+    z-index: 9999;
+
+    /* Animación */
+    visibility: hidden;
+    transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+}
+
+/* Flecha izquierda del tooltip */
+.sidebar.collapsed .nav-item .nav-label::before {
+    content: '';
+    position: absolute;
+    left: -6px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-width: 5px 7px 5px 0;
+    border-style: solid;
+    border-color: transparent var(--text) transparent transparent;
+}
+
+/* Mostrar al hacer hover */
+.sidebar.collapsed .nav-item:hover .nav-label {
+    opacity: 1 !important;
+    visibility: visible;
+    transform: translateY(-50%) translateX(0);
+}
+
+/* El sidebar colapsado también necesita overflow visible */
+.sidebar.collapsed {
+    overflow: visible !important;
+}
+/* Fin del tooltip */
+
 .collapse-btn {
   background: rgba(255,255,255,0.08);
   border: none;

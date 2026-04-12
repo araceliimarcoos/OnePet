@@ -1,4 +1,4 @@
-from .models import Propietario, Telefono, Medicamento, Servicio, Especie, Raza, Cita, Mascota, Veterinario, EdoCita, Especialidad, EdoUsuario, Usuario, Consulta, Expediente, Receta, Tratamiento, Hospitalizacion, EdoHosp, ServCons, ServHosp, SignosVitales
+from .models import Propietario, Telefono, Medicamento, Servicio, Especie, Raza, Cita, Mascota, Veterinario, EdoCita, Especialidad, EdoUsuario, Usuario, Consulta, Expediente, Receta, Tratamiento, Hospitalizacion, EdoHosp, ServCons, ServHosp, SignosVitales, Pago
 from django.utils import timezone
 from datetime import date, time, datetime, timedelta
 import re, json
@@ -240,11 +240,13 @@ def validar_datos_consulta(data):
     sintomas    = data.get('sintomas', '').strip()
     diagnostico = data.get('diagnostico', '').strip()
     observaciones = data.get('observaciones', '').strip()
+    peso = data.get('peso', 0)
 
     try:
         temp = float(data.get('temperatura', 0))
         fc   = int(data.get('freccardiaca', 0))
         fr   = int(data.get('frecrespiratoria', 0))
+        peso = float(data.get('peso', 0))
     except (ValueError, TypeError):
         return False, 'Los signos vitales deben ser valores numéricos'
     
@@ -264,19 +266,38 @@ def validar_datos_consulta(data):
         return False, 'La frecuencia cardíaca es obligatoria'
     if fr <= 0:
         return False, 'La frecuencia respiratoria es obligatoria'
- 
+    if peso <= 0:
+        return False, 'El peso es obligatorio'
+    
+    medicamentos_list = _parsear_json(data.get('medicamentos_json', '[]'))
+    for item in medicamentos_list:
+        if len(item.get('notas', '')) > 50:
+            return False, 'Las notas no del medicamento "{item.get("nombre")}" no pueden superar 50 caracteres'
+        if len(item.get('dosis', '')) > 30:
+            return False, f'La dosis de "{item.get("clave")}" no puede superar 30 caracteres'
+        if len(item.get('frecuencia', '')) > 30:
+            return False, f'La frecuencia de "{item.get("clave")}" no puede superar 30 caracteres'
+        if len(item.get('duracion', '')) > 30:
+            return False, f'La duración de "{item.get("clave")}" no puede superar 30 caracteres'
+        
     return True, None
 
 def guardar_consulta_db(cita, data):
-    """
-    Crea Expediente (si no existe), Consulta, actualiza estado de cita,
-    y opcionalmente crea Receta + Tratamientos.
-    """
+    
     # 1. Expediente — crear si la mascota no tiene uno
     expediente, _ = Expediente.objects.get_or_create(
         mascota=cita.mascota,
         defaults={'fechaapertura': timezone.now().date()}
     )
+    
+    #Actualizar peso
+    nuevo_peso = data.get('peso', '')
+    if nuevo_peso:
+        try:
+            cita.mascota.peso = float(nuevo_peso)
+            cita.mascota.save()
+        except (ValueError, TypeError):
+            pass
     
     # 2. Consulta
     consulta = Consulta.objects.create(
@@ -298,38 +319,37 @@ def guardar_consulta_db(cita, data):
     except EdoCita.DoesNotExist:
         pass
     
-    # 4. Receta + Tratamientos (si se agregaron medicamentos)
-    medicamentos_json = data.get('medicamentos_json', '[]')
-    try:
-        medicamentos_list = json.loads(medicamentos_json)
-    except (json.JSONDecodeError, TypeError):
-        medicamentos_list = []
- 
+    # 4. Receta + Tratamientos
+    medicamentos_list = _parsear_json(data.get('medicamentos_json', '[]'))
     if medicamentos_list:
-        instrugenerales = data.get('instrugenerales', '').strip()
         receta = Receta.objects.create(
             fecha=timezone.now().date(),
-            instrugenerales=instrugenerales or 'Ver indicaciones por medicamento',
+            instrugenerales=data.get('instrugenerales', '').strip() or 'Ver indicaciones',
             consulta=consulta,
         )
         
         # Insertar tratamientos con SQL pa evitar el id
         with connection.cursor() as cursor:
-            for item in medicamentos_list:
-                cursor.execute("""
-                    INSERT INTO tratamiento
-                    (receta, medicamento, cantidad, dosis, frecuencia, duracion, notas)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s)
-                """, [
-                    receta.numero,
-                    item['clave'],
-                    int(item.get('cantidad', 1)),
-                    item.get('dosis', ''),
-                    item.get('frecuencia', ''),
-                    item.get('duracion', ''),
-                    item.get('notas', ''),    
-                ])
-        
+            _insertar_tratamientos(cursor, receta.numero, medicamentos_list)
+            
+    # 5. Servicios extra
+    servicios_list = _parsear_json(data.get('servicios_json', '[]'))
+    if servicios_list:
+        with connection.cursor() as cursor:
+            for item in servicios_list:
+                try:
+                    cantidad = int(item.get('cantidad', 1))
+                    costo    = float(item.get('costo', 0))
+                    cursor.execute("""
+                        INSERT INTO serv_cons (servicio, consulta, cantidad, subtotal)
+                        VALUES (%s, %s, %s, %s)
+                    """, [item['clave'], consulta.numero, cantidad, round(cantidad * costo, 2)])
+                except Exception as e:
+                    print(f"[serv_cons INSERT error] {e}")
+    # 6. Calcular y guardar total
+    consulta.total = _calcular_total_consulta(consulta.numero)
+    consulta.save()
+                        
     return consulta
 
 def actualizar_consulta_db(consulta, data):
@@ -381,6 +401,81 @@ def obtener_servicios_consulta(consulta_numero):
         cols = [col[0] for col in cursor.description]
         return [dict(zip(cols, row)) for row in cursor.fetchall()]
 
+# ── FUNCIONES AUXILIARES ──────────────────────────────────────────────────
+def _parsear_json(json_str):
+    try:
+        result = json.loads(json_str)
+        return result if isinstance(result, list) else []
+    except (json.JSONDecodeError, TypeError):
+        return []
+ 
+ 
+def _calcular_total_consulta(consulta_numero):
+    """
+    Total = suma de serv_cons.subtotal + suma de (tratamiento.cantidad * medicamento.precio)
+    """
+    with connection.cursor() as cursor:
+        # Servicios
+        cursor.execute("""
+            SELECT COALESCE(SUM(sc.subtotal), 0)
+            FROM serv_cons sc
+            WHERE sc.consulta = %s
+        """, [consulta_numero])
+        total_servicios = float(cursor.fetchone()[0])
+ 
+        # Medicamentos (de la receta asociada a esta consulta)
+        cursor.execute("""
+            SELECT COALESCE(SUM(t.cantidad * m.precio), 0)
+            FROM tratamiento t
+            JOIN medicamento m ON t.medicamento = m.clave
+            JOIN receta r ON t.receta = r.numero
+            WHERE r.consulta = %s
+        """, [consulta_numero])
+        total_medicamentos = float(cursor.fetchone()[0])
+ 
+    return round(total_servicios + total_medicamentos, 2)
+ 
+ 
+def _calcular_total_hospitalizacion(hosp_numero):
+    """
+    Total = días hospitalizados (registros únicos en signos_vitales)
+            + serv_hosp.subtotal
+            + (tratamiento.cantidad * medicamento.precio)
+ 
+    Nota: el costo por día se toma como la suma de servicios de hospitalización
+    dividida entre los días, a menos que haya una tarifa fija definida.
+    Por ahora: total = serv_hosp + medicamentos.
+    Los días se calculan como (fechaalta - fechaingreso).days + 1 (informativo).
+    """
+    with connection.cursor() as cursor:
+        # Servicios de hospitalización
+        cursor.execute("""
+            SELECT COALESCE(SUM(subtotal), 0)
+            FROM serv_hosp
+            WHERE hospitalizacion = %s
+        """, [hosp_numero])
+        total_servicios = float(cursor.fetchone()[0])
+ 
+        # Medicamentos
+        cursor.execute("""
+            SELECT COALESCE(SUM(t.cantidad * m.precio), 0)
+            FROM tratamiento t
+            JOIN medicamento m ON t.medicamento = m.clave
+            JOIN receta r ON t.receta = r.numero
+            WHERE r.hospitalizacion = %s
+        """, [hosp_numero])
+        total_medicamentos = float(cursor.fetchone()[0])
+ 
+        # Días registrados (informativo, incluido en el retorno si quieres mostrarlo)
+        cursor.execute("""
+            SELECT COUNT(DISTINCT fecha)
+            FROM signos_vitales
+            WHERE hospitalizacion = %s
+        """, [hosp_numero])
+        dias = cursor.fetchone()[0]
+ 
+    return round(total_servicios + total_medicamentos, 2)
+
 #--------------------------------------------- H O S P I T A L I Z A C I O N -----------------------------------------------------------------------------------
 def validar_datos_hospitalizacion(data):
     diagno  = data.get('diagnoingreso', '').strip()
@@ -401,19 +496,14 @@ def validar_datos_hospitalizacion(data):
     return True, None
 
 def crear_hospitalizacion_db(consulta, data):
-    """
-    Crea la hospitalización a partir de una consulta existente.
-    - La hospitalización referencia la consulta y el expediente.
-    - Estado inicial: 'Hospitalizado' (o el nombre que tenga en edo_hosp).
-    - fechaalta / horaalta quedan NULL hasta dar de alta.
-    """
+    
+    # Crea la hospitalización a partir de una consulta existente.
  
     estado_inicial = EdoHosp.objects.filter(
         nombre__icontains='Hospitalizado'
     ).first() or EdoHosp.objects.first()
     
     veterinario = Veterinario.objects.get(folio=data['veterinario'])
- 
     now = timezone.now()
  
     hosp = Hospitalizacion.objects.create(
@@ -430,7 +520,7 @@ def crear_hospitalizacion_db(consulta, data):
         expediente=consulta.expediente,
     )
  
-    # Signos vitales iniciales (si se proporcionaron)
+    # Signos vitales iniciales y peso actualizaod
     try:
         temp = float(data.get('temperatura', 0))
         fc   = int(data.get('freccardiaca', 0))
@@ -445,65 +535,115 @@ def crear_hospitalizacion_db(consulta, data):
             )
     except (ValueError, TypeError):
         pass
+    
+    peso = data.get('peso','')
+    if peso:
+        try:
+            hosp.expediente.mascota.peso = float(peso)
+            hosp.expediente.mascota.save()
+        except (ValueError, TypeError):
+            pass
  
-    # Receta (si hay medicamentos)
-    medicamentos_json = data.get('medicamentos_json', '[]')
-    try:
-        medicamentos_list = json.loads(medicamentos_json)
-    except (json.JSONDecodeError, TypeError):
-        medicamentos_list = []
- 
+    # Receta + tratamientos
+    medicamentos_list = _parsear_json(data.get('medicamentos_json', '[]'))
     if medicamentos_list:
-        from .models import Receta, Medicamento
         receta = Receta.objects.create(
             fecha=now.date(),
-            instrugenerales=data.get('instrugenerales', 'Ver indicaciones'),
+            instrugenerales=data.get('instrugenerales', '').strip() or 'Ver indicaciones',
             hospitalizacion=hosp,
         )
         with connection.cursor() as cursor:
-            for item in medicamentos_list:
-                try:
-                    cursor.execute("""
-                        INSERT INTO tratamiento
-                        (receta, medicamento, cantidad, dosis, frecuencia, duracion, notas)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s)
-                    """, [
-                        receta.numero,
-                        item['clave'],
-                        int(item.get('cantidad', 1)),
-                        item.get('dosis', ''),
-                        item.get('frecuencia', ''),
-                        item.get('duracion', ''),
-                        item.get('notas', ''),
-                    ])
-                except Exception:
-                    continue
+            _insertar_tratamientos(cursor, receta.numero, medicamentos_list)
  
     # Servicios
-    servicios_json = data.get('servicios_json', '[]')
-    try:
-        servicios_list = json.loads(servicios_json)
-    except (json.JSONDecodeError, TypeError):
-        servicios_list = []
- 
+    servicios_list = _parsear_json(data.get('medicamentos_json', '[]'))
     if servicios_list:
         with connection.cursor() as cursor:
             for item in servicios_list:
                 try:
                     cantidad = int(item.get('cantidad', 1))
                     costo    = float(item.get('costo', 0))
-                    subtotal = round(cantidad * costo, 2)
                     cursor.execute("""
                         INSERT INTO serv_hosp (servicio, hospitalizacion, cantidad, subtotal)
                         VALUES (%s, %s, %s, %s)
-                    """, [item['clave'], hosp.numero, cantidad, subtotal])
-                except Exception:
-                    continue
+                    """, [item['clave'], hosp.numero, cantidad, round(cantidad * costo, 2)])
+                except Exception as e:
+                    print(f"[serv_hosp INSERT error] {e}")
+ 
+    return hosp
+
+def actualizar_hospitalizacion_db(hosp, data):
+    """
+    Actualiza signos vitales del día, diagnóstico/observaciones,
+    peso de la mascota, y agrega receta/servicios si se proporcionaron.
+    """
+    now = timezone.now()
+ 
+    # Signos vitales del día
+    try:
+        temp = float(data.get('temperatura') or 0)
+        fc   = int(data.get('freccardiaca') or 0)
+        fr   = int(data.get('frecrespiratoria') or 0)
+        if temp > 0 and fc > 0 and fr > 0:
+            SignosVitales.objects.create(
+                fecha=now.date(),
+                freccardiaca=fc,
+                frecrespiratoria=fr,
+                temperatura=temp,
+                hospitalizacion=hosp,
+            )
+    except (ValueError, TypeError):
+        pass
+ 
+    # Peso
+    peso = data.get('peso', '')
+    if peso:
+        try:
+            hosp.expediente.mascota.peso = float(peso)
+            hosp.expediente.mascota.save()
+        except (ValueError, TypeError):
+            pass
+ 
+    # Diagnóstico y observaciones (opcionales)
+    diagno = data.get('diagnoingreso', '').strip()
+    obs    = data.get('obsergenerales', '').strip()
+    if diagno:
+        hosp.diagnoingreso = diagno
+    if obs:
+        hosp.obsergenerales = obs
+    hosp.save()
+ 
+    # Receta: si ya existe, agregar más tratamientos; si no, crear nueva
+    medicamentos_list = _parsear_json(data.get('medicamentos_json', '[]'))
+    if medicamentos_list:
+        receta = Receta.objects.filter(hospitalizacion=hosp).first()
+        if not receta:
+            receta = Receta.objects.create(
+                fecha=now.date(),
+                instrugenerales=data.get('instrugenerales', '').strip() or 'Ver indicaciones',
+                hospitalizacion=hosp,
+            )
+        with connection.cursor() as cursor:
+            _insertar_tratamientos(cursor, receta.numero, medicamentos_list)
+ 
+    # Servicios extra
+    servicios_list = _parsear_json(data.get('servicios_json', '[]'))
+    if servicios_list:
+        with connection.cursor() as cursor:
+            for item in servicios_list:
+                try:
+                    cantidad = int(item.get('cantidad', 1))
+                    costo    = float(item.get('costo', 0))
+                    cursor.execute("""
+                        INSERT INTO serv_hosp (servicio, hospitalizacion, cantidad, subtotal)
+                        VALUES (%s, %s, %s, %s)
+                    """, [item['clave'], hosp.numero, cantidad, round(cantidad * costo, 2)])
+                except Exception as e:
+                    print(f"[serv_hosp UPDATE INSERT error] {e}")
  
     return hosp
 
 def dar_de_alta_hospitalizacion(hosp, data):
-    from django.utils import timezone
     now = timezone.now()
  
     estado_alta = EdoHosp.objects.filter(
@@ -513,10 +653,11 @@ def dar_de_alta_hospitalizacion(hosp, data):
     hosp.fechaalta  = now.date()
     hosp.horaalta   = now.time()
     hosp.estado     = estado_alta
+    hosp.total      = _calcular_total_hospitalizacion(hosp.numero)
     hosp.save()
+    
     return hosp
- 
- 
+
 def obtener_servicios_hosp(hosp_numero):
     with connection.cursor() as cursor:
         cursor.execute("""
@@ -535,6 +676,53 @@ def obtener_signos_vitales(hosp_numero):
     ).order_by('-fecha')
     return vitales
 
+# ── FUNCIÓN AUXILIAR: INSERT tratamiento (reutilizable) ───────────────────
+def _insertar_tratamientos(cursor, receta_numero, medicamentos_list):
+    # Obtener mascota desde la receta
+    cursor.execute("""
+        SELECT hospitalizacion, consulta FROM receta WHERE numero = %s
+    """, [receta_numero])
+    row = cursor.fetchone()
+    hosp_id, consulta_id = row if row else (None, None)
+
+    if hosp_id:
+        cursor.execute("""
+            SELECT e.mascota FROM hospitalizacion h
+            JOIN expediente e ON h.expediente = e.mascota
+            WHERE h.numero = %s
+        """, [hosp_id])
+    else:
+        cursor.execute("""
+            SELECT e.mascota FROM consulta c
+            JOIN expediente e ON c.expediente = e.mascota
+            WHERE c.numero = %s
+        """, [consulta_id])
+
+    mascota_row = cursor.fetchone()
+    mascota_folio = mascota_row[0] if mascota_row else None
+
+    for item in medicamentos_list:
+        try:
+            params = [
+                receta_numero,
+                item['clave'],
+                int(item.get('cantidad', 1)),
+                item.get('dosis', ''),
+                item.get('frecuencia', ''),
+                item.get('duracion', ''),
+                item.get('notas', ''),
+                mascota_folio,
+                'Activo',
+            ]
+            print(f"[tratamiento params] {params}")  # ← para ver qué llega
+            cursor.execute("""
+                INSERT INTO tratamiento
+                (receta, medicamento, cantidad, dosis, frecuencia, duracion, notas, mascota, estado)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, params)
+        except Exception as e:
+            print(f"[tratamiento INSERT error] {e}")
+            continue
 
 #--------------------------------------------- M E D I C A M E N T O S -----------------------------------------------------------------------------------
 def generar_clave_medicamento():
@@ -918,3 +1106,171 @@ def crear_especialidad_db(data):
         descripcion=data.get('descripcion').strip(),
     )
     return especialidad
+
+#--------------------------------------------- P A G O S -----------------------------------------------------------------------------------
+def obtener_desglose_consulta(consulta_numero):
+    """
+    Retorna el desglose completo para generar el pago de una consulta.
+    Incluye: tarifa base de consulta, servicios extras y medicamentos.
+    """
+    with connection.cursor() as cursor:
+ 
+        # Tarifa base: busca el servicio llamado 'Consulta' o similar
+        cursor.execute("""
+            SELECT s.clave, s.nombre, s.descripcion, s.costo, 1 as cantidad,
+                   s.costo as subtotal, 'base' as tipo
+            FROM servicio s
+            WHERE s.nombre ILIKE '%consulta%'
+            LIMIT 1
+        """)
+        cols = [c[0] for c in cursor.description]
+        fila_base = cursor.fetchone()
+        items = []
+        subtotal_base = 0.0
+        if fila_base:
+            item = dict(zip(cols, fila_base))
+            items.append(item)
+            subtotal_base = float(item['costo'])
+ 
+        # Servicios extras de la consulta
+        cursor.execute("""
+            SELECT s.clave, s.nombre, s.descripcion, s.costo,
+                   sc.cantidad, sc.subtotal, 'servicio' as tipo
+            FROM serv_cons sc
+            JOIN servicio s ON sc.servicio = s.clave
+            WHERE sc.consulta = %s
+        """, [consulta_numero])
+        cols = [c[0] for c in cursor.description]
+        servicios = [dict(zip(cols, r)) for r in cursor.fetchall()]
+        items.extend(servicios)
+        total_servicios = sum(float(s['subtotal']) for s in servicios)
+ 
+        # Medicamentos
+        cursor.execute("""
+            SELECT m.clave, m.nombre, m.descripcion, m.precio as costo,
+                   t.cantidad, (t.cantidad * m.precio) as subtotal,
+                   'medicamento' as tipo
+            FROM tratamiento t
+            JOIN medicamento m ON t.medicamento = m.clave
+            JOIN receta r ON t.receta = r.numero
+            WHERE r.consulta = %s
+        """, [consulta_numero])
+        cols = [c[0] for c in cursor.description]
+        meds = [dict(zip(cols, r)) for r in cursor.fetchall()]
+        items.extend(meds)
+        total_meds = sum(float(m['subtotal']) for m in meds)
+ 
+    total = round(subtotal_base + total_servicios + total_meds, 2)
+    return items, total
+
+def obtener_desglose_hospitalizacion(hosp_numero):
+    """
+    Desglose para pago de hospitalización.
+    Dias = fechaalta - fechaingreso (mínimo 1).
+    Tarifa diaria = servicio cuyo nombre contenga 'hospitaliz'.
+    """
+    from .models import Hospitalizacion
+    hosp = Hospitalizacion.objects.select_related('expediente').get(numero=hosp_numero)
+ 
+    dias = 1
+    if hosp.fechaalta and hosp.fechaingreso:
+        dias = max((hosp.fechaalta - hosp.fechaingreso).days, 1)
+ 
+    items = []
+    total_hosp = 0.0
+ 
+    with connection.cursor() as cursor:
+ 
+        # Tarifa diaria de hospitalización
+        cursor.execute("""
+            SELECT s.clave, s.nombre, s.descripcion, s.costo
+            FROM servicio s
+            WHERE s.nombre ILIKE '%hospitaliz%'
+            LIMIT 1
+        """)
+        cols = [c[0] for c in cursor.description]
+        fila = cursor.fetchone()
+        if fila:
+            srv = dict(zip(cols, fila))
+            subtotal_hosp = round(float(srv['costo']) * dias, 2)
+            items.append({
+                'clave': srv['clave'],
+                'nombre': srv['nombre'],
+                'descripcion': srv['descripcion'],
+                'costo': float(srv['costo']),
+                'cantidad': dias,
+                'subtotal': subtotal_hosp,
+                'tipo': 'base',
+                'nota': f'{dias} día{"s" if dias != 1 else ""} de hospitalización',
+            })
+            total_hosp = subtotal_hosp
+ 
+        # Servicios extras de hospitalización
+        cursor.execute("""
+            SELECT s.clave, s.nombre, s.descripcion, s.costo,
+                   sh.cantidad, sh.subtotal, 'servicio' as tipo
+            FROM serv_hosp sh
+            JOIN servicio s ON sh.servicio = s.clave
+            WHERE sh.hospitalizacion = %s
+        """, [hosp_numero])
+        cols = [c[0] for c in cursor.description]
+        servicios = [dict(zip(cols, r)) for r in cursor.fetchall()]
+        items.extend(servicios)
+        total_servicios = sum(float(s['subtotal']) for s in servicios)
+ 
+        # Medicamentos
+        cursor.execute("""
+            SELECT m.clave, m.nombre, m.descripcion, m.precio as costo,
+                   t.cantidad, (t.cantidad * m.precio) as subtotal,
+                   'medicamento' as tipo
+            FROM tratamiento t
+            JOIN medicamento m ON t.medicamento = m.clave
+            JOIN receta r ON t.receta = r.numero
+            WHERE r.hospitalizacion = %s
+        """, [hosp_numero])
+        cols = [c[0] for c in cursor.description]
+        meds = [dict(zip(cols, r)) for r in cursor.fetchall()]
+        items.extend(meds)
+        total_meds = sum(float(m['subtotal']) for m in meds)
+ 
+    total = round(total_hosp + total_servicios + total_meds, 2)
+    return items, total, dias
+
+def crear_pago_db(tipo, referencia_id, total):
+    """
+    Crea el registro de pago.
+    tipo: 'consulta' | 'hospitalizacion'
+    """
+    now = timezone.now()
+ 
+    if tipo == 'consulta':
+        consulta = Consulta.objects.get(numero=referencia_id)
+        pago = Pago.objects.create(
+            fecha=now.date(),
+            hora=now.time(),
+            pagofinal=total,
+            consulta=consulta,
+            hospitalizacion=None,
+        )
+        # Marcar cita como Pagada
+        try:
+            consulta.cita.estado = EdoCita.objects.get(nombre='Pagada')
+            consulta.cita.save()
+        except EdoCita.DoesNotExist:
+            pass
+ 
+    elif tipo == 'hospitalizacion':
+        hosp = Hospitalizacion.objects.get(numero=referencia_id)
+        consulta = hosp.consulta
+        pago = Pago.objects.create(
+            fecha=now.date(),
+            hora=now.time(),
+            pagofinal=total,
+            consulta=consulta,
+            hospitalizacion=hosp,
+        )
+        # Guardar total en la hospitalización
+        hosp.total = total
+        hosp.save()
+ 
+    return pago

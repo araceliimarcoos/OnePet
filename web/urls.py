@@ -40,7 +40,9 @@ urlpatterns = [
     path('hospitalizacion/<int:numero>/alta/',             views.dar_alta_hospitalizacion, name='dar_alta_hospitalizacion'),
     
     path('pagos/', views.pagos, name='pagos'),
-    path('pagos/recibos/', views.recibos, name='recibos'),
+    path('pagos/<int:codigo>/recibo/',  views.ver_recibo,         name='ver_recibo'),
+    path('pagos/previsualizar/',        views.previsualizar_pago, name='previsualizar_pago'),
+    path('pagos/confirmar/',            views.confirmar_pago,     name='confirmar_pago'),
     
     path('servicios/', views.servicios, name='servicios'),
     path('servicios/nuevo/', views.nuevo_servicio, name='nuevo_servicio'),

@@ -483,16 +483,16 @@
                             </div>
                         </div>
                         <div class="vital-field">
-                            <span class="vital-label">Frec. Resp.</span>
+                            <span class="vital-label">Frec. Respiratoria</span>
                             <div class="vital-input-wrap">
                                 <input type="number" name="frecrespiratoria" class="vital-input" placeholder="24" value="{{ data.frecrespiratoria|default:'' }}" required>
                                 <span class="vital-unit">rpm</span>
                             </div>
                         </div>
                         <div class="vital-field">
-                            <span class="vital-label">Peso Act.</span>
+                            <span class="vital-label">Peso Actual</span>
                             <div class="vital-input-wrap">
-                                <input type="number" step="0.1" class="vital-input" placeholder="{{ cita.mascota.peso }}" readonly>
+                                <input type="number" step="0.1" name="peso" class="vital-input" value="{{ cita.mascota.peso|stringformat:"s" }}">
                                 <span class="vital-unit">kg</span>
                             </div>
                         </div>
