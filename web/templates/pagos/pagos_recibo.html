@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block titulo %}Recibo de Pago{% endblock %}
+{% block titulo %}Recibo #{{ pago.codigo|stringformat:"04d" }}{% endblock %}
 {% block nav_pagos %}active{% endblock %}
 
 {% block breadcrumb %}
@@ -9,147 +9,432 @@
     <span class="material-symbols-outlined">chevron_right</span>
     <a href="{% url 'pagos' %}">Pagos</a>
     <span class="material-symbols-outlined">chevron_right</span>
-    <span class="breadcrumb-current">Recibo de Pago</span>
+    <span class="breadcrumb-current">Recibo #{{ pago.codigo|stringformat:"04d" }}</span>
 {% endblock %}
 
 {% block topbar_titulo %}Recibo de Pago{% endblock %}
 
+{% block estilos %}
+<style>
+.recibo-wrapper {
+    max-width: 780px;
+    margin: 0 auto;
+    padding-bottom: 40px;
+}
+
+/* ── Acciones superiores ─────────────────────────────────────────────────── */
+.recibo-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+/* ── Tarjeta principal ───────────────────────────────────────────────────── */
+.recibo-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+/* ── Cabecera del recibo ─────────────────────────────────────────────────── */
+.recibo-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 28px 32px 24px;
+    background: linear-gradient(135deg, #1a2535 0%, #2d3f52 100%);
+    color: #fff;
+}
+
+.recibo-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.recibo-logo-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    background: var(--blue-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.recibo-logo-icon .material-symbols-outlined {
+    font-size: 24px;
+    color: #fff;
+}
+
+.recibo-clinic-name {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.2;
+}
+
+.recibo-clinic-sub {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.6);
+    margin-top: 2px;
+}
+
+.recibo-meta {
+    text-align: right;
+}
+
+.recibo-badge-pagado {
+    display: inline-block;
+    background: var(--green);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+}
+
+.recibo-numero-label {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.recibo-numero {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #fff;
+    font-family: monospace;
+}
+
+.recibo-fecha {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.6);
+    margin-top: 4px;
+}
+
+/* ── Info paciente / propietario ─────────────────────────────────────────── */
+.recibo-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.recibo-info-cell {
+    padding: 20px 24px;
+    border-right: 1px solid var(--border);
+}
+
+.recibo-info-cell:last-child { border-right: none; }
+
+.recibo-info-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.recibo-info-label .material-symbols-outlined { font-size: 14px; }
+
+.recibo-info-main {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 2px;
+}
+
+.recibo-info-sub {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+/* ── Tabla de items ──────────────────────────────────────────────────────── */
+.recibo-table-wrap { padding: 0; }
+
+.recibo-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.recibo-table thead tr {
+    background: var(--bg);
+    border-bottom: 2px solid var(--border);
+}
+
+.recibo-table th {
+    padding: 11px 20px;
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.recibo-table th:last-child,
+.recibo-table td:last-child { text-align: right; }
+
+.recibo-table td {
+    padding: 13px 20px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: top;
+}
+
+.recibo-table tr:last-child td { border-bottom: none; }
+
+.recibo-item-nombre { font-weight: 600; }
+.recibo-item-desc { font-size: 0.76rem; color: var(--text-muted); margin-top: 2px; }
+
+.badge-tipo {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+.badge-tipo-base        { background: #eaf3fd; color: var(--blue-dark); }
+.badge-tipo-servicio    { background: var(--green-light); color: var(--green-dark); }
+.badge-tipo-medicamento { background: #fef3e2; color: #b7641a; }
+
+/* ── Totales ─────────────────────────────────────────────────────────────── */
+.recibo-totales {
+    display: flex;
+    justify-content: flex-end;
+    padding: 20px 24px;
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+}
+
+.recibo-totales-inner { width: 260px; }
+
+.recibo-tot-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.88rem;
+    color: var(--text);
+    padding: 4px 0;
+}
+
+.recibo-tot-final {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--text);
+    padding: 10px 0 0;
+    margin-top: 6px;
+    border-top: 2px solid var(--border);
+}
+
+.recibo-tot-final .med-price { font-size: 1.2rem; color: var(--green-dark); }
+
+/* ── Nota footer ─────────────────────────────────────────────────────────── */
+.recibo-footer {
+    padding: 18px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    background: var(--surface);
+}
+
+.recibo-footer .material-symbols-outlined { color: var(--blue-dark); font-size: 20px; flex-shrink: 0; }
+
+@media print {
+    .recibo-actions, .topbar, .sidebar, .breadcrumb, .page-header { display: none !important; }
+    .recibo-wrapper { max-width: 100%; margin: 0; }
+    .recibo-card { border: none; box-shadow: none; }
+}
+</style>
+{% endblock %}
+
 {% block contenido %}
 <div class="page active">
+    <div class="recibo-wrapper">
 
-    <!-- Tarjeta principal del recibo -->
-    <div class="rw-card">
-
-        <!-- Marca + Estado -->
-        <div class="rw-brand-row">
-            <div class="rw-brand">
-                <div class="rw-logo">
-                    <span class="material-symbols-outlined" style="color: #43C0B0; font-size: 26px;">shield</span>
-                </div>
-                <div>
-                    <div class="rw-brand-name">Nose que poner aqui</div>
-                    <div class="rw-brand-sub">OnePet logo o algo asi</div>
-                </div>
-            </div>
-            <div class="rw-inv-meta">
-                <span class="rw-badge">PAGADO</span>
-                <div class="rw-inv-label">Recibo no.</div>
-                <div class="rw-inv-no">{{ pago.numero_recibo|default:"#P-2026-001" }}</div>
-            </div>
+        <!-- Acciones -->
+        <div class="recibo-actions">
+            <a href="{% url 'pagos' %}" class="btn-cancelar" style="text-decoration:none;">
+                ← Volver
+            </a>
+            <button type="button" onclick="window.print()" class="btn-primary">
+                <span class="material-symbols-outlined">print</span>
+                Imprimir
+            </button>
         </div>
 
-        <hr class="rw-divider">
+        <div class="recibo-card">
 
-        <!-- Info: Cliente / Paciente / Pago -->
-        <div class="rw-info-row">
-            <div class="rw-info-cell">
-                <div class="rw-info-lbl"><strong>Cliente</strong></div>
-                <div class="rw-info-main">{{ pago.cliente.nombre|default:"Ricardo Montaner" }}</div>
-                <div class="rw-info-sub">Folio: {{ pago.cliente.id_documento|default:"P-0001" }}</div>
-                <div class="rw-info-sub">{{ pago.cliente.email|default:"ricardo.m@example.com" }}</div>
-            </div>
-            <div class="rw-info-cell">
-                <div class="rw-info-lbl"><strong>Paciente</strong></div>
-                <div class="rw-info-main">
-                    <span class="material-symbols-outlined" style="font-size:16px; color: #43C0B0;">pets</span>
-                    {{ pago.mascota.nombre|default:"Luna" }} ({{ pago.mascota.raza|default:"Golden Retriever" }})
+            <!-- CABECERA ─────────────────────────────────────────────────── -->
+            <div class="recibo-header">
+                <div class="recibo-logo">
+                    <div class="recibo-logo-icon">
+                        <span class="material-symbols-outlined">pets</span>
+                    </div>
+                    <div>
+                        <div class="recibo-clinic-name">OnePet</div>
+                        <div class="recibo-clinic-sub">Clínica Veterinaria</div>
+                    </div>
                 </div>
-                <div class="rw-info-sub">Fecha: {{ pago.fecha|date:"d M Y"|default:"14 Oct 2023" }}</div>
-            </div>
-            
-        </div>
-        <div class="table-wrapper">
-        <!-- Tabla de servicios -->
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>SERVICIO / PRODUCTO </th>
-                    <th>PRECIO POR UNIDAD</th>
-                    <th>CANTIDAD</th>
-                    <th>SUBTOTAL</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in pago.items.all %}
-                <tr>
-                    <td>
-                        <div class="rw-svc-name">{{ item.nombre }}</div>
-                        <div class="rw-svc-desc">{{ item.descripcion }}</div>
-                    </td>
-                    <td>${{ item.precio_unitario }}</td>
-                    <td>{{ item.cantidad }}</td>
-                    <td>${{ item.subtotal }}</td>
-                </tr>
-                {% empty %}
-                <!-- Datos de ejemplo si no hay items -->
-                <tr>
-                    <td>
-                        <div class="rw-svc-name">Consulta Veterinaria General</div>
-                        <div class="rw-svc-desc">Evaluación física completa y diagnóstico</div>
-                    </td>
-                    <td>$45.00</td>
-                    <td>1</td>
-                    <td>$45.00</td>
-                </tr>
-                <tr>
-                    <td>
-                        <div class="rw-svc-name">Vacuna Nobivac Puppy DP</div>
-                        <div class="rw-svc-desc">Prevención de Moquillo y Parvovirosis</div>
-                    </td>
-                    <td>$28.50</td>
-                    <td>1</td>
-                    <td>$28.50</td>
-                </tr>
-                <tr>
-                    <td>
-                        <div class="rw-svc-name">Limpieza Dental Ultrasónica</div>
-                        <div class="rw-svc-desc">Remoción de sarro bajo sedación ligera</div>
-                    </td>
-                    <td>$120.00</td>
-                    <td>1</td>
-                    <td>$120.00</td>
-                </tr>
-                <tr>
-                    <td>
-                        <div class="rw-svc-name">Bravecto Masticable (10–20kg)</div>
-                        <div class="rw-svc-desc">Protección pulgas y garrapatas (3 meses)</div>
-                    </td>
-                    <td>$55.00</td>
-                    <td>1</td>
-                    <td>$55.00</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        </div>
-
-        <hr class="rw-divider">
-
-        <!-- Footer: Nota + Totales -->
-        <div class="rw-footer">
-            <div class="rw-note">
-                <div class="rw-note-lbl">Nota</div>
-                <p class="rw-note-text">
-                    {{ pago.nota|default:"Gracias por confiar la salud de Luna en nuestras manos. Recuerde programar su próxima cita de desparasitación en 3 meses." }}
-                </p>
-            </div>
-            <div class="rw-summary">
-                <div class="rw-sum-row">
-                    <span>Subtotal</span>
-                    <span>${{ pago.subtotal|default:"248.50" }}</span>
-                </div>
-                <div class="rw-sum-row">
-                    <span>Tax (IVA 15%)</span>
-                    <span>${{ pago.impuesto|default:"37.28" }}</span>
-                </div>
-                <div class="rw-total-row">
-                    <span class="rw-total-lbl">Monto Total</span>
-                    <span class="rw-total-amt">${{ pago.total|default:"285.78" }}</span>
+                <div class="recibo-meta">
+                    <div><span class="recibo-badge-pagado">✓ PAGADO</span></div>
+                    <div class="recibo-numero-label">Recibo</div>
+                    <div class="recibo-numero">#{{ pago.codigo|stringformat:"04d" }}</div>
+                    <div class="recibo-fecha">{{ pago.fecha|date:"d M Y" }} · {{ pago.hora|time:"H:i" }}</div>
                 </div>
             </div>
-        </div>
 
+            <!-- INFO ─────────────────────────────────────────────────────── -->
+            <div class="recibo-info">
+                <div class="recibo-info-cell">
+                    <div class="recibo-info-label">
+                        <span class="material-symbols-outlined">person</span>
+                        Propietario
+                    </div>
+                    <div class="recibo-info-main">
+                        {{ propietario.nombrepila }} {{ propietario.primerapellido }}
+                        {% if propietario.segundoapellido %} {{ propietario.segundoapellido }}{% endif %}
+                    </div>
+                    <div class="recibo-info-sub">Folio: {{ propietario.folio }}</div>
+                    <div class="recibo-info-sub">{{ propietario.correo }}</div>
+                </div>
 
-    </div><!-- /.rw-card -->
-</div><!-- /.page -->
+                <div class="recibo-info-cell">
+                    <div class="recibo-info-label">
+                        <span class="material-symbols-outlined">pets</span>
+                        Paciente
+                    </div>
+                    <div class="recibo-info-main">{{ mascota.nombre }}</div>
+                    <div class="recibo-info-sub">{{ mascota.especie.nombre }} · {{ mascota.raza.nombre }}</div>
+                    <div class="recibo-info-sub">Folio: {{ mascota.folio }}</div>
+                </div>
+
+                <div class="recibo-info-cell">
+                    <div class="recibo-info-label">
+                        <span class="material-symbols-outlined">stethoscope</span>
+                        Tipo de atención
+                    </div>
+                    {% if tipo == 'hospitalizacion' %}
+                    <div class="recibo-info-main">Hospitalización</div>
+                    <div class="recibo-info-sub">
+                        Ingreso: {{ pago.hospitalizacion.fechaingreso|date:"d/m/Y" }}
+                    </div>
+                    <div class="recibo-info-sub">
+                        Alta: {{ pago.hospitalizacion.fechaalta|date:"d/m/Y" }}
+                    </div>
+                    {% if dias %}
+                    <div class="recibo-info-sub">{{ dias }} día{{ dias|pluralize:"s" }} de hospitalización</div>
+                    {% endif %}
+                    {% else %}
+                    <div class="recibo-info-main">Consulta</div>
+                    <div class="recibo-info-sub">
+                        Fecha: {{ pago.consulta.cita.fecha|date:"d/m/Y" }}
+                    </div>
+                    <div class="recibo-info-sub">
+                        Dr. {{ veterinario.nombrepila }} {{ veterinario.primerapellido }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- TABLA ───────────────────────────────────────────────────── -->
+            <div class="recibo-table-wrap">
+                <table class="recibo-table">
+                    <thead>
+                        <tr>
+                            <th>Concepto</th>
+                            <th style="text-align:right;">Precio unit.</th>
+                            <th style="text-align:right;">Cant.</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td>
+                                <div class="recibo-item-nombre">
+                                    {{ item.nombre }}
+                                    {% if item.tipo == 'base' %}
+                                    <span class="badge-tipo badge-tipo-base">Base</span>
+                                    {% elif item.tipo == 'servicio' %}
+                                    <span class="badge-tipo badge-tipo-servicio">Servicio</span>
+                                    {% elif item.tipo == 'medicamento' %}
+                                    <span class="badge-tipo badge-tipo-medicamento">Medicamento</span>
+                                    {% endif %}
+                                </div>
+                                {% if item.descripcion %}
+                                <div class="recibo-item-desc">{{ item.descripcion }}</div>
+                                {% endif %}
+                                {% if item.nota %}
+                                <div class="recibo-item-desc" style="color:var(--blue-dark);">{{ item.nota }}</div>
+                                {% endif %}
+                            </td>
+                            <td style="text-align:right; color:var(--text-muted);">
+                                ${{ item.costo|floatformat:2 }}
+                            </td>
+                            <td style="text-align:right; color:var(--text-muted);">
+                                {{ item.cantidad }}
+                            </td>
+                            <td style="text-align:right; font-weight:600;">
+                                ${{ item.subtotal|floatformat:2 }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- TOTALES ─────────────────────────────────────────────────── -->
+            <div class="recibo-totales">
+                <div class="recibo-totales-inner">
+                    <div class="recibo-tot-row">
+                        <span>Subtotal</span>
+                        <span>${{ total|floatformat:2 }}</span>
+                    </div>
+                    <div class="recibo-tot-row">
+                        <span>IVA</span>
+                        <span style="color:var(--text-muted);">No aplica</span>
+                    </div>
+                    <div class="recibo-tot-final">
+                        <span>Total</span>
+                        <span class="med-price">${{ pago.pagofinal|floatformat:2 }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FOOTER ──────────────────────────────────────────────────── -->
+            <div class="recibo-footer">
+                <span class="material-symbols-outlined">favorite</span>
+                <span>
+                    Gracias por confiar en OnePet el cuidado de
+                    <strong>{{ mascota.nombre }}</strong>.
+                    Conserve este recibo como comprobante de pago.
+                </span>
+            </div>
+
+        </div><!-- /.recibo-card -->
+    </div>
+</div>
 {% endblock %}

@@ -1,221 +1,1087 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block titulo %}Iniciar Consulta{% endblock %}
+{% block titulo %}
+    {% if modo == 'ver' %}Consulta #{{ consulta.numero }}
+    {% elif modo == 'editar' %}Editar Consulta #{{ consulta.numero }}
+    {% else %}Iniciar Consulta{% endif %}
+{% endblock %}
 
 {% block nav_consultas %}active{% endblock %}
-
 
 {% block breadcrumb %}
     <a href="{% url 'dashboard' %}">Inicio</a>
     <span class="material-symbols-outlined breadcrumb-sep">chevron_right</span>
     <a href="{% url 'consultas' %}">Consultas</a>
     <span class="material-symbols-outlined breadcrumb-sep">chevron_right</span>
-    <span class="breadcrumb-current">Consulta Iniciada</span>
+    <span class="breadcrumb-current">
+        {% if modo == 'ver' %}Consulta #{{ consulta.numero }}
+        {% elif modo == 'editar' %}Editar #{{ consulta.numero }}
+        {% else %}Nueva Consulta{% endif %}
+    </span>
 {% endblock %}
 
 {% block topbar_titulo %}Consultas{% endblock %}
 
-{% block contenido %}
-<div class="page-content">
+{% block estilos %}
+<style>
+/* ── Layout principal ─────────────────────────────────────────────────── */
+.consulta-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 120px);
+    padding-bottom: 80px; /* espacio para el footer fijo */
+}
 
-    <!-- DATOS DE LA MASCOTA -->
-    <div class="card">
-        <div class="mascota-profile">
-            <div class="mascota-photo">🐕</div>
-            <div class="mascota-info">
-                <div class="mascota-name-row">
-                    <span class="mascota-name">Luna</span>
-                    <span class="badge-paciente badge-regular">Paciente Regular</span>
+.consulta-layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 20px;
+    align-items: start;
+}
+
+/* ── Cards de sección ─────────────────────────────────────────────────── */
+.card-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 16px;
+    overflow: hidden;
+}
+
+.card-section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.card-section-header .material-symbols-outlined {
+    font-size: 20px;
+    color: var(--blue-dark);
+}
+
+.card-section-body { padding: 16px 18px; }
+
+/* ── Card mascota ─────────────────────────────────────────────────────── */
+.mascota-profile {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.mascota-emoji {
+    font-size: 2.2rem;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--blue-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.mascota-info { flex: 1; }
+
+.mascota-name-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+    flex-wrap: wrap;
+}
+
+.mascota-name {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--text);
+}
+
+.badge-paciente {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: var(--green-light);
+    color: var(--green-dark);
+}
+
+.mascota-meta {
+    font-size: 0.83rem;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.meta-dot { margin: 0 6px; opacity: 0.6; }
+
+.mascota-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.chip {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 10px;
+}
+
+.chip .material-symbols-outlined { font-size: 15px; color: var(--text-muted); }
+
+/* ── Vitales ──────────────────────────────────────────────────────────── */
+.vitales-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+
+.vital-field { display: flex; flex-direction: column; gap: 4px; }
+
+.vital-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.vital-input-wrap {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: var(--surface);
+}
+
+.vital-input {
+    flex: 1;
+    border: none;
+    padding: 8px 10px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text);
+    background: transparent;
+    font-family: inherit;
+    width: 0;
+}
+
+.vital-input:focus { outline: none; }
+.vital-input[readonly] { color: var(--text-muted); background: var(--bg); }
+
+.vital-unit {
+    padding: 0 10px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--bg);
+    border-left: 1px solid var(--border);
+    white-space: nowrap;
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+}
+
+/* ── Formulario ───────────────────────────────────────────────────────── */
+.form-input, .form-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: var(--text);
+    background: var(--surface);
+    box-sizing: border-box;
+    transition: border-color 0.15s;
+}
+
+.form-input:focus, .form-textarea:focus {
+    outline: none;
+    border-color: var(--blue-dark);
+}
+
+.form-input[readonly], .form-textarea[readonly] {
+    background: var(--bg);
+    color: var(--text-muted);
+    cursor: default;
+}
+
+.form-textarea { resize: vertical; min-height: 90px; }
+
+.form-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+    display: block;
+}
+
+/* ── Visitas recientes ────────────────────────────────────────────────── */
+.visita-item {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.visita-item:last-child { border-bottom: none; }
+
+.visita-fecha {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 3px;
+}
+
+.visita-titulo { font-size: 0.85rem; font-weight: 700; color: var(--text); }
+.visita-desc   { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+
+.link-ver-todo {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--blue-dark);
+    text-decoration: none;
+    margin-top: 12px;
+    letter-spacing: 0.04em;
+}
+
+/* ── Receta ───────────────────────────────────────────────────────────── */
+.receta-item {
+    display: flex;
+    align-items: center;        /* centra verticalmente el botón X */
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;         /* padding interno para que no quede pegado */
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    margin-bottom: 8px;
+}
+
+.receta-item:last-child { margin-bottom: 0; }
+
+.receta-nombre {
+    font-size: 0.87rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 2px;
+}
+
+.receta-dosis {
+    font-size: 0.77rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+    line-height: 1.4;
+}
+
+.btn-remove {
+    background: none;
+    border: none;
+    color: #c0392b;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    align-self: center;     /* garantiza centrado vertical aunque el texto sea largo */
+}
+
+.btn-remove:hover { background: #fff5f5; }
+.btn-remove .material-symbols-outlined { font-size: 18px; }
+
+.btn-add-med {
+    width: 100%;
+    padding: 9px;
+    border: 1px dashed var(--border);
+    background: none;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--blue-dark);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 10px;
+    transition: background 0.15s;
+}
+
+.btn-add-med:hover { background: var(--blue-light); }
+
+/* ── Footer fijo ──────────────────────────────────────────────────────── */
+.page-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 14px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    z-index: 100;
+}
+
+/* ── Alerta error ─────────────────────────────────────────────────────── */
+.alerta-error {
+    background: #fff5f5;
+    border: 1px solid #f5c6c6;
+    border-radius: var(--radius-sm);
+    color: #c0392b;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    margin-bottom: 16px;
+}
+
+/* ── Alerta éxito ─────────────────────────────────────────────────────── */
+.alerta-ok {
+    background: #eaf9f0;
+    border: 1px solid #a8e6c3;
+    border-radius: var(--radius-sm);
+    color: #1d6b3f;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+</style>
+{% endblock %}
+
+{% block contenido %}
+<div class="consulta-wrapper">
+
+    {% if guardado %}
+    <div class="alerta-ok">
+        <span class="material-symbols-outlined" style="font-size:18px;">check_circle</span>
+        Consulta guardada correctamente.
+    </div>
+    {% endif %}
+
+    {% if error %}
+    <div class="alerta-error">{{ error }}</div>
+    {% endif %}
+
+    <!-- CARD: DATOS DE LA MASCOTA ────────────────────────────────────────── -->
+    <div class="card-section" style="margin-bottom:16px;">
+        <div class="card-section-body">
+            <div class="mascota-profile">
+                <div class="mascota-emoji material-symbols-outlined ">pets</div>
+                <div class="mascota-info">
+                    <div class="mascota-name-row">
+                        <span class="mascota-nombre">{{ cita.mascota.nombre }}</span>
+                        <span class="badge-paciente">Paciente</span>
+                    </div>
+                    <div class="mascota-meta">
+                        {{ cita.mascota.especie.nombre }} &bull; {{ cita.mascota.raza.nombre }} &bull; Propietario: {{ cita.propietario.nombrepila }} {{ cita.propietario.primerapellido }}
+                    </div>
+                    <div class="mascota-chips">
+                        
+                        <span class="chip">
+                            <span class="material-symbols-outlined">badge</span>
+                            {{ cita.mascota.folio }}
+                        </span>
+                        <span class="chip">
+                            <span class="material-symbols-outlined">monitor_weight</span>
+                            {{ cita.mascota.peso|stringformat:".2f" }} kg
+                        </span>
+                        <span class="chip">
+                            <span class="material-symbols-outlined">badge</span>
+                            {{ edad }}
+                        </span>
+                        {% if cita.mascota.alergias %}
+                        <span class="chip" style="color:#c0392b; border-color:#f5c6c6; background:#fff5f5;">
+                            <span class="material-symbols-outlined">warning</span>
+                            Alergias: {{ cita.mascota.alergias }}
+                        </span>
+                        {% endif %}
+                        <span class="chip">
+                            <span class="material-symbols-outlined">stethoscope</span>
+                            Dr. {{ cita.veterinario.nombrepila }} {{ cita.veterinario.primerapellido }}
+                        </span>
+                    </div>
                 </div>
-                <div class="mascota-meta">
-                    <span>Canino</span>
-                    <span class="meta-dot">•</span>
-                    <span>Golden Retriever</span>
-                    <span class="meta-dot">•</span>
-                    <span>4 años y 2 meses</span>
-                </div>
-                <div class="mascota-chips">
-                    <span class="chip">
-                        <span class="material-symbols-outlined">monitor_weight</span>
-                        28.5 kg
-                    </span>
-                    <span class="chip">
-                        <span class="material-symbols-outlined">person</span>
-                        Dueño: Carlos Méndez
-                    </span>
-                </div>
+                <button type="button" class="btn-primary" id="btnHistorial" style="white-space:nowrap;">
+                    <span class="material-symbols-outlined">history</span>
+                    Historial Clínico
+                </button>
             </div>
-            <button class="btn-historial">
-                <span class="material-symbols-outlined">history</span>
-                Ver Historial Clínico
-            </button>
         </div>
     </div>
 
-    <!-- GRID: FORMULARIO + SIDEBAR -->
+    <!-- FORM + SIDEBAR ───────────────────────────────────────────────────── -->
+    {% if modo == 'iniciar' %}
+    <form method="POST" action="" id="formConsulta">
+    {% csrf_token %}
+    <input type="hidden" name="medicamentos_json" id="medicamentosJson" value="[]">
+    {% endif %}
+
+    {% if modo == 'editar' %}
+    <form method="POST" action="" id="formConsulta">
+    {% csrf_token %}
+    {% endif %}
+
     <div class="consulta-layout">
 
-        <!-- COLUMNA PRINCIPAL -->
-        <div class="consulta-main-col">
+        <!-- COLUMNA PRINCIPAL ──────────────────────────────────────────── -->
+        <div>
 
-            <!-- MOTIVO DE CONSULTA -->
-            <div class="card">
-                <div class="card-header">
-                    <h3>
-                        <span class="material-symbols-outlined">description</span>
-                        Motivo de la consulta
-                    </h3>
+            <!-- Motivo (readonly siempre) -->
+            <div class="card-section">
+                <div class="card-section-header">
+                    <span class="material-symbols-outlined">description</span>
+                    Motivo de la consulta
                 </div>
-                <div class="card-body">
-                    <div class="form-group">
-                        <input type="text" class="form-input"
-                               placeholder="Ej: Decaimiento y falta de apetito desde hace 24h" />
-                    </div>
+                <div class="card-section-body">
+                    <input type="text" class="form-input" value="{{ cita.motivo }}" readonly>
                 </div>
             </div>
 
-            <!-- TRIAJE DE SIGNOS VITALES -->
-            <div class="card">
-                <div class="card-header">
-                    <h3>
-                        <span class="material-symbols-outlined">monitor_heart</span>
-                        Triaje de Signos Vitales
-                    </h3>
+            <!-- Signos vitales (solo en iniciar) -->
+            {% if modo == 'iniciar' %}
+            <div class="card-section">
+                <div class="card-section-header">
+                    <span class="material-symbols-outlined">monitor_heart</span>
+                    Signos Vitales
                 </div>
-                <div class="card-body">
+                <div class="card-section-body">
                     <div class="vitales-grid">
                         <div class="vital-field">
                             <span class="vital-label">Temperatura</span>
                             <div class="vital-input-wrap">
-                                <input type="text" class="vital-input" value="38.5" />
+                                <input type="number" step="0.1" name="temperatura" class="vital-input" placeholder="38.5" value="{{ data.temperatura|default:'' }}" required>
                                 <span class="vital-unit">°C</span>
                             </div>
                         </div>
                         <div class="vital-field">
                             <span class="vital-label">Frec. Cardíaca</span>
                             <div class="vital-input-wrap">
-                                <input type="text" class="vital-input" value="80" />
+                                <input type="number" name="freccardiaca" class="vital-input" placeholder="80" value="{{ data.freccardiaca|default:'' }}" required>
                                 <span class="vital-unit">lpm</span>
                             </div>
                         </div>
                         <div class="vital-field">
-                            <span class="vital-label">Frec. Resp.</span>
+                            <span class="vital-label">Frec. Respiratoria</span>
                             <div class="vital-input-wrap">
-                                <input type="text" class="vital-input" value="24" />
+                                <input type="number" name="frecrespiratoria" class="vital-input" placeholder="24" value="{{ data.frecrespiratoria|default:'' }}" required>
                                 <span class="vital-unit">rpm</span>
                             </div>
                         </div>
                         <div class="vital-field">
-                            <span class="vital-label">Peso Act.</span>
+                            <span class="vital-label">Peso Actual</span>
                             <div class="vital-input-wrap">
-                                <input type="text" class="vital-input" value="28.5" />
+                                <input type="number" step="0.1" name="peso" class="vital-input" value="{{ cita.mascota.peso|stringformat:"s" }}">
                                 <span class="vital-unit">kg</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+            {% endif %}
 
-            <!-- DIAGNÓSTICO -->
-            <div class="card">
-                <div class="card-header">
-                    <h3>
-                        <span class="material-symbols-outlined">biotech</span>
-                        Diagnóstico
-                    </h3>
+            {% if modo == 'ver' %}
+            <!-- Signos vitales en modo ver -->
+            <div class="card-section">
+                <div class="card-section-header">
+                    <span class="material-symbols-outlined">monitor_heart</span>
+                    Signos Vitales
                 </div>
-                <div class="card-body">
-                    <div class="input-with-icon">
-                        <input type="text" class="form-input"
-                               placeholder="Buscar diagnóstico o ingresar manual..." />
-                        <span class="material-symbols-outlined input-icon">search</span>
+                <div class="card-section-body">
+                    <div class="vitales-grid">
+                        <div class="vital-field">
+                            <span class="vital-label">Temperatura</span>
+                            <div class="vital-input-wrap">
+                                <input type="text" class="vital-input" value="{{ consulta.temperatura }}" readonly>
+                                <span class="vital-unit">°C</span>
+                            </div>
+                        </div>
+                        <div class="vital-field">
+                            <span class="vital-label">Frec. Cardíaca</span>
+                            <div class="vital-input-wrap">
+                                <input type="text" class="vital-input" value="{{ consulta.freccardiaca }}" readonly>
+                                <span class="vital-unit">lpm</span>
+                            </div>
+                        </div>
+                        <div class="vital-field">
+                            <span class="vital-label">Frec. Resp.</span>
+                            <div class="vital-input-wrap">
+                                <input type="text" class="vital-input" value="{{ consulta.frecrespiratoria }}" readonly>
+                                <span class="vital-unit">rpm</span>
+                            </div>
+                        </div>
+                        <div class="vital-field">
+                            <span class="vital-label">Peso Reg.</span>
+                            <div class="vital-input-wrap">
+                                <input type="text" class="vital-input" value="{{ cita.mascota.peso }}" readonly>
+                                <span class="vital-unit">kg</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+            {% endif %}
 
-            <!-- OBSERVACIONES Y PLAN DE TRATAMIENTO -->
-            <div class="card">
-                <div class="card-header">
-                    <h3>
-                        <span class="material-symbols-outlined">edit_note</span>
-                        Observaciones y Plan de Tratamiento
-                    </h3>
+            <!-- Síntomas -->
+            <div class="card-section">
+                <div class="card-section-header">
+                    <span class="material-symbols-outlined">sick</span>
+                    Síntomas
                 </div>
-                <div class="card-body">
-                    <textarea class="form-textarea"
-                              placeholder="Detalle el examen físico, hallazgos, medicamentos recetados y recomendaciones..."></textarea>
+                <div class="card-section-body">
+                    {% if modo == 'ver' %}
+                    <textarea class="form-textarea" readonly>{{ consulta.sintomas }}</textarea>
+                    {% else %}
+                    <textarea class="form-textarea" name="sintomas" placeholder="Describe los síntomas observados..." required>{% if consulta %}{{ consulta.sintomas }}{% elif data %}{{ data.sintomas }}{% endif %}</textarea>
+                    {% endif %}
                 </div>
             </div>
 
-        </div><!-- /consulta-main-col -->
-
-        <!-- COLUMNA LATERAL -->
-        <div class="consulta-sidebar-col">
-
-            <!-- VISITAS RECIENTES -->
-            <div class="card">
-                <div class="card-header">
-                    <h3>
-                        <span class="material-symbols-outlined">calendar_today</span>
-                        Visitas Recientes
-                    </h3>
+            <!-- Diagnóstico -->
+            <div class="card-section">
+                <div class="card-section-header">
+                    <span class="material-symbols-outlined">biotech</span>
+                    Diagnóstico
                 </div>
-                <div class="card-body">
+                <div class="card-section-body">
+                    {% if modo == 'ver' %}
+                    <input type="text" class="form-input" value="{{ consulta.diagnostico }}" readonly>
+                    {% else %}
+                    <input type="text" class="form-input" name="diagnostico" placeholder="Diagnóstico clínico..." value="{% if consulta %}{{ consulta.diagnostico }}{% elif data %}{{ data.diagnostico }}{% endif %}" required>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Observaciones -->
+            <div class="card-section">
+                <div class="card-section-header">
+                    <span class="material-symbols-outlined">edit_note</span>
+                    Observaciones
+                </div>
+                <div class="card-section-body">
+                    {% if modo == 'ver' %}
+                    <textarea class="form-textarea" readonly style="min-height:110px;">{{ consulta.observaciones }}</textarea>
+                    {% else %}
+                    <textarea class="form-textarea" name="observaciones" placeholder="Hallazgos del examen físico, plan de tratamiento y recomendaciones..." style="min-height:110px;" required>{% if consulta %}{{ consulta.observaciones }}{% elif data %}{{ data.observaciones }}{% endif %}</textarea>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div><!-- /col principal -->
+
+        <!-- COLUMNA LATERAL ────────────────────────────────────────────── -->
+        <div>
+
+            <!-- Visitas recientes -->
+            <div class="card-section">
+                <div class="card-section-header">
+                    <span class="material-symbols-outlined">calendar_today</span>
+                    Visitas Recientes
+                </div>
+                <div class="card-section-body">
+                    {% for c in consultas_previas %}
                     <div class="visita-item">
-                        <div class="visita-fecha">15 OCT 2023</div>
-                        <div class="visita-titulo">Control Post-Vacunación</div>
-                        <div class="visita-desc">Sin reacciones adversas. Peso estable.</div>
+                        <div class="visita-fecha">{{ c.cita.fecha|date:"d M Y" }}</div>
+                        <div class="visita-titulo">{{ c.cita.motivo }}</div>
+                        <div class="visita-desc">{{ c.diagnostico|truncatechars:60 }}</div>
                     </div>
-                    <div class="visita-item">
-                        <div class="visita-fecha">02 SEP 2023</div>
-                        <div class="visita-titulo">Limpieza Dental</div>
-                        <div class="visita-desc">Profilaxis completa bajo sedación ligera.</div>
-                    </div>
-                    <a href="#" class="link-ver-todo">
+                    {% empty %}
+                    <p style="font-size:0.83rem; color:var(--text-muted); text-align:center; padding:10px 0;">Sin visitas previas registradas</p>
+                    {% endfor %}
+                    <a href="#" class="link-ver-todo" id="btnHistorial2">
                         VER TODO EL HISTORIAL
-                        <span class="material-symbols-outlined">arrow_forward</span>
+                        <span class="material-symbols-outlined" style="font-size:15px;">arrow_forward</span>
                     </a>
                 </div>
             </div>
 
-            <!-- RECETA RÁPIDA -->
-            <div class="card">
-                <div class="card-header">
-                    <h3>
-                        <span class="material-symbols-outlined">prescriptions</span>
-                        Receta Rápida
-                    </h3>
+            <!-- Receta -->
+            <div class="card-section">
+                <div class="card-section-header">
+                    <span class="material-symbols-outlined">prescriptions</span>
+                    Receta
                 </div>
-                <div class="card-body">
-                    <div class="receta-item">
-                        <div>
-                            <div class="receta-nombre">Amoxicilina 500mg</div>
-                            <div class="receta-dosis">1 comp cada 12h / 7 días</div>
-                        </div>
-                        <button class="btn-remove">
-                            <span class="material-symbols-outlined">close</span>
-                        </button>
+                <div class="card-section-body">
+                    <div id="recetaLista">
+                        {% if modo == 'ver' or modo == 'editar' %}
+                            {% if tratamientos %}
+                                {% for t in tratamientos %}
+                                <div class="receta-item">
+                                    <div>
+                                        <div class="receta-nombre">{{ t.nombre }}</div>
+                                        <div class="receta-dosis">{{ t.dosis }} · {{ t.frecuencia }} · {{ t.duracion }}</div>
+                                        {% if t.notas %}<div class="receta-dosis" style="font-style:italic;">{{ t.notas }}</div>{% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <p style="font-size:0.83rem; color:var(--text-muted);">Sin receta registrada</p>
+                            {% endif %}
+                        
+                        {% else %}
+                            <p id="recetaVacia" style="font-size:0.83rem; color:var(--text-muted); text-align:center; padding:6px 0;">Sin medicamentos agregados</p>
+                        {% endif %}
                     </div>
-                    <button class="btn-add-med">
+                    {% if modo == 'iniciar' %}
+                    <button type="button" class="btn-add-med" id="btnAgregarMed">
                         <span class="material-symbols-outlined">add</span>
                         Añadir Medicamento
                     </button>
+                    {% endif %}
                 </div>
             </div>
 
-        </div><!-- /consulta-sidebar-col -->
+            {% if modo == 'iniciar' %}
+            <!-- INPUT HIDDEN para servicios -->
+            <input type="hidden" name="servicios_json" id="serviciosJson" value="[]">
+            
+            <!-- Card de servicios extras -->
+            <div class="card-section">
+                <div class="card-section-header">
+                    <span class="material-symbols-outlined">medical_services</span>
+                    Servicios Extras
+                </div>
+                <div class="card-section-body">
+                    <div id="serviciosLista">
+                        <p id="serviciosVacio" style="font-size:0.83rem; color:var(--text-muted); text-align:center; padding:6px 0;">
+                            Sin servicios agregados
+                        </p>
+                    </div>
+                    <button type="button" class="btn-add-med" id="btnAgregarServicio">
+                        <span class="material-symbols-outlined">add</span>
+                        Añadir Servicio
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if modo == 'ver' or modo == 'editar' %}
+            <!-- Card de servicios en modo ver/editar (solo lectura) -->
+            <div class="card-section">
+                <div class="card-section-header">
+                    <span class="material-symbols-outlined">medical_services</span>
+                    Servicios Extras
+                </div>
+                <div class="card-section-body">
+                    {% if servicios_consulta %}
+                        {% for s in servicios_consulta %}
+                        <div class="receta-item">
+                            <div>
+                                <div class="receta-nombre">{{ s.nombre }}</div>
+                                <div class="receta-dosis">Cantidad: {{ s.cantidad }} · Subtotal: ${{ s.subtotal }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p style="font-size:0.83rem; color:var(--text-muted);">Sin servicios extras</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+        </div><!-- /col lateral -->
 
     </div><!-- /consulta-layout -->
 
-</div><!-- /page-content -->
+    {% if modo != 'ver' %}</form>{% endif %}
 
-<!-- FOOTER DE ACCIONES -->
+</div><!-- /consulta-wrapper -->
+
+<!-- FOOTER FIJO ──────────────────────────────────────────────────────────── -->
 <footer class="page-footer">
-    <button class="btn-secondary">Cancelar</button>
-    <button class="btn-finalizar">
+    <a href="{% url 'consultas' %}" class="btn-cancelar" style="text-decoration:none;">
+        {% if modo == 'ver' %}Volver{% else %}Cancelar{% endif %}
+    </a>
+    {% if modo == 'ver' %}
+    <a href="{% url 'editar_consulta' consulta.numero %}" class="btn-primary" style="text-decoration:none; display:flex; align-items:center; gap:6px;">
+        <span class="material-symbols-outlined">edit</span>
+        Editar Consulta
+    </a>
+    {% elif modo == 'editar' %}
+    <button type="submit" form="formConsulta" class="btn-primary">
+        <span class="material-symbols-outlined">save</span>
+        Guardar Cambios
+    </button>
+    {% else %}
+    <button type="submit" form="formConsulta" class="btn-primary" id="btnFinalizar">
         <span class="material-symbols-outlined">check_circle</span>
         Finalizar Consulta
     </button>
+    {% endif %}
 </footer>
+
+<!-- MODAL: HISTORIAL CLÍNICO ─────────────────────────────────────────────── -->
+<div class="modal-overlay" id="modalHistorial">
+    <div class="modal" style="max-width:560px;">
+        <div class="modal-header">
+            <h2>Historial Clínico — {{ cita.mascota.nombre }}</h2>
+            <button class="modal-close" id="btnCerrarHistorial" type="button">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="modal-body" style="max-height:70vh; overflow-y:auto;">
+
+            <!-- Datos de la mascota -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; padding-bottom:16px; border-bottom:1px solid var(--border);">
+                <div>
+                    <p class="form-label">Nombre</p>
+                    <p style="font-size:0.9rem; font-weight:700;">{{ cita.mascota.nombre }}</p>
+                </div>
+                <div>
+                    <p class="form-label">Folio</p>
+                    <p style="font-size:0.9rem;">{{ cita.mascota.folio }}</p>
+                </div>
+                <div>
+                    <p class="form-label">Especie / Raza</p>
+                    <p style="font-size:0.9rem;">{{ cita.mascota.especie.nombre }} · {{ cita.mascota.raza.nombre }}</p>
+                </div>
+                <div>
+                    <p class="form-label">Sexo</p>
+                    <p style="font-size:0.9rem;">{% if cita.mascota.sexo == 'M' %}Macho{% else %}Hembra{% endif %}</p>
+                </div>
+                <div>
+                    <p class="form-label">Fecha de nacimiento</p>
+                    <p style="font-size:0.9rem;">{{ cita.mascota.fechanacimiento|date:"d/m/Y" }}</p>
+                </div>
+                <div>
+                    <p class="form-label">Peso</p>
+                    <p style="font-size:0.9rem;">{{ cita.mascota.peso }} kg</p>
+                </div>
+                {% if cita.mascota.alergias %}
+                <div style="grid-column:1/-1;">
+                    <p class="form-label" style="color:#c0392b;">Alergias</p>
+                    <p style="font-size:0.9rem; color:#c0392b;">{{ cita.mascota.alergias }}</p>
+                </div>
+                {% endif %}
+                <div style="grid-column:1/-1;">
+                    <p class="form-label">Características únicas</p>
+                    <p style="font-size:0.9rem;">{{ cita.mascota.caracunica }}</p>
+                </div>
+            </div>
+
+            <!-- Consultas previas completas -->
+            <p class="form-label" style="margin-bottom:10px;">Consultas anteriores</p>
+            {% for c in consultas_previas %}
+            <div style="border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; margin-bottom:10px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                    <strong style="font-size:0.85rem;">{{ c.cita.fecha|date:"d M Y" }} · {{ c.cita.hora|time:"H:i" }}</strong>
+                    <span style="font-size:0.78rem; color:var(--text-muted);">Dr. {{ c.cita.veterinario.nombrepila }} {{ c.cita.veterinario.primerapellido }}</span>
+                </div>
+                <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:4px;">Motivo: {{ c.cita.motivo }}</p>
+                <p style="font-size:0.85rem; margin-bottom:2px;"><strong>Diagnóstico:</strong> {{ c.diagnostico }}</p>
+                <p style="font-size:0.82rem; color:var(--text-muted);">{{ c.observaciones|truncatechars:120 }}</p>
+            </div>
+            {% empty %}
+            <p style="font-size:0.83rem; color:var(--text-muted); text-align:center; padding:20px 0;">Sin consultas previas registradas</p>
+            {% endfor %}
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-cancelar" id="btnCerrarHistorial2">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: AGREGAR MEDICAMENTO ───────────────────────────────────────────── -->
+{% if modo != 'ver' %}
+
+{% if modo == 'iniciar' %}
+<div class="modal-overlay" id="modalServicio">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>Añadir Servicio Extra</h2>
+            <button class="modal-close" id="btnCerrarServicio" type="button">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="form-field" style="margin-bottom:14px;">
+                <label class="form-label">Servicio</label>
+                <select id="selectServicio" style="width:100%; padding:9px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-family:inherit; font-size:0.9rem;">
+                    <option value="">Seleccionar servicio...</option>
+                    {% for s in servicios_disponibles %}
+                    <option value="{{ s.clave }}"
+                            data-nombre="{{ s.nombre }}"
+                            data-costo="{{ s.costo }}">
+                        {{ s.nombre }} — ${{ s.costo }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="form-label">Cantidad</label>
+                <input type="number" id="servCantidad" class="form-input" min="1" value="1">
+            </div>
+            <p id="servSubtotal" style="font-size:0.85rem; color:var(--text-muted); margin-top:10px; text-align:right;"></p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-cancelar" id="btnCancelarServicio">Cancelar</button>
+            <button type="button" class="btn-primary" id="btnConfirmarServicio">
+                <span class="material-symbols-outlined">add</span>
+                Agregar
+            </button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="modal-overlay" id="modalMedicamento">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>Añadir Medicamento</h2>
+            <button class="modal-close" id="btnCerrarMed" type="button">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="form-field" style="margin-bottom:14px;">
+                <label class="form-label">Medicamento</label>
+                <select id="selectMedicamento" style="width:100%; padding:9px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-family:inherit; font-size:0.9rem;">
+                    <option value="">Seleccionar medicamento...</option>
+                    {% for m in medicamentos_disponibles %}
+                    <option value="{{ m.clave }}" data-nombre="{{ m.nombre }}" data-precio="{{ m.precio }}">
+                        {{ m.nombre }} — ${{ m.precio }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+                <div class="form-field">
+                    <label class="form-label">Dosis</label>
+                    <input type="text" id="medDosis" class="form-input" placeholder="Ej: 1 tableta">
+                </div>
+                <div class="form-field">
+                    <label class="form-label">Cantidad</label>
+                    <input type="number" id="medCantidad" class="form-input" placeholder="1" min="1" value="1">
+                </div>
+                <div class="form-field">
+                    <label class="form-label">Frecuencia</label>
+                    <input type="text" id="medFrecuencia" class="form-input" placeholder="Ej: cada 12h">
+                </div>
+                <div class="form-field">
+                    <label class="form-label">Duración</label>
+                    <input type="text" id="medDuracion" class="form-input" placeholder="Ej: 7 días">
+                </div>
+            </div>
+            <div class="form-field">
+                <label class="form-label">Notas adicionales</label>
+                <input type="text" id="medNotas" class="form-input" placeholder="Ej: administrar con comida">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-cancelar" id="btnCancelarMed">Cancelar</button>
+            <button type="button" class="btn-primary" id="btnConfirmarMed">
+                <span class="material-symbols-outlined">add</span>
+                Agregar
+            </button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    // ── Historial modal ──────────────────────────────────────────────────────
+    const overlayHistorial = document.getElementById('modalHistorial');
+
+    function abrirHistorial() {
+        overlayHistorial.classList.add('visible');
+        document.body.style.overflow = 'hidden';
+    }
+    function cerrarHistorial() {
+        overlayHistorial.classList.remove('visible');
+        document.body.style.overflow = '';
+    }
+
+    document.getElementById('btnHistorial')?.addEventListener('click', abrirHistorial);
+    document.getElementById('btnHistorial2')?.addEventListener('click', (e) => { e.preventDefault(); abrirHistorial(); });
+    document.getElementById('btnCerrarHistorial')?.addEventListener('click', cerrarHistorial);
+    document.getElementById('btnCerrarHistorial2')?.addEventListener('click', cerrarHistorial);
+    overlayHistorial?.addEventListener('click', (e) => { if (e.target === overlayHistorial) cerrarHistorial(); });
+
+    {% if modo != 'ver' %}
+    // ── Receta: lista en memoria ─────────────────────────────────────────────
+    let medicamentosReceta = [];
+
+    function renderReceta() {
+        const lista   = document.getElementById('recetaLista');
+        const vacia   = document.getElementById('recetaVacia');
+        const jsonInput = document.getElementById('medicamentosJson');
+
+        // Ocultar mensaje vacío si hay medicamentos
+        if (vacia) vacia.style.display = medicamentosReceta.length ? 'none' : 'block';
+
+        // Limpiar items anteriores (mantener el párrafo vacío)
+        lista.querySelectorAll('.receta-item').forEach(el => el.remove());
+
+        medicamentosReceta.forEach((m, idx) => {
+            const item = document.createElement('div');
+            item.className = 'receta-item';
+            item.innerHTML = `
+                <div>
+                    <div class="receta-nombre">${m.nombre}</div>
+                    <div class="receta-dosis">${m.dosis} · ${m.frecuencia} · ${m.duracion}</div>
+                    ${m.notas ? `<div class="receta-dosis" style="font-style:italic;">${m.notas}</div>` : ''}
+                </div>
+                <button type="button" class="btn-remove" data-idx="${idx}">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            `;
+            item.querySelector('.btn-remove').addEventListener('click', () => {
+                medicamentosReceta.splice(idx, 1);
+                renderReceta();
+            });
+            lista.appendChild(item);
+        });
+
+        if (jsonInput) jsonInput.value = JSON.stringify(medicamentosReceta);
+    }
+
+    // ── Modal medicamento ────────────────────────────────────────────────────
+    const overlayMed = document.getElementById('modalMedicamento');
+
+    document.getElementById('btnAgregarMed')?.addEventListener('click', () => {
+        overlayMed.classList.add('visible');
+        document.body.style.overflow = 'hidden';
+    });
+
+    function cerrarMed() {
+        overlayMed.classList.remove('visible');
+        document.body.style.overflow = '';
+        document.getElementById('selectMedicamento').value = '';
+        document.getElementById('medDosis').value = '';
+        document.getElementById('medCantidad').value = '1';
+        document.getElementById('medFrecuencia').value = '';
+        document.getElementById('medDuracion').value = '';
+        document.getElementById('medNotas').value = '';
+    }
+
+    document.getElementById('btnCerrarMed')?.addEventListener('click', cerrarMed);
+    document.getElementById('btnCancelarMed')?.addEventListener('click', cerrarMed);
+    overlayMed?.addEventListener('click', (e) => { if (e.target === overlayMed) cerrarMed(); });
+
+    document.getElementById('btnConfirmarMed')?.addEventListener('click', () => {
+        const sel     = document.getElementById('selectMedicamento');
+        const opt     = sel.selectedOptions[0];
+        const dosis    = document.getElementById('medDosis').value.trim();
+        const cantidad = document.getElementById('medCantidad').value.trim();
+        const frecuencia = document.getElementById('medFrecuencia').value.trim();
+        const duracion   = document.getElementById('medDuracion').value.trim();
+        const notas      = document.getElementById('medNotas').value.trim();
+
+        if (!opt?.value) { alert('Selecciona un medicamento'); return; }
+        if (!dosis || !frecuencia || !duracion) { alert('Dosis, frecuencia y duración son obligatorios'); return; }
+
+        medicamentosReceta.push({
+            clave:     opt.value,
+            nombre:    opt.dataset.nombre,
+            cantidad:  parseInt(cantidad) || 1,
+            dosis,
+            frecuencia,
+            duracion,
+            notas,
+        });
+
+        renderReceta();
+        cerrarMed();
+    });
+
+    // ── Servicios ─────────────────────────────────────────────────────────────
+    let serviciosLista = [];
+    
+    function renderServicios() {
+        const lista     = document.getElementById('serviciosLista');
+        const vacio     = document.getElementById('serviciosVacio');
+        const jsonInput = document.getElementById('serviciosJson');
+        if (vacio) vacio.style.display = serviciosLista.length ? 'none' : 'block';
+        lista.querySelectorAll('.receta-item').forEach(el => el.remove());
+        serviciosLista.forEach((s, idx) => {
+            const item = document.createElement('div');
+            item.className = 'receta-item';
+            const subtotal = (s.cantidad * s.costo).toFixed(2);
+            item.innerHTML = `
+                <div>
+                    <div class="receta-nombre">${s.nombre}</div>
+                    <div class="receta-dosis">Cant: ${s.cantidad} · Subtotal: $${subtotal}</div>
+                </div>
+                <button type="button" class="btn-remove" data-idx="${idx}">
+                    <span class="material-symbols-outlined">close</span>
+                </button>`;
+            item.querySelector('.btn-remove').addEventListener('click', () => {
+                serviciosLista.splice(idx, 1); renderServicios();
+            });
+            lista.appendChild(item);
+        });
+        if (jsonInput) jsonInput.value = JSON.stringify(serviciosLista);
+    }
+    
+    const overlayServ = document.getElementById('modalServicio');
+    document.getElementById('btnAgregarServicio')?.addEventListener('click', () => {
+        overlayServ.classList.add('visible'); document.body.style.overflow = 'hidden';
+    });
+    function cerrarServicio() {
+        overlayServ.classList.remove('visible'); document.body.style.overflow = '';
+        document.getElementById('selectServicio').value = '';
+        document.getElementById('servCantidad').value   = '1';
+        document.getElementById('servSubtotal').textContent = '';
+    }
+    document.getElementById('btnCerrarServicio')?.addEventListener('click', cerrarServicio);
+    document.getElementById('btnCancelarServicio')?.addEventListener('click', cerrarServicio);
+    overlayServ?.addEventListener('click', (e) => { if (e.target === overlayServ) cerrarServicio(); });
+    
+    function actualizarSubtotal() {
+        const sel  = document.getElementById('selectServicio');
+        const cant = parseInt(document.getElementById('servCantidad').value) || 0;
+        const opt  = sel.selectedOptions[0];
+        const costo = parseFloat(opt?.dataset.costo) || 0;
+        const sub   = document.getElementById('servSubtotal');
+        sub.textContent = (opt?.value && cant > 0) ? `Subtotal: $${(cant * costo).toFixed(2)}` : '';
+    }
+    document.getElementById('selectServicio')?.addEventListener('change', actualizarSubtotal);
+    document.getElementById('servCantidad')?.addEventListener('input', actualizarSubtotal);
+    
+    document.getElementById('btnConfirmarServicio')?.addEventListener('click', () => {
+        const sel  = document.getElementById('selectServicio');
+        const opt  = sel.selectedOptions[0];
+        const cant = parseInt(document.getElementById('servCantidad').value) || 1;
+        if (!opt?.value) { alert('Selecciona un servicio'); return; }
+        serviciosLista.push({ clave:opt.value, nombre:opt.dataset.nombre, costo:parseFloat(opt.dataset.costo), cantidad:cant });
+        renderServicios(); cerrarServicio();
+    });
+
+    {% endif %}
+
+    // ── Escape ───────────────────────────────────────────────────────────────
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        cerrarHistorial();
+        {% if modo != 'ver' %}cerrarMed();{% endif %}
+    });
+
+});
+</script>
 {% endblock %}

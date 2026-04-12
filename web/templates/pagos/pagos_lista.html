@@ -1,105 +1,250 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block titulo %}Pagos{%endblock%}
-
+{% block titulo %}Pagos{% endblock %}
 {% block nav_pagos %}active{% endblock %}
 
 {% block breadcrumb %}
     <a href="{% url 'dashboard' %}">Inicio</a>
     <span class="material-symbols-outlined">chevron_right</span>
     <span class="breadcrumb-current">Pagos</span>
-    
 {% endblock %}
 
 {% block topbar_titulo %}Lista de Pagos{% endblock %}
 
 {% block contenido %}
+<div class="page active" id="page-pagos">
 
-    <div class="page active" id="page-pagos">
-        <div class="page-header">
-            <div>
-                <h1 class="page-title">Pagos</h1>
-                <p class="page-sub">Adminstracion de pagos y generacion de recibos</p>
-            </div>
-            <div class="page-header-right">
-                <button class="btn-primary" id="btnNuevoPago">
-                    <span class="material-symbols-outlined">add_circle</span>
-                    Generar Recibo
-                </button>
-            </div>
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Pagos</h1>
+            <p class="page-sub">Administración de pagos y generación de recibos</p>
         </div>
-
-        <div class="card">
-            <div class="filters-bar">
-                <div class="search-box">
-                    <span class="material-symbols-outlined">search</span>
-                    <input type="text" id="pagoSearch" placeholder="Buscar por folio o cliente...">
-                </div>
-
-                <div class="filters-right">
-                    <select id="" class="filter-select" id="">
-                        <option value="">Filtro vacio</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="table-wrapper">
-                <table class="data-table" id="pagosTable">
-                    <thead>
-                        <tr>
-                            <th>CODIGO</th>
-                            <th>FECHA Y HORA</th>
-                            <th>PROPIETARIO</th>
-                            <th>MASCOTA</th>
-                            <th>TOTAL</th>
-                            <th>ESTADO</th>
-                            <th>ACCIONES</th>
-                            
-                        </tr>
-                    </thead>
-                    <tbody id="pagosBody">
-                        {% for pago in pagos %}
-                        <tr>
-                            <td><strong>#{{ pago.codigo|stringformat:"04d" }}</strong></td>
-                            <td>
-                                <div class="fecha-cell">
-                                    <span class="fecha-dia">{{ pago.fecha|date:"M d, Y" }}</span>
-                                    <span class="fecha-hora">
-                                        <span class="material-symbols-outlined">schedule</span>
-                                        {{ pago.hora|time:"H:i" }}
-                                    </span>
-                                </div>
-                            </td>
-                            <td>{{ pago.consulta.expediente.mascota.propietario.nombrepila }} {{ pago.consulta.expediente.mascota.propietario.primerapellido }}</td>
-
-                            <td><strong>{{ pago.consulta.expediente.mascota.nombre }}</strong></td>
-
-                            <td><span class="med-price">${{ pago.pagofinal|floatformat:2 }}</span></td>
-
-                            <td>
-                                {% if pago.hospitalizacion %}
-
-                                <div class="badge badge-confirmada">
-                                    {{ pago.hospitalizacion.estado.nombre|upper }}
-                                </div>
-
-                                {% else %}
-                                <div class="badge badge-pendiente">
-                                    {{ pago.consulta.cita.estado.nombre|upper }}
-                                </div>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <a href="{% url 'recibos' %}" class="link-green">Ver Detalles</a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                        
-                    </tbody>
-                </table>
-            </div>
+        <div class="page-header-right">
+            <button class="btn-primary" id="btnNuevoPago">
+                <span class="material-symbols-outlined">receipt_long</span>
+                Generar Pago
+            </button>
         </div>
     </div>
 
+    <div class="card">
+        <div class="filters-bar">
+            <div class="search-box">
+                <span class="material-symbols-outlined">search</span>
+                <input type="text" id="pagoSearch" placeholder="Buscar por código, mascota o propietario...">
+            </div>
+        </div>
+
+        <div class="table-wrapper">
+            <table class="data-table" id="pagosTable">
+                <thead>
+                    <tr>
+                        <th>CÓDIGO</th>
+                        <th>FECHA</th>
+                        <th>PROPIETARIO</th>
+                        <th>MASCOTA</th>
+                        <th>TIPO</th>
+                        <th>TOTAL</th>
+                        <th>ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody id="pagosBody">
+                    {% for pago in pagos %}
+                    <tr>
+                        <td><strong>#{{ pago.codigo|stringformat:"04d" }}</strong></td>
+                        <td>
+                            <div class="fecha-cell">
+                                <span class="fecha-dia">{{ pago.fecha|date:"M d, Y" }}</span>
+                                <span class="fecha-hora">
+                                    <span class="material-symbols-outlined">schedule</span>
+                                    {{ pago.hora|time:"H:i" }}
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            {{ pago.consulta.cita.mascota.propietario.nombrepila }}
+                            {{ pago.consulta.cita.mascota.propietario.primerapellido }}
+                        </td>
+                        <td><strong>{{ pago.consulta.cita.mascota.nombre }}</strong></td>
+                        <td>
+                            {% if pago.hospitalizacion %}
+                            <span class="badge badge-pendiente" style="font-size:0.75rem;">
+                                <span class="material-symbols-outlined" style="font-size:13px;">bed</span>
+                                Hospitalización
+                            </span>
+                            {% else %}
+                            <span class="badge badge-confirmada" style="font-size:0.75rem;">
+                                <span class="material-symbols-outlined" style="font-size:13px;">stethoscope</span>
+                                Consulta
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td><span class="med-price">${{ pago.pagofinal|floatformat:2 }}</span></td>
+                        <td>
+                            <a href="{% url 'ver_recibo' pago.codigo %}" class="link-green">
+                                Ver recibo
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7">No hay pagos registrados</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ── MODAL: GENERAR PAGO ──────────────────────────────────────────────── -->
+<div class="modal-overlay" id="modalNuevoPago">
+    <div class="modal" style="max-width:520px;">
+        <div class="modal-header">
+            <h2>Generar Pago</h2>
+            <button class="modal-close" id="btnCerrarPago" type="button">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="modal-body">
+
+            <!-- Selector de tipo -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+                <button type="button" class="tipo-btn active" data-tipo="consulta" id="btnTipoConsulta">
+                    <span class="material-symbols-outlined">stethoscope</span>
+                    Consulta
+                </button>
+                <button type="button" class="tipo-btn" data-tipo="hospitalizacion" id="btnTipoHosp">
+                    <span class="material-symbols-outlined">bed</span>
+                    Hospitalización
+                </button>
+            </div>
+
+            <!-- Select consultas -->
+            <div id="panelConsulta">
+                <label style="font-size:0.82rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; display:block; margin-bottom:8px;">
+                    Seleccionar Consulta
+                </label>
+                <select id="selectConsulta" style="width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-family:inherit; font-size:0.9rem; color:var(--text); background:var(--surface);">
+                    <option value="">Seleccionar consulta pendiente de pago...</option>
+                    {% for c in consultas_sin_pago %}
+                    <option value="{{ c.numero }}">
+                        #{{ c.numero|stringformat:"04d" }} · {{ c.cita.mascota.nombre }} ·
+                        {{ c.cita.fecha|date:"d/m/Y" }} ·
+                        {{ c.cita.propietario.nombrepila }} {{ c.cita.propietario.primerapellido }}
+                    </option>
+                    {% empty %}
+                    <option value="" disabled>No hay consultas pendientes de pago</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Select hospitalizaciones -->
+            <div id="panelHosp" style="display:none;">
+                <label style="font-size:0.82rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; display:block; margin-bottom:8px;">
+                    Seleccionar Hospitalización
+                </label>
+                <select id="selectHosp" style="width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-family:inherit; font-size:0.9rem; color:var(--text); background:var(--surface);">
+                    <option value="">Seleccionar hospitalización pendiente de pago...</option>
+                    {% for h in hosps_sin_pago %}
+                    <option value="{{ h.numero }}">
+                        #{{ h.numero|stringformat:"04d" }} · {{ h.expediente.mascota.nombre }} ·
+                        Alta: {{ h.fechaalta|date:"d/m/Y" }} ·
+                        {{ h.expediente.mascota.propietario.nombrepila }} {{ h.expediente.mascota.propietario.primerapellido }}
+                    </option>
+                    {% empty %}
+                    <option value="" disabled>No hay hospitalizaciones pendientes de pago</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Desglose (se carga dinámicamente) -->
+            <div id="desglose" style="display:none; margin-top:16px;">
+                <div style="border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden;">
+                    <table style="width:100%; border-collapse:collapse; font-size:0.83rem;">
+                        <thead>
+                            <tr style="background:var(--bg);">
+                                <th style="text-align:left; padding:8px 12px; font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Concepto</th>
+                                <th style="text-align:right; padding:8px 12px; font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Cant.</th>
+                                <th style="text-align:right; padding:8px 12px; font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody id="desgloseBody"></tbody>
+                    </table>
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 12px; background:var(--bg); border-top:1px solid var(--border); font-weight:700; font-size:0.95rem;">
+                        <span>Total</span>
+                        <span id="desgloseTotal" class="med-price"></span>
+                    </div>
+                </div>
+                <p style="font-size:0.75rem; color:var(--text-muted); margin-top:8px; display:flex; align-items:center; gap:4px;">
+                    <span class="material-symbols-outlined" style="font-size:14px;">info</span>
+                    Al confirmar el pago no se podrán modificar los datos de la consulta/hospitalización.
+                </p>
+            </div>
+
+            <div id="cargandoDesglose" style="display:none; text-align:center; padding:20px; color:var(--text-muted); font-size:0.85rem;">
+                <span class="material-symbols-outlined" style="font-size:20px; display:block; margin-bottom:6px;">hourglass_top</span>
+                Calculando desglose...
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-cancelar" id="btnCancelarPago">Cancelar</button>
+            <button type="button" class="btn-primary" id="btnConfirmarPago" disabled>
+                <span class="material-symbols-outlined">payments</span>
+                Confirmar Pago
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ── MODAL: CONFIRMACIÓN FINAL ───────────────────────────────────────── -->
+<div class="modal-overlay" id="modalConfirmacionFinal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>Confirmar Pago</h2>
+            <button class="modal-close" id="btnCerrarConfirmacion" type="button">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="modal-body" style="text-align:center; padding:28px 24px;">
+            <span class="material-symbols-outlined" style="font-size:48px; color:#e67e22; display:block; margin-bottom:12px;">warning</span>
+            <p style="font-size:1rem; font-weight:700; color:var(--text); margin:0 0 10px;">
+                ¿Confirmar el pago de <span id="cfTotal" style="color:var(--green-dark);"></span>?
+            </p>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin:0; line-height:1.6;">
+                Al confirmar este pago, <strong>ya no será posible modificar</strong> los datos
+                de la consulta o hospitalización asociada.
+            </p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-cancelar" id="btnCancelarConfirmacion">Cancelar</button>
+            <button type="button" id="btnPagarFinal" class="btn-primary" style="background:var(--green-dark);">
+                <span class="material-symbols-outlined">check_circle</span>
+                Confirmar y Pagar
+            </button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block estilos %}
+<style>
+.tipo-btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 10px; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+    background: var(--surface); font-family: inherit; font-size: 0.88rem;
+    font-weight: 600; color: var(--text-muted); cursor: pointer;
+    transition: all 0.15s;
+}
+.tipo-btn:hover { border-color: var(--blue-dark); color: var(--blue-dark); }
+.tipo-btn.active {
+    border-color: var(--blue-dark); background: var(--blue-light);
+    color: var(--blue-dark);
+}
+.tipo-btn .material-symbols-outlined { font-size: 18px; }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'core/js/pagos.js' %}"></script>
 {% endblock %}

@@ -460,13 +460,30 @@
     <div class="page-header">
         <div>
             <h1 class="page-title">Personal Veterinario</h1>
-            <p class="page-sub">Lista de Empleados del Hospital</p>
+            <p class="page-sub">Lista de Veterinarios del Hospital</p>
         </div>
         <div class="page-header-right">
-            <button class="btn-primary" id="btnNuevoPersonal">
+            <button class="btn-primary" id="btnNuevoVeterinario">
                 <span class="material-symbols-outlined">person_add</span>
-                Nuevo Personal
+                Nuevo Veterinario
             </button>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card green">
+            <span class="stat-icon material-symbols-outlined">medical_services</span>
+            <div class="stat-body">
+                <p class="stat-label">Veterinarios</p>
+                <p class="stat-value">{{ total_conteo|default:"0" }}</p>
+            </div>
+        </div>
+        <div class="stat-card blue">
+            <span class="stat-icon material-symbols-outlined">workspace_premium</span>
+            <div class="stat-body">
+                <p class="stat-label">Especialidades</p>
+                <p class="stat-value">{{ total_especialidades|default:"0" }}</p>
+            </div>
         </div>
     </div>
 
@@ -479,6 +496,10 @@
         <button class="page-tab" data-tab="agenda">
             <span class="material-symbols-outlined">calendar_month</span>
             Agenda
+        </button>
+        <button class="page-tab" data-tab="especialidades">
+            <span class="material-symbols-outlined">workspace_premium</span>
+            Especialidades
         </button>
     </div>
 
@@ -496,22 +517,23 @@
                             name="q"
                             value="{{ query|default:'' }}"
                             placeholder="Buscar por clave o nombre..."
-                            autocomplete="off"
+                            autocomplete="on"
                         >
                     </div>
                 </form>
                 <div class="filters-right">
                     <select class="filter-select" id="filterEspecialidad">
                         <option value="">Todas las Especialidades</option>
-                        <option value="vet">Veterinario</option>
-                        <option value="recep">Recepcionista</option>
-                        <option value="admin">Administrador</option>
+                        {% for esp in especialidades %}
+                        <option value="{{ esp.clave }}">{{ esp.nombre }}</option>
+                        {% empty %}
+                        <option value="">No hay especialidades disponibles</option>
+                        {% endfor %}
                     </select>
                     <select class="filter-select" id="filterEstado">
-                        <option value="">Todos los Estados</option>
-                        <option value="turno">En turno</option>
-                        <option value="fuera">Fuera de turno</option>
-                        <option value="descanso">En descanso</option>
+                        <option value="">Estado</option>
+                        <option value="">Pendiente</option>
+                        
                     </select>
                 </div>
             </div>
@@ -526,14 +548,11 @@
                             <th>ACCIONES</th>
                         </tr>
                     </thead>
-<!--...............................................................................................................................................-->
+
                     <tbody id="personalBody">
                         {% for veterinario in veterinarios %}
                         <tr>
-                            
-
                             <td>
-                            <!-- USUARIO -->
                                 <div class="user-cell">
                                     <div class="user-avatar-p" style="background-color: #a8d8b9; color: var(--green-dark);">
                                         <span>
@@ -543,7 +562,11 @@
 
                                     <div class="user-info-text">
                                         <span class="user-name-table">
+                                            {% if veterinario.segundoapellido %}
                                             {{ veterinario.nombrepila }} {{ veterinario.primerapellido }} {{ veterinario.segundoapellido }}
+                                            {% else %}
+                                            {{ veterinario.nombrepila }} {{ veterinario.primerapellido }}
+                                            {% endif %}
                                         </span>
                                         <span class="user-email-table">
                                            {{ veterinario.folio }}
@@ -553,30 +576,58 @@
                                 </div>
                              </td>
 
-                            <!-- ESPECIALIDAD-->
-
                             <td>
-                                <strong>
-                                    {{ veterinario.especialidad.nombre }}
-                                </strong>
-                            </td>
-
-                            <!-- CORREO-->
-                            <td>
-                                <strong>
-                                    {{ veterinario.correo }}
-                                </strong>
+                                <strong>{{ veterinario.especialidad.nombre }}</strong>
                             </td>
 
                             <td>
-                                <a href="#" class="link-green">Ver Acciones</a>
+                                <strong>{{ veterinario.correo }}</strong>
                             </td>
 
+                            <td>
+                                <div class="menu-wrap">
+                                    <button class="menu-btn"
+                                            aria-label="Acciones"
+                                            data-folio="{{ veterinario.folio }}"
+                                            data-nombre="{{ veterinario.nombrepila }} {{ veterinario.primerapellido }}{% if veterinario.segundoapellido %} {{ veterinario.segundoapellido }}{% endif %}"
+                                            data-nombrepila="{{ veterinario.nombrepila }}"
+                                            data-apellido-pat="{{ veterinario.primerapellido }}"
+                                            data-apellido-mat="{{ veterinario.segundoapellido|default:'' }}"
+                                            data-correo="{{ veterinario.correo }}"
+                                            data-telefono="{{ veterinario.telefono }}"
+                                            data-cedula="{{ veterinario.cedula }}"
+                                            data-especialidad="{{ veterinario.especialidad.nombre }}"
+                                            data-especialidad-clave="{{ veterinario.especialidad.clave }}">
+                                        <span class="material-symbols-outlined">more_horiz</span>
+                                    </button>
+                                    <div class="dropdown-menu" role="menu">
+                                        <button class="dropdown-item" role="menuitem" data-accion="detalles">
+                                            <span class="material-symbols-outlined">info</span>
+                                            Ver detalles
+                                        </button>
+                                        <button class="dropdown-item" role="menuitem" data-accion="editar">
+                                            <span class="material-symbols-outlined">edit</span>
+                                            Editar
+                                        </button>
 
+                                        <div class="dropdown-divider"></div>
+
+                                        <button class="dropdown-item danger" role="menuitem"
+                                                data-id="{{ veterinario.folio }}"
+                                                data-nombre="{{ veterinario.nombrepila }} {{ veterinario.primerapellido }}">
+                                            <span class="material-symbols-outlined">delete</span>
+                                            Dar de baja
+                                        </button>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5">No hay veterinarios registrados</td>
                         </tr>
                         {% endfor %}
                     </tbody>
-<!--...............................................................................................................................................-->
                 </table>
             </div>
 
@@ -619,29 +670,20 @@
                 <!-- Veterinarios -->
                 <div class="agenda-sidebar-section">
                     <p class="agenda-sidebar-label">Veterinarios</p>
-
-                    <div class="vet-item">
-                        <div class="vet-avatar">SM</div>
-                        <div class="vet-info">
-                            <span class="vet-name">Dra. Sofia Mendez</span>
-                            <span class="vet-role">Cardiología</span>
+                    {% for v in veterinarios %}
+                    <div class="vet-item" data-vet="{{ v.folio }}" onclick="toggleVet(this)">
+                        <div class="vet-avatar">
+                            {{ v.nombrepila|slice:":1"|upper }}{{ v.primerapellido|slice:":1"|upper }}
                         </div>
-                        <div class="vet-check">
+                        <div class="vet-info">
+                            <span class="vet-name">{{ v.nombrepila }} {{ v.primerapellido }}</span>
+                            <span class="vet-role">{{ v.especialidad.nombre }}</span>
+                        </div>
+                        <div class="vet-check vet-check-active">
                             <span class="material-symbols-outlined">check</span>
                         </div>
                     </div>
-
-                    <div class="vet-item">
-                        <div class="vet-avatar" style="background: #e8f9f1; color: var(--green-dark);">CR</div>
-                        <div class="vet-info">
-                            <span class="vet-name">Carlos Ruiz</span>
-                            <span class="vet-role">Traumatología</span>
-                        </div>
-                        <div class="vet-check" style="background: var(--green);">
-                            <span class="material-symbols-outlined">check</span>
-                        </div>
-                    </div>
-
+                    {% endfor %}
                 </div>
 
                 <!-- Categorías -->
@@ -703,15 +745,314 @@
         </div>
     </div>
 
+    <!-- ===== TAB: ESPECIALIDADES ===== -->
+    <div class="tab-panel" id="tab-especialidades">
+        <div class="card" style="border-radius: 0 0 var(--radius) var(--radius); border-top: none;">
+    
+            <div class="filters-bar">
+                <div class="search-box">
+                    <span class="material-symbols-outlined">search</span>
+                    <input type="text" id="espSearch" placeholder="Buscar especialidad...">
+                </div>
+                <div class="filters-right">
+                    <button class="btn-primary" id="btnNuevaEspecialidad">
+                        <span class="material-symbols-outlined">add_circle</span>
+                        Nueva Especialidad
+                    </button>
+                </div>
+            </div>
+    
+            <div class="table-wrapper">
+                <table class="data-table" id="espTable">
+                    <thead>
+                        <tr>
+                            <th>CLAVE</th>
+                            <th>NOMBRE</th>
+                            <th>DESCRIPCIÓN</th>
+                            <th>VETERINARIOS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="espBody">
+                        {% for esp in especialidades %}
+                        <tr>
+                            <td><code class="med-key">{{ esp.clave }}</code></td>
+                            <td><strong>{{ esp.nombre }}</strong></td>
+                            <td>{{ esp.descripcion }}</td>
+                            <td>{{ esp.total_vets|default:"0" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4">No hay especialidades registradas</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
 </div>
+
+<!-- Modal Nuevo Veterinario -->
+<div class="modal-overlay" id="modalNuevoVeterinario">
+    <div class="modal-big">
+        <div class="modal-header">
+            <h2>Registrar Veterinario</h2>
+            <button class="modal-close" id="btnCerrarModal" type="button">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <form id="formNuevoVeterinario" novalidate>
+            {% csrf_token %}
+            <div class="modal-body">
+                <p class="modal-error" style="display:none; color:#c0392b; font-size:13px; margin:0 0 12px; padding:8px 12px; background:#fff5f5; border-radius:6px; border:1px solid #f5c6c6;"></p>
+
+                <div class="form-row-3">
+                    <div class="form-field">
+                        <label>Nombre(s)</label>
+                        <input type="text" id="nombre" name="nombre" placeholder="Ej. Lucia" required>
+                    </div>
+
+                    <div class="form-field">
+                        <label>Apellido Paterno</label>
+                        <input type="text" id="apellido" name="apellido_paterno" placeholder="Ej. Alvarez" required>
+                    </div>
+
+                    <div class="form-field">
+                        <label>Apellido Materno</label>
+                        <input type="text" id="apellido" name="apellido_materno" placeholder="Ej. Soto" required>
+                    </div>
+                </div>
+
+                
+
+                <div class="form-row-3">
+                    <div class="form-field">
+                        <label>Correo Electrónico</label>
+                        <input type="text" id="correo" name="correo" placeholder="Ej. l.alvarez@ejemplo.com" required>
+                    </div>
+
+                    <div class="form-field">
+                        <label>Teléfono</label>
+                        <input type="tel" id="telefono" name="telefono" placeholder="Ej. (664) 854-6482" required>
+                    </div>
+
+                    <div class="form-field">
+                        <label>Numero de Cedula Profesional</label>
+                        <input type="text" id="cedula" name="cedula" placeholder="Ej. 54964584" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="form-field">
+                        <label>Especialidad</label>
+                        <select id="especialidad" name="especialidad" required>
+                            <option value="">Seleccionar especialidad...</option>
+                            {% for esp in especialidades %}
+                            <option value="{{ esp.clave }}">{{ esp.nombre }}</option>
+                            {% empty %}
+                            <option value="">No hay especialidades disponibles</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-cancelar" id="btnCancelar">Cancelar</button>
+                <button type="submit" class="btn-primary">
+                    <span class="material-symbols-outlined">save</span> Agregar Veterinario
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ══════════════════════════ MODAL: VER DETALLES ════════════════════════════ -->
+<div class="modal-overlay" id="modalVerDetalles">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>Detalles del Veterinario</h2>
+            <button class="modal-close" id="btnCerrarDetalles" type="button">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="modal-body" style="padding: 0;">
+ 
+            <!-- Cabecera con avatar -->
+            <div style="display:flex; align-items:center; gap:16px; padding:20px 24px; border-bottom:1px solid var(--border);">
+                <div style="width:56px; height:56px; border-radius:50%; background:var(--blue-light); display:flex; align-items:center; justify-content:center; font-size:1.3rem; font-weight:700; color:var(--blue-dark); flex-shrink:0;" id="det-avatar">—</div>
+                <div>
+                    <p style="font-size:1rem; font-weight:700; color:var(--text); margin:0 0 2px;" id="det-nombre">—</p>
+                    <p style="font-size:0.82rem; color:var(--text-muted); margin:0;" id="det-especialidad">—</p>
+                </div>
+                <span class="folio-badge" style="margin-left:auto;" id="det-folio">—</span>
+            </div>
+ 
+            <!-- Grid de datos -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0; padding:4px 0;">
+ 
+                <div style="padding:14px 24px; border-bottom:1px solid var(--border); border-right:1px solid var(--border);">
+                    <p style="font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; margin:0 0 4px;">Correo</p>
+                    <p style="font-size:0.88rem; color:var(--text); margin:0; word-break:break-all;" id="det-correo">—</p>
+                </div>
+ 
+                <div style="padding:14px 24px; border-bottom:1px solid var(--border);">
+                    <p style="font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; margin:0 0 4px;">Teléfono</p>
+                    <p style="font-size:0.88rem; color:var(--text); margin:0;" id="det-telefono">—</p>
+                </div>
+ 
+                <div style="padding:14px 24px; grid-column:1/-1;">
+                    <p style="font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; margin:0 0 4px;">Cédula Profesional</p>
+                    <p style="font-size:0.88rem; color:var(--text); margin:0; font-family:monospace; letter-spacing:0.05em;" id="det-cedula">—</p>
+                </div>
+ 
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-cancelar" id="btnCerrarDetalles2">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════ MODAL: EDITAR VETERINARIO ═════════════════════════════ -->
+<div class="modal-overlay" id="modalEditarVeterinario">
+    <div class="modal-big">
+        <div class="modal-header">
+            <h2>Editar Veterinario</h2>
+            <button class="modal-close" id="btnCerrarEditar" type="button">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <form id="formEditarVeterinario" novalidate>
+            {% csrf_token %}
+            <input type="hidden" id="editar-folio" name="folio">
+            <div class="modal-body">
+                <p class="modal-error" style="display:none; color:#c0392b; font-size:13px; margin:0 0 12px; padding:8px 12px; background:#fff5f5; border-radius:6px; border:1px solid #f5c6c6;"></p>
+ 
+                <div class="form-row-3">
+                    <div class="form-field">
+                        <label>Nombre(s)</label>
+                        <input type="text" id="editar-nombre" name="nombre" required>
+                    </div>
+                    <div class="form-field">
+                        <label>Apellido Paterno</label>
+                        <input type="text" id="editar-apellido-pat" name="apellido_paterno" required>
+                    </div>
+                    <div class="form-field">
+                        <label>Apellido Materno</label>
+                        <input type="text" id="editar-apellido-mat" name="apellido_materno">
+                    </div>
+                </div>
+ 
+                <div class="form-row-3">
+                    <div class="form-field">
+                        <label>Correo Electrónico</label>
+                        <input type="text" id="editar-correo" name="correo" required>
+                    </div>
+                    <div class="form-field">
+                        <label>Teléfono</label>
+                        <input type="tel" id="editar-telefono" name="telefono" required>
+                    </div>
+                    <div class="form-field">
+                        <label>Cédula Profesional</label>
+                        <!-- readonly: la cédula no se puede modificar -->
+                        <input type="text" id="editar-cedula" name="cedula" class="folio-input" readonly tabindex="-1">
+                    </div>
+                </div>
+ 
+                <div class="form-group">
+                    <div class="form-field">
+                        <label>Especialidad</label>
+                        <select id="editar-especialidad" name="especialidad" required>
+                            {% for esp in especialidades %}
+                            <option value="{{ esp.clave }}">{{ esp.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancelar" id="btnCancelarEditar">Cancelar</button>
+                <button type="submit" class="btn-primary">
+                    <span class="material-symbols-outlined">save</span> Guardar Cambios
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ══════════════════════════ MODAL: CONFIRMAR BAJA ═════════════════════════════ -->
+<div class="modal-overlay" id="modalConfirmarBaja">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>Confirmar Baja</h2>
+            <button class="modal-close" id="btnCerrarBaja" type="button">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="modal-body" style="text-align:center; padding: 28px 24px;">
+            <span class="material-symbols-outlined" style="font-size:48px; color:#e67e22; display:block; margin-bottom:12px;">warning</span>
+            <p style="font-size:0.95rem; color:var(--text); margin:0 0 8px;">¿Dar de baja a <strong id="baja-nombre">este veterinario</strong>?</p>
+            <p style="font-size:0.82rem; color:var(--text-muted); margin:0;">El veterinario quedará inactivo en el sistema. Esta acción puede revertirse.</p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-cancelar" id="btnCancelarBaja">Cancelar</button>
+            <button type="button" id="btnConfirmarBaja" style="background:#c0392b; color:#fff; border:none; padding:9px 20px; border-radius:8px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                <span class="material-symbols-outlined" style="font-size:17px;">person_off</span>
+                Confirmar Baja
+            </button>
+        </div>
+    </div>
+</div>
+
+{{ citas_json|json_script:"citas-data" }}
+
+<!-- ══════════════════════════ MODAL: CONFIRMAR BAJA ═════════════════════════════ -->
+<div class="modal-overlay" id="modalNuevaEspecialidad">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>Registrar Nueva Especialidad</h2>
+            <button class="modal-close" id="btnCerrarEsp" type="button">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <form id="formNuevaEspecialidad" novalidate>
+            {% csrf_token %}
+            <div class="modal-body">
+                <p class="modal-error" style="display:none; color:#c0392b; font-size:13px; margin:0 0 12px; padding:8px 12px; background:#fff5f5; border-radius:6px; border:1px solid #f5c6c6;"></p>
+ 
+                <div class="form-field">
+                    <label>Nombre de la Especialidad</label>
+                    <input type="text" name="nombre" placeholder="Ej: Cardiología, Oncología..." required>
+                </div>
+                <div class="form-field" style="margin-top:14px;">
+                    <label>Descripción</label>
+                    <textarea name="descripcion" placeholder="Describe brevemente el área de especialización..." required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancelar" id="btnCancelarEsp">Cancelar</button>
+                <button type="submit" class="btn-primary">
+                    <span class="material-symbols-outlined">save</span> Agregar Especialidad
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="toast-container"></div>
+
 {% endblock %}
 
 {% block scripts %}
-<script>
-// ===== TABS =====
-const pageTabs   = document.querySelectorAll('.page-tab');
-const tabPanels  = document.querySelectorAll('.tab-panel');
 
+<script src="{% static 'core/js/personal.js' %}"></script>
+
+<script>
+// ── TABS ──────────────────────────────────────────────────────────────────────
+const pageTabs  = document.querySelectorAll('.page-tab');
+const tabPanels = document.querySelectorAll('.tab-panel');
+ 
 pageTabs.forEach(btn => {
     btn.addEventListener('click', () => {
         pageTabs.forEach(b => b.classList.remove('active'));
@@ -721,144 +1062,174 @@ pageTabs.forEach(btn => {
         if (btn.dataset.tab === 'agenda') renderCalendar();
     });
 });
-
-// ===== BÚSQUEDA EN LISTA =====
-document.getElementById('personalSearch').addEventListener('input', function() {
+ 
+// ── BÚSQUEDA EN LISTA DE VETERINARIOS ─────────────────────────────────────────
+document.getElementById('personalSearch')?.addEventListener('input', function() {
     const q = this.value.toLowerCase();
     document.querySelectorAll('#personalBody tr').forEach(row => {
         row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
     });
 });
-
-// ===== CALENDARIO =====
-const HORAS    = ['08:00 AM','09:00 AM','10:00 AM','11:00 AM','12:00 PM',
-                  '01:00 PM','02:00 PM','03:00 PM','04:00 PM'];
-const DIAS     = ['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'];
-
-// Eventos estáticos de ejemplo
-const EVENTOS  = [
-    { dia: 0, hora: 0, titulo: 'Buddy (Labra...)', sub: 'Vacunación • John D.', tiempo: '08:00 - 08:45', color: 'green' },
-    { dia: 0, hora: 1, titulo: 'Luna (Maine Co...)', sub: 'Dental Surgery • Emily Smith', extra: '⚠ High Risk', color: 'blue', span: 3 },
-    { dia: 1, hora: 3, titulo: 'Charlie (Beagle)', sub: 'Revisión rutinaria • Sar...', color: 'green' },
-    { dia: 2, hora: 1, titulo: 'Milo (Poodle)', sub: 'Cancelado', color: 'canceled' },
-    { dia: 2, hora: 2, titulo: 'Sophie (Persian)', sub: 'Spaying • Michael Brown', color: 'blue', span: 2 },
-    { dia: 3, hora: 0, titulo: 'Cooper (Golden...)', sub: 'Consultation', color: 'green' },
-    { dia: 4, hora: 3, titulo: 'Bella (Husky)', sub: 'Hip Dysplasia Check', color: 'blue', span: 2 },
-];
-
-let weekOffset = 0;
-
-function getWeekDates(offset) {
-    const now  = new Date(2023, 9, 14); // Oct 14, 2023 (lunes base)
-    const start = new Date(now);
-    start.setDate(start.getDate() + offset * 7);
-    const days = [];
-    for (let i = 0; i < 7; i++) {
-        const d = new Date(start);
-        d.setDate(start.getDate() + i);
-        days.push(d);
-    }
-    return days;
+ 
+// ── BÚSQUEDA EN ESPECIALIDADES ────────────────────────────────────────────────
+document.getElementById('espSearch')?.addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    document.querySelectorAll('#espBody tr').forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+});
+ 
+// ── AGENDA ────────────────────────────────────────────────────────────────────
+const CITAS_DATA = JSON.parse(document.getElementById('citas-data')?.textContent || '[]');
+const HORAS = ['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00'];
+const DIAS  = ['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'];
+ 
+let weekOffset  = 0;
+let vetsActivos = new Set();
+ 
+// Calcula el lunes de la semana actual en el cliente (sin depender de Django)
+function getLunesActual() {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const dia = hoy.getDay(); // 0=Dom, 1=Lun...
+    const diff = dia === 0 ? -6 : 1 - dia;
+    hoy.setDate(hoy.getDate() + diff);
+    return hoy;
 }
-
+const LUNES_BASE = getLunesActual();
+ 
+function getWeekDates(offset) {
+    return Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(LUNES_BASE);
+        d.setDate(LUNES_BASE.getDate() + offset * 7 + i);
+        return d;
+    });
+}
+ 
 function formatWeekTitle(days) {
-    const opts = { month: 'short', day: 'numeric', year: 'numeric' };
     const s = days[0].toLocaleDateString('es-MX', { month: 'short', day: 'numeric' });
     const e = days[6].toLocaleDateString('es-MX', { month: 'short', day: 'numeric', year: 'numeric' });
     return `${s} – ${e}`;
 }
-
+ 
+function colorEvento(estado) {
+    if (estado === 'Cancelada') return 'canceled';
+    if (estado === 'Atendida')  return 'green';
+    return 'blue';
+}
+ 
+// Inicializar vets activos desde el sidebar
+document.querySelectorAll('.vet-item[data-vet]').forEach(el => {
+    vetsActivos.add(el.dataset.vet);
+});
+ 
+function toggleVet(el) {
+    const folio = el.dataset.vet;
+    const check = el.querySelector('.vet-check');
+    if (vetsActivos.has(folio)) {
+        vetsActivos.delete(folio);
+        check.style.opacity = '0.3';
+    } else {
+        vetsActivos.add(folio);
+        check.style.opacity = '1';
+    }
+    renderCalendar();
+}
+ 
 function renderCalendar() {
     const grid  = document.getElementById('calGrid');
+    if (!grid) return;
     const days  = getWeekDates(weekOffset);
     const today = new Date();
+    today.setHours(0,0,0,0);
     grid.innerHTML = '';
-
-    // --- Encabezado ---
+ 
+    // Filtrar citas según la semana visible y vets activos
+    const lunesOffset = new Date(LUNES_BASE);
+    lunesOffset.setDate(LUNES_BASE.getDate() + weekOffset * 7);
+ 
+    const citas = CITAS_DATA.filter(c => {
+        const activo = vetsActivos.size === 0 || vetsActivos.has(c.veterinario);
+        return activo;
+    });
+ 
+    // Lookup [dia][hora] = cita (solo aplica para semana actual, offset=0)
+    const lookup = {};
+    if (weekOffset === 0) {
+        citas.forEach(c => {
+            if (!lookup[c.dia]) lookup[c.dia] = {};
+            lookup[c.dia][c.hora] = c;
+        });
+    }
+ 
+    // ── Encabezado ──────────────────────────────────────────────────────────
+ 
     // Celda GMT
     const gmtCell = document.createElement('div');
     gmtCell.className = 'cal-header-cell';
-    gmtCell.innerHTML = '<span style="font-size:0.7rem;color:var(--text-muted);font-weight:600;">GMT-5</span>';
+    gmtCell.innerHTML = '<span style="font-size:0.7rem;color:var(--text-muted);font-weight:600;">GMT-7</span>';
     grid.appendChild(gmtCell);
-
+ 
     days.forEach((d, i) => {
-        const isToday = d.toDateString() === today.toDateString();
+        const isToday = d.getTime() === today.getTime();
         const cell = document.createElement('div');
         cell.className = 'cal-header-cell' + (isToday ? ' today' : '');
         cell.innerHTML = `<span class="cal-day-name">${DIAS[i]}</span><span class="cal-day-num">${d.getDate()}</span>`;
         grid.appendChild(cell);
     });
-
-    // --- Filas de horas ---
-    // Materialize events into a lookup: [dia][hora] = evento
-    const lookup = {};
-    EVENTOS.forEach(ev => {
-        if (!lookup[ev.dia]) lookup[ev.dia] = {};
-        lookup[ev.dia][ev.hora] = ev;
-    });
-
-    // Track which slots are occupied by a spanning event
-    const occupied = {}; // "dia-hora" => true
-
-    EVENTOS.forEach(ev => {
-        if (ev.span) {
-            for (let s = 1; s < ev.span; s++) {
-                occupied[`${ev.dia}-${ev.hora + s}`] = true;
-            }
-        }
-    });
-
+ 
+    // ── Filas de horas ───────────────────────────────────────────────────────
+    // El grid tiene 8 columnas: 1 tiempo + 7 días.
+    // IMPORTANTE: siempre hay que añadir exactamente 8 celdas por fila.
+ 
     HORAS.forEach((hora, hi) => {
-        // Celda de hora
+        // Celda de tiempo
         const timeCell = document.createElement('div');
         timeCell.className = 'cal-time-cell';
         timeCell.textContent = hora;
         grid.appendChild(timeCell);
-
+ 
         days.forEach((d, di) => {
-            const isSat = di === 5;
-            const isSun = di === 6;
-            const key   = `${di}-${hi}`;
-
-            if (occupied[key]) return; // slot ocupado por evento superior
-
             const slot = document.createElement('div');
             slot.className = 'cal-slot';
-
-            if (isSun) {
+ 
+            if (di === 6) {
+                // Domingo — cerrar clínica
                 if (hi === 0) {
+                    // Solo en la primera hora hacemos el span visual
                     slot.style.gridRow = `span ${HORAS.length}`;
-                    slot.innerHTML = `<div class="cal-closed">CLINIC CLOSED</div>`;
-                } else { return; }
-            } else if (isSat && hi >= 4) {
-                if (hi === 4) {
-                    slot.style.gridRow = `span ${HORAS.length - 4}`;
-                    slot.innerHTML = `<div class="cal-closed">MORNING SHIFT ONLY</div>`;
-                } else { return; }
-            } else {
-                const ev = lookup[di] && lookup[di][hi];
-                if (ev) {
-                    if (ev.span) slot.style.gridRow = `span ${ev.span}`;
-                    slot.innerHTML = `
-                        <div class="cal-event ${ev.color}">
-                            <span class="cal-event-title">${ev.titulo}</span>
-                            <span class="cal-event-sub">${ev.sub}</span>
-                            ${ev.tiempo ? `<span class="cal-event-time"><span class="material-symbols-outlined">schedule</span>${ev.tiempo}</span>` : ''}
-                            ${ev.extra  ? `<span class="cal-event-sub" style="color:var(--orange);font-size:0.7rem;">${ev.extra}</span>` : ''}
-                        </div>`;
+                    slot.innerHTML = `<div class="cal-closed">CLÍNICA CERRADA</div>`;
+                } else {
+                    // Las demás horas del domingo: celda invisible que mantiene el grid
+                    slot.style.visibility = 'hidden';
                 }
+                grid.appendChild(slot); // SIEMPRE se añade para mantener alineación
+                return;
             }
-
+ 
+            const ev = lookup[di]?.[hi];
+            if (ev) {
+                const color = colorEvento(ev.estado);
+                slot.innerHTML = `
+                    <div class="cal-event ${color}">
+                        <span class="cal-event-title">${ev.titulo}</span>
+                        <span class="cal-event-sub">${ev.sub}</span>
+                        <span class="cal-event-time">
+                            <span class="material-symbols-outlined">schedule</span>${ev.tiempo}
+                        </span>
+                    </div>`;
+            }
+ 
             grid.appendChild(slot);
         });
     });
-
-    // Actualizar título
+ 
     document.getElementById('weekTitle').textContent = formatWeekTitle(days);
 }
-
-document.getElementById('prevWeek').addEventListener('click', () => { weekOffset--; renderCalendar(); });
-document.getElementById('nextWeek').addEventListener('click', () => { weekOffset++; renderCalendar(); });
-document.getElementById('todayBtn').addEventListener('click', () => { weekOffset = 0; renderCalendar(); });
+ 
+// Navegación de semanas
+document.getElementById('prevWeek')?.addEventListener('click', () => { weekOffset--; renderCalendar(); });
+document.getElementById('nextWeek')?.addEventListener('click', () => { weekOffset++; renderCalendar(); });
+document.getElementById('todayBtn')?.addEventListener('click', () => { weekOffset = 0; renderCalendar(); });
 </script>
 {% endblock %}

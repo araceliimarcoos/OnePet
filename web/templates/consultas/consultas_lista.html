@@ -1,219 +1,178 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block titulo %}Consultas{%endblock%}
-
+{% block titulo %}Consultas{% endblock %}
 {% block nav_consultas %}active{% endblock %}
 
 {% block breadcrumb %}
     <a href="{% url 'dashboard' %}">Inicio</a>
     <span class="material-symbols-outlined">chevron_right</span>
     <span class="breadcrumb-current">Consultas</span>
-    
 {% endblock %}
 
 {% block topbar_titulo %}Lista de Consultas{% endblock %}
 
 {% block contenido %}
+<div class="page active" id="page-consultas">
 
-    <div class="page active" id="page-consultas">
-        <div class="page-header">
-            <div>
-                <h1 class="page-title">Consultas</h1>
-                <p class="page-sub">Gestión de consultas medicas</p>
-            </div>
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Consultas</h1>
+            <p class="page-sub">Historial de consultas médicas</p>
+        </div>
+        <div class="page-header-right">
+            <button class="btn-primary" id="btnIniciarConsulta">
+                <span class="material-symbols-outlined">add_circle</span>
+                Iniciar Consulta
+            </button>
+        </div>
+    </div>
 
-            <div class="page-header-right">
-                <button class="btn-primary" id="btnIniciarConsulta">
-                    <span class="material-symbols-outlined">add_circle</span>
-                    Iniciar Consulta
-                </button>
+    <div class="card">
+        <div class="filters-bar">
+            <div class="search-box">
+                <span class="material-symbols-outlined">search</span>
+                <input type="text" placeholder="Buscar por mascota, propietario, diagnóstico..." id="consultasSearch">
             </div>
         </div>
 
-        <div class="card">
-            <div class="filters-bar">
-                <div class="search-box">
-                    <span class="material-symbols-outlined">search</span>
-                    <input type="text" placeholder="Buscar por folio, mascota, propietario..." id="consultasSearch" />
-                </div>
-
-                <div class="filters-right">
-                
-                <select class="filter-select" id="filterEstado"> <!-- pendiente -->
-                    <option value="">Todos los estados</option>
-                    <option value="Confirmada">Confirmada</option>
-                    <option value="En curso">En curso</option>
-                    <option value="Pendiente">Pendiente</option>
-                    <option value="Cancelada">Cancelada</option>
-                    <option value="Completada">Completada</option>
-                </select>
-                </div>
-
-            </div>
-
-            <div class="table-wrapper">
-                <table class="data-table" id="consultasTable">
-                    <thead>
-                        <tr>
-                            <th>NUMERO</th>
-                            <th>FECHA</th>
-                            <th>MASCOTA</th>
-                            <th>PROPIETARIO</th>
-                            <th>MOTIVO</th>
-                            <th>ACCIONES</th>
-                        </tr>
-                    </thead>
-                    <tbody id="consultasBody">
-                        {% for consulta in consultas %}
-                        <tr>
-                            <td><strong>#{{ consulta.numero|stringformat:"04d" }}</strong></td>
-                            <td>
-                                <div class="fecha-cell">
-                                    <span class="fecha-dia">{{ consulta.cita.fecha|date:"M d, Y" }}</span>
-                                    <span class="fecha-hora">
-                                        <span class="material-symbols-outlined">schedule</span>
-                                        {{ consulta.cita.hora|date:"H:i" }}
-                                    </span>
+        <div class="table-wrapper">
+            <table class="data-table" id="consultasTable">
+                <thead>
+                    <tr>
+                        <th>NÚMERO</th>
+                        <th>FECHA</th>
+                        <th>MASCOTA</th>
+                        <th>PROPIETARIO</th>
+                        <th>DIAGNÓSTICO</th>
+                        <th>ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody id="consultasBody">
+                    {% for consulta in consultas %}
+                    <tr>
+                        <td><strong>#{{ consulta.numero|stringformat:"04d" }}</strong></td>
+                        <td>
+                            <div class="fecha-cell">
+                                <span class="fecha-dia">{{ consulta.cita.fecha|date:"M d, Y" }}</span>
+                                <span class="fecha-hora">
+                                    <span class="material-symbols-outlined">schedule</span>
+                                    {{ consulta.cita.hora|time:"H:i" }}
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="mascota-cell">
+                                <div class="mascota-avatar"><span class="material-symbols-outlined">pets</span></div>
+                                <div>
+                                    <span class="mascota-nombre">{{ consulta.cita.mascota.nombre }}</span>
+                                    <span class="mascota-raza">{{ consulta.cita.mascota.raza.nombre }} • {{ consulta.cita.mascota.raza.especie.nombre }}</span>
                                 </div>
-                            </td>
-                            <td>
-                                <div class="mascota-cell">
-                                    <div class="mascota-avatar"><span class="material-symbols-outlined">pets</span></div>
-                                    <div>
-                                        <span class="mascota-nombre">{{ consulta.cita.mascota.nombre }}</span>
-                                        <span class="mascota-raza">{{ consulta.cita.mascota.raza.nombre }} • {{ consulta.cita.mascota.raza.especie.nombre }}</span>
-
-                                    </div>
+                            </div>
+                        </td>
+                        <td>{{ consulta.cita.mascota.propietario.nombrepila }} {{ consulta.cita.mascota.propietario.primerapellido }}</td>
+                        <td><span class="motivo-text">{{ consulta.diagnostico|truncatechars:50 }}</span></td>
+                        <td>
+                            <div class="menu-wrap">
+                                <button class="menu-btn" aria-label="Acciones"
+                                        data-numero="{{ consulta.numero }}">
+                                    <span class="material-symbols-outlined">more_horiz</span>
+                                </button>
+                                <div class="dropdown-menu" role="menu">
+                                    <a href="{% url 'ver_consulta' consulta.numero %}" class="dropdown-item">
+                                        <span class="material-symbols-outlined">visibility</span>
+                                        Ver consulta
+                                    </a>
+                                    <a href="{% url 'editar_consulta' consulta.numero %}" class="dropdown-item">
+                                        <span class="material-symbols-outlined">edit</span>
+                                        Editar
+                                    </a>
                                 </div>
-                            </td>
-                            <td>{{ consulta.cita.mascota.propietario.nombrepila }} {{ consulta.cita.mascota.propietario.primerapellido }}</td>
-                            <td><span class="motivo-text">{{ consulta.cita.motivo }}</span></td>
-                            <td><a href="{% url 'iniciar_consulta' %}" class="link-green">Ver Detalles</a></td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="6">No hay citas registradas</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6">No hay consultas registradas</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
 
-            </div>
-
-            <div class="table-footer">
-
+        <div class="table-footer">
             <span>Mostrando <strong>{{ consultas.start_index }}-{{ consultas.end_index }}</strong> de <strong>{{ total_conteo }}</strong> consultas</span>
-            <!-- Controles -->
             <div class="pagination">
-                <!-- boton anterior -->
                 {% if consultas.has_previous %}
-                    <a href="?page={{ consultas.previous_page_number }}{% if query %}&q={{ query }}{% endif %}"
-                        class="page-btn">‹</a>
+                    <a href="?page={{ consultas.previous_page_number }}{% if query %}&q={{ query }}{% endif %}" class="page-btn">‹</a>
                 {% else %}
                     <button class="page-btn" disabled>‹</button>
                 {% endif %}
-                    
-                <!-- numeros de pagina -->
                 {% for num in consultas.paginator.page_range %}
                     {% if consultas.number == num %}
                         <button class="page-btn active">{{ num }}</button>
-                    {% elif num >= consultas.number|add:"-2" and num <= consultas.number|add:"2"  %}
-                        <a href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}"
-                            class="page-btn">{{ num }}</a>
+                    {% elif num >= consultas.number|add:"-2" and num <= consultas.number|add:"2" %}
+                        <a href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}" class="page-btn">{{ num }}</a>
                     {% endif %}
                 {% endfor %}
-
-                <!-- boton siguiente -->
                 {% if consultas.has_next %}
-                    <a href="?page={{ consulta.next_page_number }}{% if query %}&q={{ query }}{% endif %}" 
-                        class="page-btn">›</a>
+                    <a href="?page={{ consultas.next_page_number }}{% if query %}&q={{ query }}{% endif %}" class="page-btn">›</a>
                 {% else %}
                     <button class="page-btn" disabled>›</button>
                 {% endif %}
-                
-            </div>
-        </div>
-
-        </div>
-
-    </div>
-
-    <div class="modal-overlay" id="modalIniciarConsulta">
-        <div class="modal">
-            <div class="modal-header">
-                <h2>Iniciar Consulta</h2>
-                <button class="modal-close" id="btnCerrarConsulta">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
-            </div>
-
-            <div class="modal-body">
-
-                <!-- INPUT CON SUGERENCIAS -->
-                <div class="form-group">
-                    <label>Clave de la Cita</label>
-                    <div class="autocomplete-wrapper">
-                        <input 
-                            type="text" 
-                            id="inputCita" 
-                            placeholder="Ej. C-0001 o nombre de mascota..."
-                            autocomplete="off"
-                        >
-                        <!-- Aquí aparecen las sugerencias -->
-                        <div class="autocomplete-dropdown" id="citaDropdown"></div>
-                    </div>
-                </div>
-
-                <!-- RESUMEN (oculto hasta seleccionar) -->
-                <div class="resumen-cita" id="resumenCita" style="display:none;">
-                    <h4>Resumen de la Cita</h4>
-                    <div class="resumen-grid">
-                        <div class="resumen-item">
-                            <span class="resumen-label">Folio</span>
-                            <span class="resumen-valor" id="r-folio"></span>
-                        </div>
-                        <div class="resumen-item">
-                            <span class="resumen-label">Fecha y Hora</span>
-                            <span class="resumen-valor" id="r-fecha"></span>
-                        </div>
-                        <div class="resumen-item">
-                            <span class="resumen-label">Mascota</span>
-                            <span class="resumen-valor" id="r-mascota"></span>
-                        </div>
-                        <div class="resumen-item">
-                            <span class="resumen-label">Propietario</span>
-                            <span class="resumen-valor" id="r-propietario"></span>
-                        </div>
-                        <div class="resumen-item">
-                            <span class="resumen-label">Veterinario</span>
-                            <span class="resumen-valor" id="r-veterinario"></span>
-                        </div>
-                        <div class="resumen-item">
-                            <span class="resumen-label">Motivo</span>
-                            <span class="resumen-valor" id="r-motivo"></span>
-                        </div>
-                        <div class="resumen-item">
-                            <span class="resumen-label">Estado</span>
-                            <span class="resumen-valor" id="r-estado"></span>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
-            <div class="modal-footer">
-                <button type="button" class="btn-cancelar" id="btnCancelarConsulta">Cancelar</button>
-                <button type="button" class="btn-primary" id="btnConfirmarConsulta" disabled>
-                    <span class="material-symbols-outlined">vaccines</span>
-                    Iniciar Consulta
-                </button>
             </div>
         </div>
     </div>
+</div>
+
+<!-- MODAL: INICIAR CONSULTA ─────────────────────────────────────────────── -->
+<div class="modal-overlay" id="modalIniciarConsulta">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>Iniciar Consulta</h2>
+            <button class="modal-close" id="btnCerrarConsulta" type="button">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label style="font-size:0.82rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; display:block; margin-bottom:8px;">
+                    Cita Pendiente
+                </label>
+                <select id="selectCita" style="width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-family:inherit; font-size:0.9rem; color:var(--text); background:var(--surface);">
+                    <option value="">Seleccionar cita pendiente...</option>
+                    {% for cita in citas_pendientes %}
+                    <option value="{{ cita.folio }}">
+                        {{ cita.folio }} · {{ cita.fecha|date:"d/m/Y" }} {{ cita.hora|time:"H:i" }} · {{ cita.mascota.nombre }} ({{ cita.propietario.nombrepila }} {{ cita.propietario.primerapellido }})
+                    </option>
+                    {% empty %}
+                    <option value="" disabled>No hay citas pendientes</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Resumen de la cita seleccionada -->
+            <div id="resumenCita" style="display:none; margin-top:16px; background:var(--bg); border-radius:var(--radius-sm); padding:14px; border:1px solid var(--border);">
+                <p style="font-size:0.78rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:10px; letter-spacing:0.04em;">Resumen</p>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:0.85rem;">
+                    <div><span style="color:var(--text-muted);">Folio:</span> <strong id="r-folio"></strong></div>
+                    <div><span style="color:var(--text-muted);">Fecha:</span> <span id="r-fecha"></span></div>
+                    <div><span style="color:var(--text-muted);">Mascota:</span> <span id="r-mascota"></span></div>
+                    <div><span style="color:var(--text-muted);">Propietario:</span> <span id="r-propietario"></span></div>
+                    <div style="grid-column:1/-1;"><span style="color:var(--text-muted);">Motivo:</span> <span id="r-motivo"></span></div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-cancelar" id="btnCancelarConsulta">Cancelar</button>
+            <button type="button" class="btn-primary" id="btnConfirmarConsulta" disabled>
+                <span class="material-symbols-outlined">vaccines</span>
+                Iniciar Consulta
+            </button>
+        </div>
+    </div>
+</div>
 
 {% endblock %}
 
 {% block scripts %}
-    <script src="{% static 'core/js/consultas.js' %}"></script>
+<script src="{% static 'core/js/consultas.js' %}"></script>
 {% endblock %}

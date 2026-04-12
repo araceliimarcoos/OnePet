@@ -22,16 +22,27 @@ urlpatterns = [
     path('propietarios/perfiles/<str:folio>/', views.propietarios_detalles, name='detalles_propietario'),
     
     path('propietarios/', views.propietarios, name='propietarios'),
+    
     path('citas/', views.citas, name='citas'),
+    path('citas/nueva/', views.nueva_cita, name='nueva_cita'),
+    path('citas/<str:folio>/editar/', views.editar_cita, name='editar_cita'),
     
     path('consultas/', views.consultas, name='consultas'),
-    path('consultas/iniciar_consulta/', views.iniciar_consulta, name='iniciar_consulta'),   # Iniciar consulta
+    path('consultas/<str:folio_cita>/iniciar/', views.iniciar_consulta,  name='iniciar_consulta'),
+    path('consultas/<int:numero>/ver/',         views.ver_consulta,      name='ver_consulta'),
+    path('consultas/<int:numero>/editar/',      views.editar_consulta,   name='editar_consulta'),
     path('citas/buscar/', views.buscar_citas, name='buscar_citas'),
     
     path('hospitalizacion/', views.hospitalizacion, name='hospitalizacion'),
+    path('hospitalizacion/<int:consulta_numero>/iniciar/', views.iniciar_hospitalizacion,  name='iniciar_hospitalizacion'),
+    path('hospitalizacion/<int:numero>/ver/',              views.ver_hospitalizacion,      name='ver_hospitalizacion'),
+    path('hospitalizacion/<int:numero>/editar/',           views.editar_hospitalizacion,   name='editar_hospitalizacion'),
+    path('hospitalizacion/<int:numero>/alta/',             views.dar_alta_hospitalizacion, name='dar_alta_hospitalizacion'),
     
     path('pagos/', views.pagos, name='pagos'),
-    path('pagos/recibos/', views.recibos, name='recibos'),
+    path('pagos/<int:codigo>/recibo/',  views.ver_recibo,         name='ver_recibo'),
+    path('pagos/previsualizar/',        views.previsualizar_pago, name='previsualizar_pago'),
+    path('pagos/confirmar/',            views.confirmar_pago,     name='confirmar_pago'),
     
     path('servicios/', views.servicios, name='servicios'),
     path('servicios/nuevo/', views.nuevo_servicio, name='nuevo_servicio'),
@@ -47,6 +58,11 @@ urlpatterns = [
     path('especies/razas/<str:clave_especie>/', views.razas, name='razas'), # para acceder a la lista de razas
     
     path('personal/', views.personal, name='personal'),
+    path('personal/nuevo/', views.nuevo_veterinario, name='nuevo_veterinario'),
+    path('personal/especialidades/nueva/', views.nueva_especialidad, name='nueva_especialidad'),
+    path('personal/<str:folio>/editar/', views.editar_veterinario, name='editar_veterinario'),
+    path('personal/<str:folio>/baja/', views.baja_veterinario,   name='baja_veterinario'),
+        
     path('reportes/', views.reportes, name='reportes'),
     
     #Estos son para las ventanitas 

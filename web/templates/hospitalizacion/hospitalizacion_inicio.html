@@ -1,0 +1,928 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}
+    {% if modo == 'ver' %}Hospitalización #{{ hosp.numero }}
+    {% elif modo == 'editar' %}Actualizar Hospitalización #{{ hosp.numero }}
+    {% else %}Iniciar Hospitalización{% endif %}
+{% endblock %}
+
+{% block nav_hospitalizacion %}active{% endblock %}
+
+{% block breadcrumb %}
+    <a href="{% url 'dashboard' %}">Inicio</a>
+    <span class="material-symbols-outlined breadcrumb-sep">chevron_right</span>
+    <a href="{% url 'hospitalizacion' %}">Hospitalización</a>
+    <span class="material-symbols-outlined breadcrumb-sep">chevron_right</span>
+    <span class="breadcrumb-current">
+        {% if modo == 'ver' %}#{{ hosp.numero }}
+        {% elif modo == 'editar' %}Actualizar #{{ hosp.numero }}
+        {% else %}Nueva{% endif %}
+    </span>
+{% endblock %}
+
+{% block topbar_titulo %}Hospitalización{% endblock %}
+
+{% block estilos %}
+<style>
+.hosp-wrapper { display:flex; flex-direction:column; min-height:calc(100vh - 120px); padding-bottom:80px; }
+.hosp-layout  { display:grid; grid-template-columns:1fr 340px; gap:20px; align-items:start; }
+
+.card-section { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:16px; overflow:hidden; }
+.card-section-header { display:flex; align-items:center; gap:8px; padding:14px 18px; border-bottom:1px solid var(--border); font-size:0.9rem; font-weight:700; color:var(--text); }
+.card-section-header .material-symbols-outlined { font-size:20px; color:var(--blue-dark); }
+.card-section-body { padding:16px 18px; }
+
+.mascota-profile { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+.mascota-emoji { font-size:2rem; width:52px; height:52px; border-radius:50%; background:var(--blue-light); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.mascota-info { flex:1; }
+.mascota-name-row { display:flex; align-items:center; gap:10px; margin-bottom:4px; flex-wrap:wrap; }
+.mascota-nombre { font-size:1.15rem; font-weight:800; color:var(--text); }
+.badge-paciente { font-size:0.72rem; font-weight:700; padding:3px 10px; border-radius:20px; background:var(--blue-light); color:var(--blue-dark); }
+.mascota-meta { font-size:0.83rem; color:var(--text-muted); margin-bottom:8px; }
+.meta-dot { margin:0 6px; opacity:0.4; }
+.mascota-chips { display:flex; gap:8px; flex-wrap:wrap; }
+.chip { display:flex; align-items:center; gap:4px; font-size:0.8rem; font-weight:600; color:var(--text); background:var(--bg); border:1px solid var(--border); border-radius:20px; padding:4px 10px; }
+.chip .material-symbols-outlined { font-size:15px; color:var(--text-muted); }
+
+.vitales-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; }
+.vital-field { display:flex; flex-direction:column; gap:4px; }
+.vital-label { font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; }
+.vital-input-wrap { display:flex; align-items:center; border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden; background:var(--surface); }
+.vital-input { flex:1; border:none; padding:8px 10px; font-size:0.95rem; font-weight:700; color:var(--text); background:transparent; font-family:inherit; width:0; }
+.vital-input:focus { outline:none; }
+.vital-input[readonly] { color:var(--text-muted); background:var(--bg); }
+.vital-unit { padding:0 10px; font-size:0.78rem; font-weight:600; color:var(--text-muted); background:var(--bg); border-left:1px solid var(--border); white-space:nowrap; align-self:stretch; display:flex; align-items:center; }
+
+.form-input, .form-textarea { width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-family:inherit; font-size:0.9rem; color:var(--text); background:var(--surface); box-sizing:border-box; }
+.form-input:focus, .form-textarea:focus { outline:none; border-color:var(--blue-dark); }
+.form-input[readonly], .form-textarea[readonly] { background:var(--bg); color:var(--text-muted); cursor:default; }
+.form-textarea { resize:vertical; min-height:90px; }
+.form-label { font-size:0.78rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:6px; display:block; }
+
+.signos-table { width:100%; border-collapse:collapse; font-size:0.83rem; }
+.signos-table th { text-align:left; padding:6px 10px; font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--border); }
+.signos-table td { padding:8px 10px; border-bottom:1px solid var(--border); color:var(--text); }
+.signos-table tr:last-child td { border-bottom:none; }
+
+.receta-item { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:8px; }
+.receta-item:last-child { margin-bottom:0; }
+.receta-nombre { font-size:0.87rem; font-weight:700; color:var(--text); }
+.receta-dosis { font-size:0.77rem; color:var(--text-muted); margin-top:2px; }
+.btn-remove { background:none; border:none; color:#c0392b; cursor:pointer; padding:4px; border-radius:4px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.btn-remove:hover { background:#fff5f5; }
+.btn-remove .material-symbols-outlined { font-size:18px; }
+.btn-add-med { width:100%; padding:9px; border:1px dashed var(--border); background:none; border-radius:var(--radius-sm); font-family:inherit; font-size:0.85rem; font-weight:600; color:var(--blue-dark); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; margin-top:8px; }
+.btn-add-med:hover { background:var(--blue-light); }
+
+.page-footer { position:fixed; bottom:0; left:0; right:0; background:var(--surface); border-top:1px solid var(--border); padding:14px 32px; display:flex; align-items:center; justify-content:flex-end; gap:12px; z-index:100; }
+
+.alerta-error { background:#fff5f5; border:1px solid #f5c6c6; border-radius:var(--radius-sm); color:#c0392b; padding:10px 14px; font-size:0.85rem; margin-bottom:16px; }
+.alerta-ok { background:#eaf9f0; border:1px solid #a8e6c3; border-radius:var(--radius-sm); color:#1d6b3f; padding:10px 14px; font-size:0.85rem; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+
+.badge-alta { display:inline-flex; align-items:center; gap:4px; background:#eaf9f0; color:#1d6b3f; border:1px solid #a8e6c3; border-radius:20px; padding:4px 12px; font-size:0.78rem; font-weight:700; }
+.badge-hosp { display:inline-flex; align-items:center; gap:4px; background:var(--blue-light); color:var(--blue-dark); border:1px solid var(--blue-dark); border-radius:20px; padding:4px 12px; font-size:0.78rem; font-weight:700; }
+
+.seccion-label { font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px; display:block; }
+.divider-dashed { border:none; border-top:1px dashed var(--border); margin:24px 0; }
+</style>
+{% endblock %}
+
+{% block contenido %}
+<div class="hosp-wrapper">
+
+    {% if guardado %}
+    <div class="alerta-ok">
+        <span class="material-symbols-outlined" style="font-size:18px;">check_circle</span>
+        {% if modo == 'ver' %}Hospitalización guardada correctamente.{% else %}Datos actualizados correctamente.{% endif %}
+    </div>
+    {% endif %}
+
+    {% if error %}<div class="alerta-error">{{ error }}</div>{% endif %}
+
+    <!-- ── CARD MASCOTA ─────────────────────────────────────────────────── -->
+    <div class="card-section" style="margin-bottom:16px;">
+        <div class="card-section-body">
+            <div class="mascota-profile">
+                <div class="mascota-emoji material-symbols-outlined">pets</div>
+                <div class="mascota-info">
+                    <div class="mascota-name-row">
+                        <span class="mascota-nombre">{{ consulta.cita.mascota.nombre }}</span>
+                        {% if modo == 'ver' and hosp.fechaalta %}
+                            <span class="badge-alta">
+                                <span class="material-symbols-outlined" style="font-size:14px;">check_circle</span>De Alta
+                            </span>
+                        {% elif modo == 'ver' %}
+                            <span class="badge-hosp">
+                                <span class="material-symbols-outlined" style="font-size:14px;">vital_signs</span>Hospitalizado
+                            </span>
+                        {% else %}
+                            <span class="badge-paciente">Hospitalización</span>
+                        {% endif %}
+                    </div>
+                    <div class="mascota-meta">
+                        {{ consulta.cita.mascota.especie.nombre }} &bull; {{ consulta.cita.mascota.raza.nombre }}
+                        <span class="meta-dot">•</span>
+                        Propietario: {{ consulta.cita.propietario.nombrepila }} {{ consulta.cita.propietario.primerapellido }}
+                    </div>
+                    <div class="mascota-chips">
+                        <span class="chip">
+                            <span class="material-symbols-outlined">badge</span>
+                            {{ consulta.cita.mascota.folio }}
+                        </span>
+                        <span class="chip">
+                            <span class="material-symbols-outlined">monitor_weight</span>
+                            {{ consulta.cita.mascota.peso|stringformat:".2f" }} kg
+                        </span>
+                        {% if consulta.cita.mascota.alergias %}
+                        <span class="chip" style="color:#c0392b; border-color:#f5c6c6; background:#fff5f5;">
+                            <span class="material-symbols-outlined">warning</span>
+                            Alergias: {{ consulta.cita.mascota.alergias }}
+                        </span>
+                        {% endif %}
+                        {% if modo == 'ver' %}
+                        <span class="chip">
+                            <span class="material-symbols-outlined">login</span>
+                            Ingreso: {{ hosp.fechaingreso|date:"d/m/Y" }} {{ hosp.horaingreso|time:"H:i" }}
+                        </span>
+                        {% if hosp.fechaalta %}
+                        <span class="chip">
+                            <span class="material-symbols-outlined">logout</span>
+                            Alta: {{ hosp.fechaalta|date:"d/m/Y" }} {{ hosp.horaalta|time:"H:i" }}
+                        </span>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+                {% if modo == 'ver' and not hosp.fechaalta %}
+                <button type="button" id="btnDarDeAlta" class="btn-primary"
+                        style="background:#e67e22; white-space:nowrap; flex-shrink:0;">
+                    <span class="material-symbols-outlined">logout</span>
+                    Dar de Alta
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ── FORM ─────────────────────────────────────────────────────────── -->
+    {% if modo != 'ver' %}
+    <form method="POST" action="" id="formHosp">
+    {% csrf_token %}
+    <input type="hidden" name="medicamentos_json" id="medicamentosJson" value="[]">
+    <input type="hidden" name="servicios_json"    id="serviciosJson"    value="[]">
+    {% endif %}
+
+    <div class="hosp-layout">
+
+        <!-- ── COLUMNA PRINCIPAL ──────────────────────────────────────── -->
+        <div>
+
+            <!-- Diagnóstico de ingreso -->
+            <div class="card-section">
+                <div class="card-section-header">
+                    <span class="material-symbols-outlined">biotech</span>
+                    Diagnóstico de Ingreso
+                </div>
+                <div class="card-section-body">
+                    {% if modo == 'ver' %}
+                    <input type="text" class="form-input" value="{{ hosp.diagnoingreso }}" readonly>
+                    {% else %}
+                    <input type="text" class="form-input" name="diagnoingreso"
+                           placeholder="Diagnóstico al momento del ingreso..."
+                           value="{% if hosp %}{{ hosp.diagnoingreso }}{% endif %}"
+                           {% if not modo %}required{% endif %}>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Observaciones -->
+            <div class="card-section">
+                <div class="card-section-header">
+                    <span class="material-symbols-outlined">edit_note</span>
+                    Observaciones Generales
+                </div>
+                <div class="card-section-body">
+                    {% if modo == 'ver' %}
+                    <textarea class="form-textarea" readonly>{{ hosp.obsergenerales }}</textarea>
+                    {% else %}
+                    <textarea class="form-textarea" name="obsergenerales"
+                              placeholder="Estado general del paciente, indicaciones especiales..."
+                              {% if not modo %}required{% endif %}>{% if hosp %}{{ hosp.obsergenerales }}{% endif %}</textarea>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Veterinario (solo en modo iniciar) -->
+            {% if not modo %}
+            <div class="card-section">
+                <div class="card-section-header">
+                    <span class="material-symbols-outlined">stethoscope</span>
+                    Veterinario Responsable
+                </div>
+                <div class="card-section-body">
+                    <select name="veterinario" class="form-input" required>
+                        <option value="">Seleccionar veterinario...</option>
+                        {% for v in veterinarios %}
+                        <option value="{{ v.folio }}">
+                            {{ v.nombrepila }} {{ v.primerapellido }} — {{ v.especialidad.nombre }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            {% elif modo == 'ver' or modo == 'editar' %}
+            <div class="card-section">
+                <div class="card-section-header">
+                    <span class="material-symbols-outlined">stethoscope</span>
+                    Veterinario Responsable
+                </div>
+                <div class="card-section-body">
+                    <input type="text" class="form-input"
+                           value="{{ hosp.veterinario.nombrepila }} {{ hosp.veterinario.primerapellido }}" readonly>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Signos vitales — modo VER: tabla histórica -->
+            {% if modo == 'ver' %}
+            <div class="card-section">
+                <div class="card-section-header">
+                    <span class="material-symbols-outlined">monitor_heart</span>
+                    Registro de Signos Vitales
+                </div>
+                <div class="card-section-body">
+                    {% if signos_vitales %}
+                    <table class="signos-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Temperatura</th>
+                                <th>Frec. Cardíaca</th>
+                                <th>Frec. Resp.</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sv in signos_vitales %}
+                            <tr>
+                                <td>{{ sv.fecha|date:"d/m/Y" }}</td>
+                                <td>{{ sv.temperatura }} °C</td>
+                                <td>{{ sv.freccardiaca }} lpm</td>
+                                <td>{{ sv.frecrespiratoria }} rpm</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <p style="font-size:0.83rem; color:var(--text-muted); text-align:center; padding:10px 0;">
+                        Sin registros de signos vitales
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Signos vitales — modo INICIAR: registro inicial + peso editable -->
+            {% if not modo %}
+            <div class="card-section">
+                <div class="card-section-header">
+                    <span class="material-symbols-outlined">monitor_heart</span>
+                    Signos Vitales Iniciales
+                </div>
+                <div class="card-section-body">
+                    <div class="vitales-grid">
+                        <div class="vital-field">
+                            <span class="vital-label">Temperatura</span>
+                            <div class="vital-input-wrap">
+                                <input type="number" step="0.1" name="temperatura"
+                                       class="vital-input" placeholder="38.5">
+                                <span class="vital-unit">°C</span>
+                            </div>
+                        </div>
+                        <div class="vital-field">
+                            <span class="vital-label">Frec. Cardíaca</span>
+                            <div class="vital-input-wrap">
+                                <input type="number" name="freccardiaca"
+                                       class="vital-input" placeholder="80">
+                                <span class="vital-unit">lpm</span>
+                            </div>
+                        </div>
+                        <div class="vital-field">
+                            <span class="vital-label">Frec. Resp.</span>
+                            <div class="vital-input-wrap">
+                                <input type="number" name="frecrespiratoria"
+                                       class="vital-input" placeholder="24">
+                                <span class="vital-unit">rpm</span>
+                            </div>
+                        </div>
+                        <div class="vital-field">
+                            <span class="vital-label">Peso actual</span>
+                            <div class="vital-input-wrap">
+                                <input type="number" step="0.1" name="peso"
+                                       class="vital-input"
+                                       placeholder="{{ consulta.cita.mascota.peso|stringformat:'.1f' }}">
+                                <span class="vital-unit">kg</span>
+                            </div>
+                        </div>
+                    </div>
+                    <p style="font-size:0.75rem; color:var(--text-muted); margin-top:8px;">
+                        Los signos vitales se pueden registrar diariamente desde 'Actualizar'
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Signos vitales — modo EDITAR: agregar del día + peso editable + histórico -->
+            {% if modo == 'editar' %}
+            <div class="card-section">
+                <div class="card-section-header">
+                    <span class="material-symbols-outlined">add_chart</span>
+                    Agregar Signos Vitales de Hoy
+                </div>
+                <div class="card-section-body">
+                    <!-- Histórico de signos en modo editar (referencia) -->
+                    {% if signos_vitales %}
+                    <span class="seccion-label" style="margin-top:8px;">Registros anteriores</span>
+                    <br>
+                    <table class="signos-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Temp.</th>
+                                <th>F.C.</th>
+                                <th>F.R.</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sv in signos_vitales %}
+                            <tr>
+                                <td>{{ sv.fecha|date:"d/m/Y" }}</td>
+                                <td>{{ sv.temperatura }}°C</td>
+                                <td>{{ sv.freccardiaca }} lpm</td>
+                                <td>{{ sv.frecrespiratoria }} rpm</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% endif %}
+                    <hr class="divider-dashed" style="margin-top:16px;">
+                    <div class="vitales-grid">
+                        <div class="vital-field">
+                            <span class="vital-label">Temperatura</span>
+                            <div class="vital-input-wrap">
+                                <input type="number" step="0.1" name="temperatura"
+                                       class="vital-input" placeholder="38.5">
+                                <span class="vital-unit">°C</span>
+                            </div>
+                        </div>
+                        <div class="vital-field">
+                            <span class="vital-label">Frec. Cardíaca</span>
+                            <div class="vital-input-wrap">
+                                <input type="number" name="freccardiaca"
+                                       class="vital-input" placeholder="80">
+                                <span class="vital-unit">lpm</span>
+                            </div>
+                        </div>
+                        <div class="vital-field">
+                            <span class="vital-label">Frec. Resp.</span>
+                            <div class="vital-input-wrap">
+                                <input type="number" name="frecrespiratoria"
+                                       class="vital-input" placeholder="24">
+                                <span class="vital-unit">rpm</span>
+                            </div>
+                        </div>
+                        <div class="vital-field">
+                            <span class="vital-label">Peso actual</span>
+                            <div class="vital-input-wrap">
+                                <input type="number" step="0.1" name="peso"
+                                       class="vital-input"
+                                       placeholder="{{ hosp.expediente.mascota.peso|stringformat:'.1f' }}">
+                                <span class="vital-unit">kg</span>
+                            </div>
+                        </div>
+                    </div>
+                    <p style="font-size:0.75rem; color:var(--text-muted); margin-top:8px;">
+                        Deja en blanco los que no cambien hoy. El peso actualiza el registro de la mascota.
+                    </p>
+
+                    
+                    
+                </div>
+            </div>
+            {% endif %}
+
+        </div><!-- /col principal -->
+
+        <!-- ── COLUMNA LATERAL ────────────────────────────────────────── -->
+        <div>
+
+            <!-- RECETA -->
+            <div class="card-section">
+                <div class="card-section-header">
+                    <span class="material-symbols-outlined">prescriptions</span>
+                    Receta
+                </div>
+                <div class="card-section-body">
+
+                    {% if modo == 'ver' %}
+                        {% if tratamientos %}
+                            {% for t in tratamientos %}
+                            <div class="receta-item">
+                                <div>
+                                    <div class="receta-nombre">{{ t.nombre }}</div>
+                                    <div class="receta-dosis">{{ t.dosis }} · {{ t.frecuencia }} · {{ t.duracion }}</div>
+                                    {% if t.notas %}
+                                    <div class="receta-dosis" style="font-style:italic;">{{ t.notas }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p style="font-size:0.83rem; color:var(--text-muted);">Sin receta registrada</p>
+                        {% endif %}
+
+                    {% elif modo == 'editar' %}
+                        <!-- Tratamientos ya guardados (solo lectura) -->
+                        {% if tratamientos %}
+                        <span class="seccion-label">Receta actual</span>
+                        {% for t in tratamientos %}
+                        <div class="receta-item" style="opacity:0.75;">
+                            <div>
+                                <div class="receta-nombre">{{ t.nombre }}</div>
+                                <div class="receta-dosis">{{ t.dosis }} · {{ t.frecuencia }} · {{ t.duracion }}</div>
+                                {% if t.notas %}
+                                <div class="receta-dosis" style="font-style:italic;">{{ t.notas }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                        <hr class="divider-dashed">
+                        <span class="seccion-label">Agregar más medicamentos</span>
+                        {% endif %}
+                        <!-- Nuevos medicamentos (dinámico) -->
+                        <div id="recetaLista">
+                            <p id="recetaVacia" style="font-size:0.83rem; color:var(--text-muted); text-align:center; padding:6px 0;">
+                                Sin medicamentos nuevos
+                            </p>
+                        </div>
+                        <button type="button" class="btn-add-med" id="btnAgregarMed">
+                            <span class="material-symbols-outlined">add</span>
+                            Añadir Medicamento
+                        </button>
+
+                    {% else %}
+                        <!-- modo iniciar -->
+                        <div id="recetaLista">
+                            <p id="recetaVacia" style="font-size:0.83rem; color:var(--text-muted); text-align:center; padding:6px 0;">
+                                Sin medicamentos agregados
+                            </p>
+                        </div>
+                        <button type="button" class="btn-add-med" id="btnAgregarMed">
+                            <span class="material-symbols-outlined">add</span>
+                            Añadir Medicamento
+                        </button>
+                    {% endif %}
+
+                </div>
+            </div>
+
+            <!-- SERVICIOS EXTRAS -->
+            <div class="card-section">
+                <div class="card-section-header">
+                    <span class="material-symbols-outlined">medical_services</span>
+                    Servicios Extras
+                </div>
+                <div class="card-section-body">
+
+                    {% if modo == 'ver' %}
+                        {% if servicios %}
+                            {% for s in servicios %}
+                            <div class="receta-item">
+                                <div>
+                                    <div class="receta-nombre">{{ s.nombre }}</div>
+                                    <div class="receta-dosis">
+                                        Cantidad: {{ s.cantidad }} · Subtotal: ${{ s.subtotal }}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p style="font-size:0.83rem; color:var(--text-muted);">Sin servicios extras</p>
+                        {% endif %}
+
+                    {% elif modo == 'editar' %}
+                        {% if servicios %}
+                        <span class="seccion-label">Servicios actuales</span>
+                        {% for s in servicios %}
+                        <div class="receta-item" style="opacity:0.75;">
+                            <div>
+                                <div class="receta-nombre">{{ s.nombre }}</div>
+                                <div class="receta-dosis">Cant: {{ s.cantidad }} · ${{ s.subtotal }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        <hr class="divider-dashed">
+                        <span class="seccion-label">Agregar más servicios</span>
+                        {% endif %}
+                        <div id="serviciosLista">
+                            <p id="serviciosVacio" style="font-size:0.83rem; color:var(--text-muted); text-align:center; padding:6px 0;">
+                                Sin servicios nuevos
+                            </p>
+                        </div>
+                        <button type="button" class="btn-add-med" id="btnAgregarServicio">
+                            <span class="material-symbols-outlined">add</span>
+                            Añadir Servicio
+                        </button>
+
+                    {% else %}
+                        <!-- modo iniciar -->
+                        <div id="serviciosLista">
+                            <p id="serviciosVacio" style="font-size:0.83rem; color:var(--text-muted); text-align:center; padding:6px 0;">
+                                Sin servicios agregados
+                            </p>
+                        </div>
+                        <button type="button" class="btn-add-med" id="btnAgregarServicio">
+                            <span class="material-symbols-outlined">add</span>
+                            Añadir Servicio
+                        </button>
+                    {% endif %}
+
+                </div>
+            </div>
+
+        </div><!-- /col lateral -->
+    </div>
+
+    {% if modo != 'ver' %}</form>{% endif %}
+
+</div><!-- /hosp-wrapper -->
+
+<!-- ── FOOTER FIJO ──────────────────────────────────────────────────────── -->
+<footer class="page-footer">
+    <a href="{% url 'hospitalizacion' %}" class="btn-cancelar" style="text-decoration:none;">
+        {% if modo == 'ver' %}Volver{% else %}Cancelar{% endif %}
+    </a>
+    {% if modo == 'ver' and not hosp.fechaalta %}
+    <a href="{% url 'editar_hospitalizacion' hosp.numero %}"
+       class="btn-primary"
+       style="text-decoration:none; display:flex; align-items:center; gap:6px;">
+        <span class="material-symbols-outlined">edit</span>
+        Actualizar
+    </a>
+    {% elif modo == 'editar' %}
+    <button type="submit" form="formHosp" class="btn-primary">
+        <span class="material-symbols-outlined">save</span>
+        Guardar Cambios
+    </button>
+    {% elif not modo %}
+    <button type="submit" form="formHosp" class="btn-primary">
+        <span class="material-symbols-outlined">check_circle</span>
+        Iniciar Hospitalización
+    </button>
+    {% endif %}
+</footer>
+
+<!-- ── MODAL: DAR DE ALTA ───────────────────────────────────────────────── -->
+{% if modo == 'ver' and not hosp.fechaalta %}
+<div class="modal-overlay" id="modalAlta">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>Confirmar Alta</h2>
+            <button class="modal-close" id="btnCerrarAlta" type="button">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="modal-body" style="text-align:center; padding:28px 24px;">
+            <span class="material-symbols-outlined"
+                  style="font-size:48px; color:var(--green); display:block; margin-bottom:12px;">logout</span>
+            <p style="font-size:0.95rem; color:var(--text); margin:0 0 8px;">
+                ¿Dar de alta a <strong>{{ consulta.cita.mascota.nombre }}</strong>?
+            </p>
+            <p style="font-size:0.82rem; color:var(--text-muted);">
+                Se registrará la fecha y hora de alta. Se calculará el total de la hospitalización.
+            </p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-cancelar" id="btnCancelarAlta">Cancelar</button>
+            <button type="button" id="btnConfirmarAlta" class="btn-primary" style="background:var(--green);">
+                <span class="material-symbols-outlined">check_circle</span>
+                Confirmar Alta
+            </button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- ── MODAL: MEDICAMENTO ────────────────────────────────────────────────── -->
+{% if not modo or modo == 'editar' %}
+<div class="modal-overlay" id="modalMedicamento">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>Añadir Medicamento</h2>
+            <button class="modal-close" id="btnCerrarMed" type="button">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="form-field" style="margin-bottom:14px;">
+                <label class="form-label">Medicamento</label>
+                <select id="selectMedicamento"
+                        style="width:100%; padding:9px 12px; border:1px solid var(--border);
+                               border-radius:var(--radius-sm); font-family:inherit; font-size:0.9rem;">
+                    <option value="">Seleccionar medicamento...</option>
+                    {% for m in medicamentos_disponibles %}
+                    <option value="{{ m.clave }}" data-nombre="{{ m.nombre }}">
+                        {{ m.nombre }} — ${{ m.precio }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+                <div>
+                    <label class="form-label">Dosis</label>
+                    <input type="text" id="medDosis" class="form-input" placeholder="Ej: 1 tableta">
+                </div>
+                <div>
+                    <label class="form-label">Cantidad</label>
+                    <input type="number" id="medCantidad" class="form-input" min="1" value="1">
+                </div>
+                <div>
+                    <label class="form-label">Frecuencia</label>
+                    <input type="text" id="medFrecuencia" class="form-input" placeholder="Ej: cada 12h">
+                </div>
+                <div>
+                    <label class="form-label">Duración</label>
+                    <input type="text" id="medDuracion" class="form-input" placeholder="Ej: 7 días">
+                </div>
+            </div>
+            <div>
+                <label class="form-label">Notas</label>
+                <input type="text" id="medNotas" class="form-input" placeholder="Ej: administrar con comida">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-cancelar" id="btnCancelarMed">Cancelar</button>
+            <button type="button" class="btn-primary" id="btnConfirmarMed">
+                <span class="material-symbols-outlined">add</span> Agregar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ── MODAL: SERVICIO ───────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="modalServicio">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>Añadir Servicio Extra</h2>
+            <button class="modal-close" id="btnCerrarServicio" type="button">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="form-field" style="margin-bottom:14px;">
+                <label class="form-label">Servicio</label>
+                <select id="selectServicio"
+                        style="width:100%; padding:9px 12px; border:1px solid var(--border);
+                               border-radius:var(--radius-sm); font-family:inherit; font-size:0.9rem;">
+                    <option value="">Seleccionar servicio...</option>
+                    {% for s in servicios_disponibles %}
+                    <option value="{{ s.clave }}" data-nombre="{{ s.nombre }}" data-costo="{{ s.costo }}">
+                        {{ s.nombre }} — ${{ s.costo }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="form-label">Cantidad</label>
+                <input type="number" id="servCantidad" class="form-input" min="1" value="1">
+            </div>
+            <p id="servSubtotal"
+               style="font-size:0.85rem; color:var(--text-muted); margin-top:10px; text-align:right;"></p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-cancelar" id="btnCancelarServicio">Cancelar</button>
+            <button type="button" class="btn-primary" id="btnConfirmarServicio">
+                <span class="material-symbols-outlined">add</span> Agregar
+            </button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    function getCsrfToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+    }
+
+    // ── DAR DE ALTA ──────────────────────────────────────────────────────────
+    const overlayAlta = document.getElementById('modalAlta');
+
+    document.getElementById('btnDarDeAlta')?.addEventListener('click', () => {
+        overlayAlta.classList.add('visible');
+        document.body.style.overflow = 'hidden';
+    });
+
+    function cerrarAlta() {
+        overlayAlta?.classList.remove('visible');
+        document.body.style.overflow = '';
+    }
+
+    document.getElementById('btnCerrarAlta')?.addEventListener('click', cerrarAlta);
+    document.getElementById('btnCancelarAlta')?.addEventListener('click', cerrarAlta);
+    overlayAlta?.addEventListener('click', (e) => { if (e.target === overlayAlta) cerrarAlta(); });
+
+    document.getElementById('btnConfirmarAlta')?.addEventListener('click', async () => {
+        const btn = document.getElementById('btnConfirmarAlta');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-symbols-outlined">hourglass_top</span> Procesando...';
+        try {
+            const resp = await fetch('{% if hosp %}/hospitalizacion/{{ hosp.numero }}/alta/{% endif %}', {
+                method:  'POST',
+                headers: { 'X-CSRFToken': getCsrfToken() },
+            });
+            const data = await resp.json();
+            if (data.ok) {
+                window.location.href = `/hospitalizacion/${data.numero}/ver/?guardado=1`;
+            } else {
+                alert(data.error || 'Error al dar de alta');
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-outlined">check_circle</span> Confirmar Alta';
+            }
+        } catch {
+            alert('Error de conexión');
+            btn.disabled = false;
+            btn.innerHTML = '<span class="material-symbols-outlined">check_circle</span> Confirmar Alta';
+        }
+    });
+
+    {% if not modo or modo == 'editar' %}
+
+    // ── RECETA ───────────────────────────────────────────────────────────────
+    let medicamentosReceta = [];
+
+    function renderReceta() {
+        const lista     = document.getElementById('recetaLista');
+        const vacia     = document.getElementById('recetaVacia');
+        const jsonInput = document.getElementById('medicamentosJson');
+        if (vacia) vacia.style.display = medicamentosReceta.length ? 'none' : 'block';
+        lista.querySelectorAll('.receta-item').forEach(el => el.remove());
+        medicamentosReceta.forEach((m, idx) => {
+            const item = document.createElement('div');
+            item.className = 'receta-item';
+            item.innerHTML = `
+                <div>
+                    <div class="receta-nombre">${m.nombre}</div>
+                    <div class="receta-dosis">${m.dosis} · ${m.frecuencia} · ${m.duracion}</div>
+                    ${m.notas ? `<div class="receta-dosis" style="font-style:italic;">${m.notas}</div>` : ''}
+                </div>
+                <button type="button" class="btn-remove">
+                    <span class="material-symbols-outlined">close</span>
+                </button>`;
+            item.querySelector('.btn-remove').addEventListener('click', () => {
+                medicamentosReceta.splice(idx, 1);
+                renderReceta();
+            });
+            lista.appendChild(item);
+        });
+        if (jsonInput) jsonInput.value = JSON.stringify(medicamentosReceta);
+    }
+
+    const overlayMed = document.getElementById('modalMedicamento');
+
+    document.getElementById('btnAgregarMed')?.addEventListener('click', () => {
+        overlayMed.classList.add('visible');
+        document.body.style.overflow = 'hidden';
+    });
+
+    function cerrarMed() {
+        overlayMed.classList.remove('visible');
+        document.body.style.overflow = '';
+        ['selectMedicamento','medDosis','medFrecuencia','medDuracion','medNotas'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+        const c = document.getElementById('medCantidad');
+        if (c) c.value = '1';
+    }
+
+    document.getElementById('btnCerrarMed')?.addEventListener('click', cerrarMed);
+    document.getElementById('btnCancelarMed')?.addEventListener('click', cerrarMed);
+    overlayMed?.addEventListener('click', (e) => { if (e.target === overlayMed) cerrarMed(); });
+
+    document.getElementById('btnConfirmarMed')?.addEventListener('click', () => {
+        const sel      = document.getElementById('selectMedicamento');
+        const opt      = sel.selectedOptions[0];
+        const dosis     = document.getElementById('medDosis').value.trim();
+        const cantidad  = document.getElementById('medCantidad').value.trim();
+        const frecuencia= document.getElementById('medFrecuencia').value.trim();
+        const duracion  = document.getElementById('medDuracion').value.trim();
+        const notas     = document.getElementById('medNotas').value.trim();
+        if (!opt?.value)                         { alert('Selecciona un medicamento'); return; }
+        if (!dosis || !frecuencia || !duracion)  { alert('Dosis, frecuencia y duración son obligatorios'); return; }
+        medicamentosReceta.push({
+            clave: opt.value, nombre: opt.dataset.nombre,
+            cantidad: parseInt(cantidad) || 1,
+            dosis, frecuencia, duracion, notas,
+        });
+        renderReceta();
+        cerrarMed();
+    });
+
+    // ── SERVICIOS ────────────────────────────────────────────────────────────
+    let serviciosLista = [];
+
+    function renderServicios() {
+        const lista     = document.getElementById('serviciosLista');
+        const vacio     = document.getElementById('serviciosVacio');
+        const jsonInput = document.getElementById('serviciosJson');
+        if (vacio) vacio.style.display = serviciosLista.length ? 'none' : 'block';
+        lista.querySelectorAll('.receta-item').forEach(el => el.remove());
+        serviciosLista.forEach((s, idx) => {
+            const item = document.createElement('div');
+            item.className = 'receta-item';
+            item.innerHTML = `
+                <div>
+                    <div class="receta-nombre">${s.nombre}</div>
+                    <div class="receta-dosis">Cant: ${s.cantidad} · $${(s.cantidad * s.costo).toFixed(2)}</div>
+                </div>
+                <button type="button" class="btn-remove">
+                    <span class="material-symbols-outlined">close</span>
+                </button>`;
+            item.querySelector('.btn-remove').addEventListener('click', () => {
+                serviciosLista.splice(idx, 1);
+                renderServicios();
+            });
+            lista.appendChild(item);
+        });
+        if (jsonInput) jsonInput.value = JSON.stringify(serviciosLista);
+    }
+
+    const overlayServ = document.getElementById('modalServicio');
+
+    document.getElementById('btnAgregarServicio')?.addEventListener('click', () => {
+        overlayServ.classList.add('visible');
+        document.body.style.overflow = 'hidden';
+    });
+
+    function cerrarServicio() {
+        overlayServ.classList.remove('visible');
+        document.body.style.overflow = '';
+        const sel = document.getElementById('selectServicio');
+        const cnt = document.getElementById('servCantidad');
+        const sub = document.getElementById('servSubtotal');
+        if (sel) sel.value = '';
+        if (cnt) cnt.value = '1';
+        if (sub) sub.textContent = '';
+    }
+
+    document.getElementById('btnCerrarServicio')?.addEventListener('click', cerrarServicio);
+    document.getElementById('btnCancelarServicio')?.addEventListener('click', cerrarServicio);
+    overlayServ?.addEventListener('click', (e) => { if (e.target === overlayServ) cerrarServicio(); });
+
+    function actualizarSubtotal() {
+        const sel   = document.getElementById('selectServicio');
+        const cant  = parseInt(document.getElementById('servCantidad').value) || 0;
+        const opt   = sel.selectedOptions[0];
+        const costo = parseFloat(opt?.dataset.costo) || 0;
+        const sub   = document.getElementById('servSubtotal');
+        sub.textContent = (opt?.value && cant > 0)
+            ? `Subtotal: $${(cant * costo).toFixed(2)}`
+            : '';
+    }
+
+    document.getElementById('selectServicio')?.addEventListener('change', actualizarSubtotal);
+    document.getElementById('servCantidad')?.addEventListener('input', actualizarSubtotal);
+
+    document.getElementById('btnConfirmarServicio')?.addEventListener('click', () => {
+        const sel  = document.getElementById('selectServicio');
+        const opt  = sel.selectedOptions[0];
+        const cant = parseInt(document.getElementById('servCantidad').value) || 1;
+        if (!opt?.value) { alert('Selecciona un servicio'); return; }
+        serviciosLista.push({
+            clave: opt.value, nombre: opt.dataset.nombre,
+            costo: parseFloat(opt.dataset.costo), cantidad: cant,
+        });
+        renderServicios();
+        cerrarServicio();
+    });
+
+    {% endif %}
+
+    // ── ESCAPE ───────────────────────────────────────────────────────────────
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        cerrarAlta();
+        {% if not modo or modo == 'editar' %}
+        cerrarMed();
+        cerrarServicio();
+        {% endif %}
+    });
+
+});
+</script>
+{% endblock %}

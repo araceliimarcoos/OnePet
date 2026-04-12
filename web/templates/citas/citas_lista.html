@@ -2,7 +2,6 @@
 {% load static %}
 
 {% block titulo %}Citas{% endblock %}
-
 {% block nav_citas %}active{% endblock %}
 
 {% block breadcrumb %}
@@ -16,7 +15,6 @@
 {% block contenido %}
 <div class="page active" id="page-citas">
 
-    <!-- ===== HEADER ===== -->
     <div class="page-header">
         <div>
             <h1 class="page-title">Citas</h1>
@@ -31,46 +29,39 @@
     </div>
 
     <!-- STATS -->
-        <div class="stats-grid">
-
-            <div class="stat-card green">
-                <span class="stat-icon material-symbols-outlined">event_available</span>
-                <div class="stat-body">
-                    <p class="stat-label">Atendidas</p>
-                    <p class="stat-value">{{ stats.Atendida|default:"0" }}</p>
-                </div>
+    <div class="stats-grid">
+        <div class="stat-card green">
+            <span class="stat-icon material-symbols-outlined">event_available</span>
+            <div class="stat-body">
+                <p class="stat-label">Atendidas</p>
+                <p class="stat-value">{{ stats.Atendida|default:"0" }}</p>
             </div>
-
-            <div class="stat-card blue">
-                <span class="stat-icon material-symbols-outlined">assignment_late</span>
-                <div class="stat-body">
+        </div>
+        <div class="stat-card blue">
+            <span class="stat-icon material-symbols-outlined">assignment_late</span>
+            <div class="stat-body">
                 <p class="stat-label">Pendientes</p>
                 <p class="stat-value">{{ stats.Pendiente|default:"0" }}</p>
-                </div>
             </div>
-
-            <div class="stat-card orange">
-                <span class="stat-icon material-symbols-outlined">credit_card</span>
-                <div class="stat-body">
+        </div>
+        <div class="stat-card orange">
+            <span class="stat-icon material-symbols-outlined">credit_card</span>
+            <div class="stat-body">
                 <p class="stat-label">Pagadas</p>
                 <p class="stat-value">{{ stats.Pagada|default:"0" }}</p>
-                </div>
             </div>
-
-            <div class="stat-card gray">
-                <span class="stat-icon material-symbols-outlined">event_busy</span>
-                <div class="stat-body">
+        </div>
+        <div class="stat-card red">
+            <span class="stat-icon material-symbols-outlined">event_busy</span>
+            <div class="stat-body">
                 <p class="stat-label">Canceladas</p>
                 <p class="stat-value">{{ stats.Cancelada|default:"0" }}</p>
-                </div>
             </div>
-
         </div>
+    </div>
 
-    <!-- ===== TABLA ===== -->
+    <!-- TABLA -->
     <div class="card">
-
-        <!-- Filtros -->
         <div class="filters-bar">
             <div class="search-box">
                 <span class="material-symbols-outlined">search</span>
@@ -80,22 +71,13 @@
                 <input type="date" class="filter-select" id="filterFecha" title="Filtrar por fecha">
                 <select class="filter-select" id="filterEstado">
                     <option value="">Todos los estados</option>
-                    <option value="Confirmada">Confirmada</option>
-                    <option value="En curso">En curso</option>
-                    <option value="Pendiente">Pendiente</option>
-                    <option value="Cancelada">Cancelada</option>
-                    <option value="Completada">Completada</option>
-                </select>
-                <select class="filter-select" id="filterVet">
-                    <option value="">Todos los veterinarios</option>
-                    <option value="Dra. Sofia Mendez">Dra. Sofia Mendez</option>
-                    <option value="Carlos Ruiz">Carlos Ruiz</option>
-                    <option value="Dra. Elena Blanco">Dra. Elena Blanco</option>
+                    {% for edo in estados_cita %}
+                    <option value="{{ edo.nombre }}">{{ edo.nombre }}</option>
+                    {% endfor %}
                 </select>
             </div>
         </div>
 
-        <!-- Tabla -->
         <div class="table-wrapper">
             <table class="data-table" id="citasTable">
                 <thead>
@@ -112,7 +94,7 @@
                 </thead>
                 <tbody id="citasBody">
                     {% for cita in citas %}
-                    <tr data-estado="Confirmada" data-vet="Dra. Sofia Mendez">
+                    <tr data-estado="{{ cita.estado.nombre }}" data-fecha="{{ cita.fecha }}">
                         <td><span class="folio-badge">#{{ cita.folio }}</span></td>
                         <td>
                             <div class="fecha-cell">
@@ -137,163 +119,275 @@
                         <td><span class="motivo-text">{{ cita.motivo }}</span></td>
                         <td>
                             {% if cita.estado.nombre == "Atendida" %}
-                            <span class="badge-cita badge-confirmada">
-                                <span class="material-symbols-outlined">check_circle</span>
-                                {{ cita.estado.nombre }}
-                            </span>
+                                <span class="badge-cita badge-confirmada"><span class="material-symbols-outlined">check_circle</span>{{ cita.estado.nombre }}</span>
                             {% elif cita.estado.nombre == "Pendiente" %}
-                            <span class="badge-cita badge-pendiente">
-                                <span class="material-symbols-outlined">schedule</span>
-                                {{ cita.estado.nombre }}
-                            </span>
+                                <span class="badge-cita badge-en-curso"><span class="material-symbols-outlined">schedule</span>{{ cita.estado.nombre }}</span>
                             {% elif cita.estado.nombre == "Cancelada" %}
-                            <span class="badge-cita badge-cancelada">
-                                <span class="material-symbols-outlined">cancel</span>
-                                {{ cita.estado.nombre }}
-                            </span>
+                                <span class="badge-cita badge-cancelada"><span class="material-symbols-outlined">cancel</span>{{ cita.estado.nombre }}</span>
                             {% else %}
-                            <span class="badge-cita badge-pendiente">
-                                <span class="material-symbols-outlined">schedule</span>
-                                {{ cita.estado.nombre }}
-                            </span>
+                                <span class="badge-cita badge-pendiente"><span class="material-symbols-outlined">schedule</span>{{ cita.estado.nombre }}</span>
                             {% endif %}
                         </td>
                         <td>
-                            <a href="#" class="link-green">Ver Detalles</a>
+                            <div class="menu-wrap">
+                                <button class="menu-btn"
+                                        aria-label="Acciones"
+                                        data-folio="{{ cita.folio }}"
+                                        data-fecha="{{ cita.fecha }}"
+                                        data-hora="{{ cita.hora|time:'H:i' }}"
+                                        data-motivo="{{ cita.motivo }}"
+                                        data-propietario="{{ cita.propietario.nombrepila }} {{ cita.propietario.primerapellido }}"
+                                        data-propietario-folio="{{ cita.propietario.folio }}"
+                                        data-mascota="{{ cita.mascota.nombre }}"
+                                        data-mascota-folio="{{ cita.mascota.folio }}"
+                                        data-veterinario="{{ cita.veterinario.nombrepila }} {{ cita.veterinario.primerapellido }}"
+                                        data-veterinario-folio="{{ cita.veterinario.folio }}"
+                                        data-estado="{{ cita.estado.nombre }}"
+                                        data-consulta-numero="{{ cita.consulta.numero|default:'' }}"
+                                        >
+                                    <span class="material-symbols-outlined">more_horiz</span>
+                                </button>
+                                <div class="dropdown-menu" role="menu">
+                                    <button class="dropdown-item" data-accion="detalles">
+                                        <span class="material-symbols-outlined">info</span>
+                                        Ver detalles
+                                    </button>
+                                    <button class="dropdown-item" data-accion="editar">
+                                        <span class="material-symbols-outlined">edit</span>
+                                        Editar
+                                    </button>
+                                    {% if cita.estado.nombre == "Pendiente" %}
+                                    <a href="{% url 'iniciar_consulta' cita.folio %}" class="dropdown-item">
+                                        <span class="material-symbols-outlined">vaccines</span>
+                                        Iniciar consulta
+                                    </a>
+                                    {% elif cita.estado.nombre == "Atendida" and cita.consulta %}
+                                    <a href="/hospitalizacion/{{ cita.consulta.numero }}/iniciar" class="dropdown-item">
+                                        <span class="material-symbols-outlined">vital_signs</span>
+                                        Iniciar hospitalización
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
                         </td>
                     </tr>
                     {% empty %}
-
-                    <tr>
-                        <td colspan="8">No hay citas registradas</td>
-                    </tr>
-
+                    <tr><td colspan="8">No hay citas registradas</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
 
-        <!-- Footer de tabla -->
         <div class="table-footer">
-            <span>
-                Mostrando 
-                <strong> {{citas.start_index}}-{{citas.end_index}} </strong> 
-                de 
-                <strong>{{ total_conteo }}</strong> citas
-            </span>
-
-            <!-- Controles -->
+            <span>Mostrando <strong>{{ citas.start_index }}-{{ citas.end_index }}</strong> de <strong>{{ total_conteo }}</strong> citas</span>
             <div class="pagination">
-                <!-- boton anterior -->
                 {% if citas.has_previous %}
-                    <a href="?page={{ citas.previous_page_number }}{% if query %}&q={{ query }}{% endif %}"
-                        class="page-btn">‹</a>
+                    <a href="?page={{ citas.previous_page_number }}{% if query %}&q={{ query }}{% endif %}" class="page-btn">‹</a>
                 {% else %}
                     <button class="page-btn" disabled>‹</button>
                 {% endif %}
-                    
-                <!-- numeros de pagina -->
                 {% for num in citas.paginator.page_range %}
                     {% if citas.number == num %}
                         <button class="page-btn active">{{ num }}</button>
-                    {% elif num >= citas.number|add:"-2" and num <= citas.number|add:"2"  %}
-                        <a href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}"
-                            class="page-btn">{{ num }}</a>
+                    {% elif num >= citas.number|add:"-2" and num <= citas.number|add:"2" %}
+                        <a href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}" class="page-btn">{{ num }}</a>
                     {% endif %}
                 {% endfor %}
-
-                <!-- boton siguiente -->
                 {% if citas.has_next %}
-                    <a href="?page={{ citas.next_page_number }}{% if query %}&q={{ query }}{% endif %}" 
-                        class="page-btn">›</a>
+                    <a href="?page={{ citas.next_page_number }}{% if query %}&q={{ query }}{% endif %}" class="page-btn">›</a>
                 {% else %}
                     <button class="page-btn" disabled>›</button>
                 {% endif %}
-                
             </div>
         </div>
-
     </div>
 </div>
 
-<!-- ===== MODAL NUEVA CITA ===== -->
+<!-- ══════════════════════════ MODAL: NUEVA CITA ══════════════════════════════ -->
 <div class="modal-overlay" id="modalNuevaCita">
-    <div class="modal-box">
-
+    <div class="modal">
         <div class="modal-header">
-            <h2>
-                Registrar Nueva Cita
-            </h2>
-            <button class="modal-close" id="cerrarModal">
+            <h2>Registrar Nueva Cita</h2>
+            <button class="modal-close" id="btnCerrarModal" type="button">
                 <span class="material-symbols-outlined">close</span>
             </button>
         </div>
+        <form id="formNuevaCita" novalidate>
+            {% csrf_token %}
+            <div class="modal-body">
+                <p class="modal-error" style="display:none; color:#c0392b; font-size:13px; margin:0 0 12px; padding:8px 12px; background:#fff5f5; border-radius:6px; border:1px solid #f5c6c6;"></p>
 
-        <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-field">
+                        <label>Propietario</label>
+                        <select id="propietario" name="propietario" required>
+                            <option value="">Seleccionar propietario...</option>
+                            {% for p in propietarios %}
+                            <option value="{{ p.folio }}">{{ p.nombrepila }} {{ p.primerapellido }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label>Mascota</label>
+                        <select id="mascota" name="mascota" required disabled>
+                            <option value="">Seleccione un propietario...</option>
+                        </select>
+                    </div>
+                </div>
 
-            <div class="form-row">
+                <div class="form-row">
+                    <div class="form-field">
+                        <label>Fecha</label>
+                        <input type="date" id="fecha" name="fecha" required>
+                    </div>
+                    <div class="form-field">
+                        <label>Hora</label>
+                        <input type="time" id="hora" name="hora" min="08:00" max="20:00" required>
+                    </div>
+                </div>
+
                 <div class="form-field">
-                    <label>Propietario</label>
-                    <select id="citaPropietario">
-                        <option value="">Seleccionar propietario</option>
-                        <option>John Doe</option>
-                        <option>Emily Smith</option>
-                        <option>Carlos García</option>
-                        <option>Ana López</option>
+                    <label>Veterinario</label>
+                    <select id="veterinario" name="veterinario" required>
+                        <option value="">Seleccionar veterinario...</option>
+                        {% for v in veterinarios %}
+                        <option value="{{ v.folio }}">{{ v.nombrepila }} {{ v.primerapellido }}</option>
+                        {% endfor %}
                     </select>
                 </div>
-                <div class="form-field">
-                    <label>Mascota</label>
-                    <select id="citaMascota">
-                        <option value="">Seleccionar mascota</option>
-                        <option>Buddy (Labrador)</option>
-                        <option>Luna (Maine Coon)</option>
-                        <option>Max (Golden Retriever)</option>
-                        <option>Cooper (Golden)</option>
-                    </select>
-                </div>
-            </div>
 
-            <div class="form-row">
-                <div class="form-field">
-                    <label>Fecha</label>
-                    <input type="date" id="citaFecha">
-                </div>
-                <div class="form-field">
-                    <label>Hora</label>
-                    <input type="time" id="citaHora">
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>Veterinario</label>
-                <select id="citaVeterinario">
-                    <option value="">Seleccionar veterinario</option>
-                    <option>Dra. Sofia Mendez</option>
-                    <option>Carlos Ruiz</option>
-                    <option>Dra. Elena Blanco</option>
-                </select>
-            </div>
-
-            <div class="form-row full">
                 <div class="form-field">
                     <label>Motivo de la cita</label>
-                    <textarea id="citaMotivo" placeholder="Describe el motivo de la consulta..."></textarea>
+                    <textarea id="motivo" name="motivo" placeholder="Describe el motivo de la consulta..." required></textarea>
                 </div>
             </div>
 
-        </div>
-
-        <div class="modal-footer">
-            <button class="btn-secondary" id="cancelarModal">Cancelar</button>
-            <button class="btn-primary">
-                <span class="material-symbols-outlined">save</span>
-                Guardar Cita
-            </button>
-        </div>
-
+            <div class="modal-footer">
+                <button type="button" class="btn-cancelar" id="btnCancelar">Cancelar</button>
+                <button type="submit" class="btn-primary">
+                    <span class="material-symbols-outlined">save</span> Guardar Cita
+                </button>
+            </div>
+        </form>
     </div>
 </div>
+
+<!-- ══════════════════════════ MODAL: VER DETALLES ════════════════════════════ -->
+<div class="modal-overlay" id="modalVerDetalles">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>Detalles de la Cita</h2>
+            <button class="modal-close" id="btnCerrarDetalles" type="button">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="detalle-grid">
+                <div class="detalle-item">
+                    <span class="detalle-label">Folio</span>
+                    <span class="detalle-valor folio-badge" id="det-folio">—</span>
+                </div>
+                <div class="detalle-item">
+                    <span class="detalle-label">Estado</span>
+                    <span class="detalle-valor" id="det-estado">—</span>
+                </div>
+                <div class="detalle-item">
+                    <span class="detalle-label">Fecha</span>
+                    <span class="detalle-valor" id="det-fecha">—</span>
+                </div>
+                <div class="detalle-item">
+                    <span class="detalle-label">Hora</span>
+                    <span class="detalle-valor" id="det-hora">—</span>
+                </div>
+                <div class="detalle-item detalle-full">
+                    <span class="detalle-label">Propietario</span>
+                    <span class="detalle-valor" id="det-propietario">—</span>
+                </div>
+                <div class="detalle-item detalle-full">
+                    <span class="detalle-label">Mascota</span>
+                    <span class="detalle-valor" id="det-mascota">—</span>
+                </div>
+                <div class="detalle-item detalle-full">
+                    <span class="detalle-label">Veterinario</span>
+                    <span class="detalle-valor" id="det-veterinario">—</span>
+                </div>
+                <div class="detalle-item detalle-full">
+                    <span class="detalle-label">Motivo</span>
+                    <span class="detalle-valor" id="det-motivo">—</span>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-cancelar" id="btnCerrarDetalles2">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════ MODAL: EDITAR CITA ═════════════════════════════ -->
+<div class="modal-overlay" id="modalEditarCita">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>Editar Cita</h2>
+            <button class="modal-close" id="btnCerrarEditar" type="button">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <form id="formEditarCita" novalidate>
+            {% csrf_token %}
+            <input type="hidden" id="editar-folio" name="folio">
+            <div class="modal-body">
+                <p class="modal-error" style="display:none; color:#c0392b; font-size:13px; margin:0 0 12px; padding:8px 12px; background:#fff5f5; border-radius:6px; border:1px solid #f5c6c6;"></p>
+
+                <div class="form-row">
+                    <div class="form-field">
+                        <label>Fecha</label>
+                        <input type="date" id="editar-fecha" name="fecha" required>
+                    </div>
+                    <div class="form-field">
+                        <label>Hora</label>
+                        <input type="time" id="editar-hora" name="hora" min="08:00" max="20:00" required>
+                    </div>
+                </div>
+
+                <div class="form-field">
+                    <label>Veterinario</label>
+                    <select id="editar-veterinario" name="veterinario" required>
+                        <option value="">Seleccionar veterinario...</option>
+                        {% for v in veterinarios %}
+                        <option value="{{ v.folio }}">{{ v.nombrepila }} {{ v.primerapellido }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label>Estado</label>
+                    <select id="editar-estado" name="estado" required>
+                        {% for edo in estados_cita %}
+                        <option value="{{ edo.clave }}">{{ edo.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label>Motivo</label>
+                    <textarea id="editar-motivo" name="motivo" required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancelar" id="btnCancelarEditar">Cancelar</button>
+                <button type="submit" class="btn-primary">
+                    <span class="material-symbols-outlined">save</span> Guardar Cambios
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- JSON con mascotas para el filtro dinámico -->
+{{ mascotas_json|json_script:"mascotas-data" }}
+
+<div id="toast-container"></div>
+
 {% endblock %}
 
 {% block scripts %}
