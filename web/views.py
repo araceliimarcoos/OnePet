@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
-from .models import Mascota, Propietario, Especie, Raza, Servicio, Medicamento, Usuario, Veterinario, Recepcionista, Administrador, Cita, Hospitalizacion, SignosVitales, Especialidad, Telefono, Pago, Expediente, Consulta, Receta, EdoCita
+from .models import Mascota, Propietario, Especie, Raza, Servicio, Medicamento, Usuario, Veterinario, Recepcionista, Administrador, Cita, Hospitalizacion, SignosVitales, Especialidad, Telefono, Pago, Expediente, Consulta, Receta, EdoCita, ServCons, ServHosp
 
 from django.core.paginator import Paginator
 from django.db.models import Q, Count
@@ -406,6 +406,23 @@ def iniciar_consulta(request, folio_cita):
         ),
         folio=folio_cita
     )
+    
+    mascota = cita.mascota
+    
+    hoy = timezone.now().date()
+    anios = hoy.year - mascota.fechanacimiento.year
+    meses = hoy.month - mascota.fechanacimiento.month
+    
+    if (hoy.month, hoy.day) < (mascota.fechanacimiento.month, mascota.fechanacimiento.day):
+        anios -= 1
+    if meses < 0:
+        meses += 12
+
+    if anios == 0:
+        mascota.edad = f"{meses} mes{'es' if meses != 1 else ''}"
+    else:
+        mascota.edad = f"{anios} año{'s' if anios != 1 else ''}"
+    
  
     # Consultas previas de esta mascota (historial)
     expediente = Expediente.objects.filter(mascota=cita.mascota).first()
@@ -421,15 +438,21 @@ def iniciar_consulta(request, folio_cita):
  
     if request.method == 'POST':
         from .services import validar_datos_consulta, guardar_consulta_db
+        
+        if Consulta.objects.filter(cita=cita).exists():
+            return redirect(f'/consultas/{Consulta.objects.get(cita=cita).numero}/ver/') 
+        
         data = {
             'sintomas':          request.POST.get('sintomas', ''),
             'diagnostico':       request.POST.get('diagnostico', ''),
             'observaciones':     request.POST.get('observaciones', ''),
             'temperatura':       request.POST.get('temperatura', ''),
+            'peso':              request.POST.get('peso', 0),
             'freccardiaca':      request.POST.get('freccardiaca', ''),
             'frecrespiratoria':  request.POST.get('frecrespiratoria', ''),
             'instrugenerales':   request.POST.get('instrugenerales', ''),
             'medicamentos_json': request.POST.get('medicamentos_json', '[]'),
+            'servicios_json':    request.POST.get('servicios_json', '[]'),
         }
         ok, error = validar_datos_consulta(data)
         if not ok:
@@ -441,9 +464,12 @@ def iniciar_consulta(request, folio_cita):
                 'consultas_previas': consultas_previas,
                 'medicamentos_disponibles': medicamentos_disponibles,
                 'data': data,
+                'servicios_disponibles': Servicio.objects.order_by('nombre'),
+                'edad': mascota.edad
             })
  
         consulta = guardar_consulta_db(cita, data)
+        from .services import guardar_servicios_consulta
         return redirect(f'/consultas/{consulta.numero}/ver/?guardado=1')
  
     return render(request, 'consultas/consultas_inicio.html', {
@@ -452,11 +478,16 @@ def iniciar_consulta(request, folio_cita):
         'modo': 'iniciar',
         'consultas_previas': consultas_previas,
         'medicamentos_disponibles': medicamentos_disponibles,
+        'servicios_disponibles': Servicio.objects.order_by('nombre'),
+        'edad': mascota.edad
     })
     
 @login_required
 def ver_consulta(request, numero):
     """Vista de solo lectura de una consulta."""
+    
+    from .services import obtener_servicios_consulta
+    
     consulta = get_object_or_404(
         Consulta.objects.select_related(
             'cita__mascota__raza__especie',
@@ -466,6 +497,22 @@ def ver_consulta(request, numero):
         ),
         numero=numero
     )
+    
+    mascota = consulta.cita.mascota
+    
+    hoy = timezone.now().date()
+    anios = hoy.year - mascota.fechanacimiento.year
+    meses = hoy.month - mascota.fechanacimiento.month
+    
+    if (hoy.month, hoy.day) < (mascota.fechanacimiento.month, mascota.fechanacimiento.day):
+        anios -= 1
+    if meses < 0:
+        meses += 12
+
+    if anios == 0:
+        mascota.edad = f"{meses} mes{'es' if meses != 1 else ''}"
+    else:
+        mascota.edad = f"{anios} año{'s' if anios != 1 else ''}"
     
     receta = Receta.objects.filter(consulta=consulta).first()
     tratamientos = []
@@ -500,6 +547,8 @@ def ver_consulta(request, numero):
         'modo':             'ver',
         'consultas_previas': consultas_previas,
         'guardado':         guardado,
+        'servicios_consulta': obtener_servicios_consulta(consulta.numero),
+        'edad':             mascota.edad
     })
  
  
@@ -516,6 +565,22 @@ def editar_consulta(request, numero):
         ),
         numero=numero
     )
+    
+    mascota = consulta.cita.mascota
+    
+    hoy = timezone.now().date()
+    anios = hoy.year - mascota.fechanacimiento.year
+    meses = hoy.month - mascota.fechanacimiento.month
+    
+    if (hoy.month, hoy.day) < (mascota.fechanacimiento.month, mascota.fechanacimiento.day):
+        anios -= 1
+    if meses < 0:
+        meses += 12
+
+    if anios == 0:
+        mascota.edad = f"{meses} mes{'es' if meses != 1 else ''}"
+    else:
+        mascota.edad = f"{anios} año{'s' if anios != 1 else ''}"
     
     # obtener receta y tratamiento
     receta = Receta.objects.filter(consulta=consulta).first()
@@ -567,8 +632,9 @@ def editar_consulta(request, numero):
         'consulta':       consulta,
         'modo':           'editar',
         'consultas_previas': consultas_previas,
-        'receta': receta,
-        'tratamientos': tratamientos
+        'receta':           receta,
+        'tratamientos':     tratamientos,
+        'edad':             mascota.edad,
     })
 
 @login_required
@@ -612,40 +678,272 @@ def buscar_citas(request):                  # Para la busqueda de citas en 'Inic
 
     return JsonResponse(resultados, safe=False)
 
-#.................................................................... H O S P I T A LI Z A C I O N E S ...................................................................#
+#.................................................................... H O S P I T A L I Z A C I O N E S ...................................................................#
 @login_required
 def hospitalizacion(request):
+    hoy = timezone.now().date()
+ 
+    # Activas primero, luego dadas de alta, ordenadas por fecha
+    hosp_list = Hospitalizacion.objects.select_related(
+        'veterinario', 'estado',
+        'expediente__mascota__raza__especie',
+        'expediente__mascota__propietario',
+    ).order_by('-fechaalta', '-fechaingreso')
+    # fechaalta NULL → son las activas, van primero (NULL < valor en ORDER BY ASC)
+ 
+    activas = hosp_list.filter(fechaalta__isnull=True)
+    revisiones_hoy = SignosVitales.objects.filter(fecha=hoy).values_list('hospitalizacion_id', flat=True)
+    pendientes  = activas.exclude(numero__in=revisiones_hoy).count()
+    altas_hoy   = hosp_list.filter(fechaalta=hoy).count()
+ 
+    # Consultas con estado 'Atendida' para el select de iniciar hospitalización
+    consultas_atendidas = Consulta.objects.select_related(
+        'cita__mascota', 'cita__propietario', 'cita__veterinario'
+    ).filter(
+        cita__estado__nombre='Atendida'
+    ).exclude(
+        # Excluir consultas que ya tienen hospitalización activa
+        hospitalizacion__isnull=False
+    ).order_by('-cita__fecha')
+    
+    contexto = {
+        'seccion_activa':      'hospitalizacion',
+        'hospitalizaciones':   hosp_list,
+        'activas':             activas.count(),
+        'admitidas_hoy':       activas.filter(fechaingreso=hoy).count(),
+        'pendientes':          pendientes,
+        'altas_hoy':           altas_hoy,
+        'total_conteo':        hosp_list.count(),
+        'consultas_atendidas': consultas_atendidas,
+    }
+    return render(request, 'hospitalizacion/hospitalizacion_lista.html', contexto)
+
+@login_required
+def iniciar_hospitalizacion(request, consulta_numero):
+    """
+    GET  → formulario de nueva hospitalización.
+    POST → guarda y redirige a ver_hospitalizacion.
+    """
+    from .services import validar_datos_hospitalizacion, crear_hospitalizacion_db
+ 
+    consulta = get_object_or_404(
+        Consulta.objects.select_related(
+            'cita__mascota__raza__especie',
+            'cita__mascota__propietario',
+            'cita__veterinario',
+            'expediente',
+        ),
+        numero=consulta_numero
+    )
+    
+    mascota = consulta.cita.mascota
     
     hoy = timezone.now().date()
+    anios = hoy.year - mascota.fechanacimiento.year
+    meses = hoy.month - mascota.fechanacimiento.month
     
-    hosp_list = Hospitalizacion.objects.select_related(
-        'veterinario',
-        'estado',
-        'expediente__mascota__propietario'
-    ).order_by('-fechaingreso')
-    
-    # pa las stats
-    activas = hosp_list.filter(fechaalta__isnull=True)    #  mascotas Hospitalizadas
-    
-    revisiones_ya_hechas_hoy = SignosVitales.objects.filter(fecha=hoy).values_list('hospitalizacion_id', flat=True)
-    
-    pendientes = activas.exclude(numero__in=revisiones_ya_hechas_hoy).count()
-    
-    altas_hoy = hosp_list.filter(fechaalta=hoy).count()
-    
-    
+    if (hoy.month, hoy.day) < (mascota.fechanacimiento.month, mascota.fechanacimiento.day):
+        anios -= 1
+    if meses < 0:
+        meses += 12
 
-    contexto = {
-        'seccion_activa':       'hospitalizacion',
-        'hospitalizaciones':    hosp_list,
-        'activas':              activas.count(),
-        'admitidas_hoy':        activas.filter(fechaingreso=hoy).count(),     
-        'pendientes':           pendientes,
-        'altas_hoy':            altas_hoy,
-        'total_conteo':         hosp_list.count(),
-    }
+    if anios == 0:
+        mascota.edad = f"{meses} mes{'es' if meses != 1 else ''}"
+    else:
+        mascota.edad = f"{anios} año{'s' if anios != 1 else ''}"
     
-    return render(request, 'hospitalizacion/hospitalizacion_lista.html', contexto)
+    veterinarios         = Veterinario.objects.order_by('primerapellido')
+    medicamentos_disp    = Medicamento.objects.order_by('nombre')
+    servicios_disp       = Servicio.objects.order_by('nombre')
+ 
+    if request.method == 'POST':
+        data = {
+            'diagnoingreso':    request.POST.get('diagnoingreso', ''),
+            'obsergenerales':   request.POST.get('obsergenerales', ''),
+            'veterinario':      request.POST.get('veterinario', ''),
+            'temperatura':      request.POST.get('temperatura', ''),
+            'freccardiaca':     request.POST.get('freccardiaca', ''),
+            'frecrespiratoria': request.POST.get('frecrespiratoria', ''),
+            'instrugenerales':  request.POST.get('instrugenerales', ''),
+            'medicamentos_json': request.POST.get('medicamentos_json', '[]'),
+            'servicios_json':   request.POST.get('servicios_json', '[]'),
+        }
+ 
+        ok, error = validar_datos_hospitalizacion(data)
+        if not ok:
+            return render(request, 'hospitalizacion/hospitalizacion_inicio.html', {
+                'seccion_activa': 'hospitalizacion',
+                'consulta': consulta,
+                'error': error,
+                'veterinarios': veterinarios,
+                'medicamentos_disponibles': medicamentos_disp,
+                'servicios_disponibles': servicios_disp,
+                'edad': mascota.edad,
+            })
+ 
+        hosp = crear_hospitalizacion_db(consulta, data)
+        return redirect(f'/hospitalizacion/{hosp.numero}/ver/?guardado=1')
+ 
+    return render(request, 'hospitalizacion/hospitalizacion_inicio.html', {
+        'seccion_activa':          'hospitalizacion',
+        'consulta':                consulta,
+        'veterinarios':            veterinarios,
+        'medicamentos_disponibles': medicamentos_disp,
+        'servicios_disponibles':   servicios_disp,
+        'edad':                    mascota.edad,
+    })
+    
+@login_required
+def ver_hospitalizacion(request, numero):
+    hosp = get_object_or_404(
+        Hospitalizacion.objects.select_related(
+            'veterinario', 'estado',
+            'expediente__mascota__raza__especie',
+            'expediente__mascota__propietario',
+            'consulta__cita',
+        ),
+        numero=numero
+    )
+    
+    mascota = hosp.consulta.cita.mascota
+    
+    hoy = timezone.now().date()
+    anios = hoy.year - mascota.fechanacimiento.year
+    meses = hoy.month - mascota.fechanacimiento.month
+    
+    if (hoy.month, hoy.day) < (mascota.fechanacimiento.month, mascota.fechanacimiento.day):
+        anios -= 1
+    if meses < 0:
+        meses += 12
+
+    if anios == 0:
+        mascota.edad = f"{meses} mes{'es' if meses != 1 else ''}"
+    else:
+        mascota.edad = f"{anios} año{'s' if anios != 1 else ''}"
+ 
+    from .services import obtener_servicios_hosp, obtener_signos_vitales
+ 
+    # Receta y tratamientos (SQL directo)
+    receta = Receta.objects.filter(hospitalizacion=hosp).first()
+    tratamientos = []
+    if receta:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT m.nombre, m.clave, t.dosis, t.frecuencia,
+                       t.duracion, t.notas, t.cantidad
+                FROM tratamiento t
+                JOIN medicamento m ON t.medicamento = m.clave
+                WHERE t.receta = %s
+            """, [receta.numero])
+            cols = [col[0] for col in cursor.description]
+            tratamientos = [dict(zip(cols, row)) for row in cursor.fetchall()]
+ 
+    servicios     = obtener_servicios_hosp(hosp.numero)
+    signos_vitales = obtener_signos_vitales(hosp.numero)
+    guardado      = request.GET.get('guardado') == '1'
+ 
+    return render(request, 'hospitalizacion/hospitalizacion_inicio.html', {
+        'seccion_activa':  'hospitalizacion',
+        'consulta':        hosp.consulta,
+        'hosp':            hosp,
+        'modo':            'ver',
+        'tratamientos':    tratamientos,
+        'servicios':       servicios,
+        'signos_vitales':  signos_vitales,
+        'guardado':        guardado,
+        'edad':            mascota.edad,
+    })
+
+@login_required
+def editar_hospitalizacion(request, numero):
+    from .services import actualizar_hospitalizacion_db, obtener_servicios_hosp, obtener_signos_vitales
+    
+    hosp = get_object_or_404(
+        Hospitalizacion.objects.select_related(
+            'veterinario', 'estado',
+            'expediente__mascota__raza__especie',
+            'expediente__mascota__propietario',
+            'consulta__cita',
+        ),
+        numero=numero
+    )
+    
+    mascota = hosp.consulta.cita.mascota
+    
+    hoy = timezone.now().date()
+    anios = hoy.year - mascota.fechanacimiento.year
+    meses = hoy.month - mascota.fechanacimiento.month
+    
+    if (hoy.month, hoy.day) < (mascota.fechanacimiento.month, mascota.fechanacimiento.day):
+        anios -= 1
+    if meses < 0:
+        meses += 12
+
+    if anios == 0:
+        mascota.edad = f"{meses} mes{'es' if meses != 1 else ''}"
+    else:
+        mascota.edad = f"{anios} año{'s' if anios != 1 else ''}"
+    
+    medicamentos_disp = Medicamento.objects.order_by('nombre')
+    servicios_disp    = Servicio.objects.order_by('nombre')
+    
+    # Receta y tratamientos actuales (para mostrar en la sidebar)
+    receta = Receta.objects.filter(hospitalizacion=hosp).first()
+    tratamientos = []
+    if receta:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT m.nombre, m.clave, t.dosis, t.frecuencia,
+                       t.duracion, t.notas, t.cantidad
+                FROM tratamiento t
+                JOIN medicamento m ON t.medicamento = m.clave
+                WHERE t.receta = %s
+            """, [receta.numero])
+            cols = [col[0] for col in cursor.description]
+            tratamientos = [dict(zip(cols, row)) for row in cursor.fetchall()]
+    
+    servicios_actuales = obtener_servicios_hosp(hosp.numero)
+    signos_vitales     = obtener_signos_vitales(hosp.numero)    
+    
+    if request.method == 'POST':
+        data = {
+            'diagnoingreso':    request.POST.get('diagnoingreso', ''),
+            'obsergenerales':   request.POST.get('obsergenerales', ''),
+            'temperatura':      request.POST.get('temperatura', ''),
+            'freccardiaca':     request.POST.get('freccardiaca', ''),
+            'frecrespiratoria': request.POST.get('frecrespiratoria', ''),
+            'peso':             request.POST.get('peso', ''),
+            'instrugenerales':  request.POST.get('instrugenerales', ''),
+            'medicamentos_json': request.POST.get('medicamentos_json', '[]'),
+            'servicios_json':   request.POST.get('servicios_json', '[]'),
+        }
+        
+        actualizar_hospitalizacion_db(hosp, data)
+        return redirect(f'/hospitalizacion/{hosp.numero}/ver/?guardado=1')
+ 
+    return render(request, 'hospitalizacion/hospitalizacion_inicio.html', {
+        'seccion_activa':          'hospitalizacion',
+        'consulta':                hosp.consulta,
+        'hosp':                    hosp,
+        'modo':                    'editar',
+        'tratamientos':            tratamientos,
+        'servicios':               servicios_actuales,
+        'signos_vitales':          signos_vitales,
+        'medicamentos_disponibles': medicamentos_disp,
+        'servicios_disponibles':   servicios_disp,
+    })
+
+@require_POST
+def dar_alta_hospitalizacion(request, numero):
+    from .services import dar_de_alta_hospitalizacion
+    try:
+        hosp = get_object_or_404(Hospitalizacion, numero=numero)
+        if hosp.fechaalta:
+            return JsonResponse({'ok': False, 'error': 'Esta hospitalización ya fue dada de alta'})
+        dar_de_alta_hospitalizacion(hosp, {})
+        return JsonResponse({'ok': True, 'numero': hosp.numero})
+    except Exception as e:
+        return JsonResponse({'ok': False, 'error': str(e)})
 
 #............................................................................. P A G O S ..................................................................................#
 @login_required
@@ -653,20 +951,143 @@ def pagos(request):
     
     pagos_list = Pago.objects.select_related(
         'consulta__cita__mascota__propietario',
-        'hospitalizacion'
+        'consulta__cita__estado',
+        'hospitalizacion__estado',
     ).order_by('-fecha', '-hora')
     
-    contexto = {
-        'seccion_activa': 'pagos',
-        'pagos': pagos_list,
-    }
+    # Consultas atendidas sin pago aún
+    consultas_sin_pago = Consulta.objects.select_related(
+        'cita__mascota__propietario', 'cita__estado'
+    ).filter(
+        cita__estado__nombre='Atendida'
+    ).exclude(
+        pago__isnull=False   # ya tienen pago
+    ).order_by('-cita__fecha')
     
+    # Hospitalizaciones con alta sin pago aún
+    hosps_sin_pago = Hospitalizacion.objects.select_related(
+        'expediente__mascota__propietario', 'estado', 'consulta'
+    ).filter(
+        fechaalta__isnull=False,
+        estado__nombre__icontains='Alta',
+    ).exclude(
+        pago__isnull=False
+    ).order_by('-fechaalta')
+    
+    contexto = {
+        'seccion_activa':     'pagos',
+        'pagos':              pagos_list,
+        'consultas_sin_pago': consultas_sin_pago,
+        'hosps_sin_pago':     hosps_sin_pago,
+    }
     return render(request, 'pagos/pagos_lista.html', contexto)
 
 @login_required
-def recibos(request):
+def ver_recibo(request, codigo):
+    """Vista de solo lectura del recibo de un pago."""
+    from .services import obtener_desglose_consulta, obtener_desglose_hospitalizacion
+ 
+    pago = get_object_or_404(
+        Pago.objects.select_related(
+            'consulta__cita__mascota__raza__especie',
+            'consulta__cita__mascota__propietario',
+            'consulta__cita__veterinario',
+            'hospitalizacion',
+        ),
+        codigo=codigo
+    )
+ 
+    mascota     = pago.consulta.cita.mascota
+    propietario = pago.consulta.cita.propietario
+    veterinario = pago.consulta.cita.veterinario
+ 
+    if pago.hospitalizacion:
+        items, total, dias = obtener_desglose_hospitalizacion(pago.hospitalizacion.numero)
+        tipo = 'hospitalizacion'
+    else:
+        items, total = obtener_desglose_consulta(pago.consulta.numero)
+        tipo  = 'consulta'
+        dias  = None
+ 
+    return render(request, 'pagos/pagos_recibo.html', {
+        'seccion_activa': 'pagos',
+        'pago':           pago,
+        'mascota':        mascota,
+        'propietario':    propietario,
+        'veterinario':    veterinario,
+        'items':          items,
+        'total':          total,
+        'tipo':           tipo,
+        'dias':           dias,
+    })
     
-    return render(request, 'pagos/pagos_recibo.html', { 'seccion_activa': 'pagos' })
+@login_required
+def previsualizar_pago(request):
+    """
+    GET con ?tipo=consulta&id=N o ?tipo=hospitalizacion&id=N
+    Devuelve JSON con el desglose para mostrar en el modal antes de confirmar.
+    """
+    from .services import obtener_desglose_consulta, obtener_desglose_hospitalizacion
+ 
+    tipo = request.GET.get('tipo')
+    id_  = request.GET.get('id')
+ 
+    if not tipo or not id_:
+        return JsonResponse({'ok': False, 'error': 'Parámetros incompletos'})
+ 
+    try:
+        if tipo == 'consulta':
+            items, total = obtener_desglose_consulta(int(id_))
+            dias = None
+        elif tipo == 'hospitalizacion':
+            items, total, dias = obtener_desglose_hospitalizacion(int(id_))
+        else:
+            return JsonResponse({'ok': False, 'error': 'Tipo inválido'})
+ 
+        return JsonResponse({
+            'ok':    True,
+            'items': [
+                {
+                    'nombre':      i.get('nombre', ''),
+                    'descripcion': i.get('descripcion', '') or i.get('nota', ''),
+                    'costo':       float(i.get('costo', 0)),
+                    'cantidad':    int(i.get('cantidad', 1)),
+                    'subtotal':    float(i.get('subtotal', 0)),
+                    'tipo':        i.get('tipo', ''),
+                }
+                for i in items
+            ],
+            'total': float(total),
+            'dias':  dias,
+        })
+    except Exception as e:
+        return JsonResponse({'ok': False, 'error': str(e)})
+    
+@require_POST
+def confirmar_pago(request):
+    """Crea el registro de pago después de confirmar en el modal."""
+    from .services import crear_pago_db, obtener_desglose_consulta, obtener_desglose_hospitalizacion
+ 
+    tipo = request.POST.get('tipo')
+    id_  = request.POST.get('id')
+ 
+    if not tipo or not id_:
+        return JsonResponse({'ok': False, 'error': 'Datos incompletos'})
+ 
+    try:
+        id_ = int(id_)
+        if tipo == 'consulta':
+            _, total = obtener_desglose_consulta(id_)
+        elif tipo == 'hospitalizacion':
+            _, total, _ = obtener_desglose_hospitalizacion(id_)
+        else:
+            return JsonResponse({'ok': False, 'error': 'Tipo inválido'})
+ 
+        pago = crear_pago_db(tipo, id_, total)
+        return JsonResponse({'ok': True, 'codigo': pago.codigo})
+ 
+    except Exception as e:
+        return JsonResponse({'ok': False, 'error': f'Error interno: {str(e)}'})
 
 #............................................................................ S E R V I C I O S ............................................................................#
 

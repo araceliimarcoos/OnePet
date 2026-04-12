@@ -34,9 +34,15 @@ urlpatterns = [
     path('citas/buscar/', views.buscar_citas, name='buscar_citas'),
     
     path('hospitalizacion/', views.hospitalizacion, name='hospitalizacion'),
+    path('hospitalizacion/<int:consulta_numero>/iniciar/', views.iniciar_hospitalizacion,  name='iniciar_hospitalizacion'),
+    path('hospitalizacion/<int:numero>/ver/',              views.ver_hospitalizacion,      name='ver_hospitalizacion'),
+    path('hospitalizacion/<int:numero>/editar/',           views.editar_hospitalizacion,   name='editar_hospitalizacion'),
+    path('hospitalizacion/<int:numero>/alta/',             views.dar_alta_hospitalizacion, name='dar_alta_hospitalizacion'),
     
     path('pagos/', views.pagos, name='pagos'),
-    path('pagos/recibos/', views.recibos, name='recibos'),
+    path('pagos/<int:codigo>/recibo/',  views.ver_recibo,         name='ver_recibo'),
+    path('pagos/previsualizar/',        views.previsualizar_pago, name='previsualizar_pago'),
+    path('pagos/confirmar/',            views.confirmar_pago,     name='confirmar_pago'),
     
     path('servicios/', views.servicios, name='servicios'),
     path('servicios/nuevo/', views.nuevo_servicio, name='nuevo_servicio'),

@@ -398,13 +398,18 @@
                         {{ cita.mascota.especie.nombre }} &bull; {{ cita.mascota.raza.nombre }} &bull; Propietario: {{ cita.propietario.nombrepila }} {{ cita.propietario.primerapellido }}
                     </div>
                     <div class="mascota-chips">
+                        
+                        <span class="chip">
+                            <span class="material-symbols-outlined">badge</span>
+                            {{ cita.mascota.folio }}
+                        </span>
                         <span class="chip">
                             <span class="material-symbols-outlined">monitor_weight</span>
                             {{ cita.mascota.peso|stringformat:".2f" }} kg
                         </span>
                         <span class="chip">
                             <span class="material-symbols-outlined">badge</span>
-                            {{ cita.mascota.folio }}
+                            {{ edad }}
                         </span>
                         {% if cita.mascota.alergias %}
                         <span class="chip" style="color:#c0392b; border-color:#f5c6c6; background:#fff5f5;">
@@ -478,16 +483,16 @@
                             </div>
                         </div>
                         <div class="vital-field">
-                            <span class="vital-label">Frec. Resp.</span>
+                            <span class="vital-label">Frec. Respiratoria</span>
                             <div class="vital-input-wrap">
                                 <input type="number" name="frecrespiratoria" class="vital-input" placeholder="24" value="{{ data.frecrespiratoria|default:'' }}" required>
                                 <span class="vital-unit">rpm</span>
                             </div>
                         </div>
                         <div class="vital-field">
-                            <span class="vital-label">Peso Act.</span>
+                            <span class="vital-label">Peso Actual</span>
                             <div class="vital-input-wrap">
-                                <input type="number" step="0.1" class="vital-input" placeholder="{{ cita.mascota.peso }}" readonly>
+                                <input type="number" step="0.1" name="peso" class="vital-input" value="{{ cita.mascota.peso|stringformat:"s" }}">
                                 <span class="vital-unit">kg</span>
                             </div>
                         </div>
@@ -638,7 +643,7 @@
                             <p id="recetaVacia" style="font-size:0.83rem; color:var(--text-muted); text-align:center; padding:6px 0;">Sin medicamentos agregados</p>
                         {% endif %}
                     </div>
-                    {% if modo != 'ver' %}
+                    {% if modo == 'iniciar' %}
                     <button type="button" class="btn-add-med" id="btnAgregarMed">
                         <span class="material-symbols-outlined">add</span>
                         Añadir Medicamento
@@ -646,6 +651,54 @@
                     {% endif %}
                 </div>
             </div>
+
+            {% if modo == 'iniciar' %}
+            <!-- INPUT HIDDEN para servicios -->
+            <input type="hidden" name="servicios_json" id="serviciosJson" value="[]">
+            
+            <!-- Card de servicios extras -->
+            <div class="card-section">
+                <div class="card-section-header">
+                    <span class="material-symbols-outlined">medical_services</span>
+                    Servicios Extras
+                </div>
+                <div class="card-section-body">
+                    <div id="serviciosLista">
+                        <p id="serviciosVacio" style="font-size:0.83rem; color:var(--text-muted); text-align:center; padding:6px 0;">
+                            Sin servicios agregados
+                        </p>
+                    </div>
+                    <button type="button" class="btn-add-med" id="btnAgregarServicio">
+                        <span class="material-symbols-outlined">add</span>
+                        Añadir Servicio
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if modo == 'ver' or modo == 'editar' %}
+            <!-- Card de servicios en modo ver/editar (solo lectura) -->
+            <div class="card-section">
+                <div class="card-section-header">
+                    <span class="material-symbols-outlined">medical_services</span>
+                    Servicios Extras
+                </div>
+                <div class="card-section-body">
+                    {% if servicios_consulta %}
+                        {% for s in servicios_consulta %}
+                        <div class="receta-item">
+                            <div>
+                                <div class="receta-nombre">{{ s.nombre }}</div>
+                                <div class="receta-dosis">Cantidad: {{ s.cantidad }} · Subtotal: ${{ s.subtotal }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p style="font-size:0.83rem; color:var(--text-muted);">Sin servicios extras</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
 
         </div><!-- /col lateral -->
 
@@ -751,6 +804,47 @@
 
 <!-- MODAL: AGREGAR MEDICAMENTO ───────────────────────────────────────────── -->
 {% if modo != 'ver' %}
+
+{% if modo == 'iniciar' %}
+<div class="modal-overlay" id="modalServicio">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>Añadir Servicio Extra</h2>
+            <button class="modal-close" id="btnCerrarServicio" type="button">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="form-field" style="margin-bottom:14px;">
+                <label class="form-label">Servicio</label>
+                <select id="selectServicio" style="width:100%; padding:9px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-family:inherit; font-size:0.9rem;">
+                    <option value="">Seleccionar servicio...</option>
+                    {% for s in servicios_disponibles %}
+                    <option value="{{ s.clave }}"
+                            data-nombre="{{ s.nombre }}"
+                            data-costo="{{ s.costo }}">
+                        {{ s.nombre }} — ${{ s.costo }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="form-label">Cantidad</label>
+                <input type="number" id="servCantidad" class="form-input" min="1" value="1">
+            </div>
+            <p id="servSubtotal" style="font-size:0.85rem; color:var(--text-muted); margin-top:10px; text-align:right;"></p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-cancelar" id="btnCancelarServicio">Cancelar</button>
+            <button type="button" class="btn-primary" id="btnConfirmarServicio">
+                <span class="material-symbols-outlined">add</span>
+                Agregar
+            </button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <div class="modal-overlay" id="modalMedicamento">
     <div class="modal">
         <div class="modal-header">
@@ -915,6 +1009,70 @@ document.addEventListener('DOMContentLoaded', () => {
         renderReceta();
         cerrarMed();
     });
+
+    // ── Servicios ─────────────────────────────────────────────────────────────
+    let serviciosLista = [];
+    
+    function renderServicios() {
+        const lista     = document.getElementById('serviciosLista');
+        const vacio     = document.getElementById('serviciosVacio');
+        const jsonInput = document.getElementById('serviciosJson');
+        if (vacio) vacio.style.display = serviciosLista.length ? 'none' : 'block';
+        lista.querySelectorAll('.receta-item').forEach(el => el.remove());
+        serviciosLista.forEach((s, idx) => {
+            const item = document.createElement('div');
+            item.className = 'receta-item';
+            const subtotal = (s.cantidad * s.costo).toFixed(2);
+            item.innerHTML = `
+                <div>
+                    <div class="receta-nombre">${s.nombre}</div>
+                    <div class="receta-dosis">Cant: ${s.cantidad} · Subtotal: $${subtotal}</div>
+                </div>
+                <button type="button" class="btn-remove" data-idx="${idx}">
+                    <span class="material-symbols-outlined">close</span>
+                </button>`;
+            item.querySelector('.btn-remove').addEventListener('click', () => {
+                serviciosLista.splice(idx, 1); renderServicios();
+            });
+            lista.appendChild(item);
+        });
+        if (jsonInput) jsonInput.value = JSON.stringify(serviciosLista);
+    }
+    
+    const overlayServ = document.getElementById('modalServicio');
+    document.getElementById('btnAgregarServicio')?.addEventListener('click', () => {
+        overlayServ.classList.add('visible'); document.body.style.overflow = 'hidden';
+    });
+    function cerrarServicio() {
+        overlayServ.classList.remove('visible'); document.body.style.overflow = '';
+        document.getElementById('selectServicio').value = '';
+        document.getElementById('servCantidad').value   = '1';
+        document.getElementById('servSubtotal').textContent = '';
+    }
+    document.getElementById('btnCerrarServicio')?.addEventListener('click', cerrarServicio);
+    document.getElementById('btnCancelarServicio')?.addEventListener('click', cerrarServicio);
+    overlayServ?.addEventListener('click', (e) => { if (e.target === overlayServ) cerrarServicio(); });
+    
+    function actualizarSubtotal() {
+        const sel  = document.getElementById('selectServicio');
+        const cant = parseInt(document.getElementById('servCantidad').value) || 0;
+        const opt  = sel.selectedOptions[0];
+        const costo = parseFloat(opt?.dataset.costo) || 0;
+        const sub   = document.getElementById('servSubtotal');
+        sub.textContent = (opt?.value && cant > 0) ? `Subtotal: $${(cant * costo).toFixed(2)}` : '';
+    }
+    document.getElementById('selectServicio')?.addEventListener('change', actualizarSubtotal);
+    document.getElementById('servCantidad')?.addEventListener('input', actualizarSubtotal);
+    
+    document.getElementById('btnConfirmarServicio')?.addEventListener('click', () => {
+        const sel  = document.getElementById('selectServicio');
+        const opt  = sel.selectedOptions[0];
+        const cant = parseInt(document.getElementById('servCantidad').value) || 1;
+        if (!opt?.value) { alert('Selecciona un servicio'); return; }
+        serviciosLista.push({ clave:opt.value, nombre:opt.dataset.nombre, costo:parseFloat(opt.dataset.costo), cantidad:cant });
+        renderServicios(); cerrarServicio();
+    });
+
     {% endif %}
 
     // ── Escape ───────────────────────────────────────────────────────────────

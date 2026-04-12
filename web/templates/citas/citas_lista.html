@@ -51,7 +51,7 @@
                 <p class="stat-value">{{ stats.Pagada|default:"0" }}</p>
             </div>
         </div>
-        <div class="stat-card gray">
+        <div class="stat-card red">
             <span class="stat-icon material-symbols-outlined">event_busy</span>
             <div class="stat-body">
                 <p class="stat-label">Canceladas</p>
@@ -121,7 +121,7 @@
                             {% if cita.estado.nombre == "Atendida" %}
                                 <span class="badge-cita badge-confirmada"><span class="material-symbols-outlined">check_circle</span>{{ cita.estado.nombre }}</span>
                             {% elif cita.estado.nombre == "Pendiente" %}
-                                <span class="badge-cita badge-pendiente"><span class="material-symbols-outlined">schedule</span>{{ cita.estado.nombre }}</span>
+                                <span class="badge-cita badge-en-curso"><span class="material-symbols-outlined">schedule</span>{{ cita.estado.nombre }}</span>
                             {% elif cita.estado.nombre == "Cancelada" %}
                                 <span class="badge-cita badge-cancelada"><span class="material-symbols-outlined">cancel</span>{{ cita.estado.nombre }}</span>
                             {% else %}
@@ -142,7 +142,9 @@
                                         data-mascota-folio="{{ cita.mascota.folio }}"
                                         data-veterinario="{{ cita.veterinario.nombrepila }} {{ cita.veterinario.primerapellido }}"
                                         data-veterinario-folio="{{ cita.veterinario.folio }}"
-                                        data-estado="{{ cita.estado.nombre }}">
+                                        data-estado="{{ cita.estado.nombre }}"
+                                        data-consulta-numero="{{ cita.consulta.numero|default:'' }}"
+                                        >
                                     <span class="material-symbols-outlined">more_horiz</span>
                                 </button>
                                 <div class="dropdown-menu" role="menu">
@@ -154,10 +156,17 @@
                                         <span class="material-symbols-outlined">edit</span>
                                         Editar
                                     </button>
+                                    {% if cita.estado.nombre == "Pendiente" %}
                                     <a href="{% url 'iniciar_consulta' cita.folio %}" class="dropdown-item">
                                         <span class="material-symbols-outlined">vaccines</span>
                                         Iniciar consulta
                                     </a>
+                                    {% elif cita.estado.nombre == "Atendida" and cita.consulta %}
+                                    <a href="/hospitalizacion/{{ cita.consulta.numero }}/iniciar" class="dropdown-item">
+                                        <span class="material-symbols-outlined">vital_signs</span>
+                                        Iniciar hospitalización
+                                    </a>
+                                    {% endif %}
                                 </div>
                             </div>
                         </td>
