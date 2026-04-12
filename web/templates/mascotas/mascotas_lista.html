@@ -131,76 +131,104 @@
 <div class="modal-overlay" id="modalNuevaMascota">
     <div class="modal">
         <div class="modal-header">
-            <h2>Registrar Nueva Mascota</h2>
+            <h2>Nueva Mascota</h2>
             <button class="modal-close" id="btnCerrarModal">
                 <span class="material-symbols-outlined">close</span>
             </button>
         </div>
 
-        <form id="formNuevaMascota">
+        <form id="formNuevaMascota" method="POST">
             {% csrf_token %}
+
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="propietario">Propietario</label>
-                    <select id="propietario" name="propietario" required>
-                        <option value="">Seleccionar propietario...</option>
-                        {% for p in propietarios %}
-                            <option value="{{ p.id }}">{{ p.nombrepila }} {{ p.primerapellido }}</option>
-                        {% endfor %}
-                    </select>
+                    <label for="folioAuto">Folio Único </label>
+                    <input type="text" class="folio-input" id="folioAuto" name="folio" value="Cargando..." readonly tabindex="-1">
                 </div>
 
-                <div class="form-group">
-                    <label for="nombre">Nombre</label>
-                    <input type="text" id="nombre" name="nombre" placeholder="Ej: Buddy" required>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="especie">Especie</label>
-                        <select id="especie" name="especie" required>
-                            <option value="">Seleccionar...</option>
-                            {% for e in especies %}
-                                <option value="{{ e.id }}">{{ e.nombre }}</option>
-                            {% endfor %}
-                        </select>
+                <div class="modal-section">
+                    <div class="modal-section-title">
+                        <span>Datos Propietario</span>
                     </div>
 
-                    <div class="form-group">
-                        <label for="raza">Raza</label>
-                        <select id="raza" name="raza" required>
-                            <option value="">Seleccionar especie primero</option>
-                            {% for r in razas %}
-                                <option value="{{ r.id }}" data-especie-id="{{ r.especie.id }}">{{ r.nombre }}</option>
-                            {% endfor %}
-                        </select>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Folio Propietario</label>
+                            <input type="text" id="folio_propietario" placeholder="P-00001" required>
+                        </div>
+                        <input type="hidden" name="propietario" id="propietario_id">
+                        
+                        <div class="form-group">
+                            <label>Nombre</label>
+                            <input type="text" id="nombre_propietario" readonly tabindex="-1">
+                        </div>
                     </div>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="fecha_nacimiento">Fecha de Nacimiento</label>
-                        <input type="date" id="fecha_nacimiento" name="fecha_nacimiento">
+                <div class="modal-section">
+                    <div class="modal-section-title">
+                        <span>Información General</span>
                     </div>
-                    <div class="form-group">
-                        <label for="sexo">Sexo</label>
-                        <select id="sexo" name="sexo">
-                            <option value="macho">Macho</option>
-                            <option value="hembra">Hembra</option>
-                        </select>
-                    </div>
-                </div>
 
-                <div class="form-row">
                     <div class="form-group">
-                        <label for="peso">Peso (kg)</label>
-                        <input type="number" step="0.1" id="peso" name="peso" placeholder="0.0">
+                        <label for="nombremascota">Nombre</label>
+                        <input type="text" id="nombremascota" name="nombre" placeholder="Buddy" required>
                     </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="especieModal">Especie</label>
+                            <select id="especieModal" name="especie" required>
+                                <option value="">Seleccionar...</option>
+                                {% for e in especies %}
+                                    <option value="{{ e.clave }}">{{ e.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="razaModal">Raza</label>
+                            <select id="razaModal" name="raza" required>
+                                <option value="">-- Selecciona una especie --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="fechanacimiento">Fecha de Nacimiento</label>
+                            <input type="date" id="fechanacimiento" name="fechanacimiento" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="sexo">Sexo</label>
+                            <select id="sexo" name="sexo" required>
+                                <option value="M">Macho</option>
+                                <option value="H">Hembra</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="peso">Peso (kg)</label>
+                            <input type="number" step="0.1" id="peso" name="peso" placeholder="0.0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="color">Color</label>
+                            <input type="text" id="color" name="color" placeholder="Café claro" required>
+                        </div>
+                    </div>
+
                     <div class="form-group">
-                        <label for="color">Color</label>
-                        <input type="text" id="color" name="color" placeholder="Café claro">
+                        <label for="caracunica">Característica única</label>
+                        <input type="text" id="caracunica" name="caracunica" placeholder="Ej: Mancha en el ojo">
                     </div>
-                </div>
+
+                    <div class="form-group">
+                        <label for="alergias">Alergía(s)</label>
+                        <input type="text" id="alergias" name="alergias" placeholder="Ninguna">
+                    </div>
+                </div>  
             </div>
 
             <div class="modal-footer">

@@ -65,10 +65,18 @@ urlpatterns = [
         
     path('reportes/', views.reportes, name='reportes'),
     
-    #Estos son para las ventanitas
+    #Estos son para las ventanitas 
     path('mascotas/nueva/', views.nueva_mascota, name='nueva_mascota'),
+    path('mascotas/crear/', views.crear_mascota, name='crear_mascota'),#Este es para crear uno nuevo
+    path('mascotas/obtener-razas/', views.obtener_razas, name='obtener_razas'),
+    path('mascotas/folio/', views.obtener_folio_mascota, name='obtener_folio'),
+    
+    path('buscar-propietario/', views.buscar_propietario, name='buscar_propietario'),
     
     path('propietarios/nuevo/', views.nuevo_propietario, name='nuevo_propietario'), #Este es del modal
     path('propietarios/folio/', views.obtener_folio, name='obtener_folio'),#Este obtiene el folio
     path('propietarios/crear/', views.crear_propietario, name='crear_propietario')#Este es para crear uno nuevo
+    
+    
+
 ]

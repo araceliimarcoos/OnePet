@@ -1,8 +1,11 @@
+from datetime import datetime
+
 from .models import Propietario, Telefono, Medicamento, Servicio, Especie, Raza, Cita, Mascota, Veterinario, EdoCita, Especialidad, EdoUsuario, Usuario, Consulta, Expediente, Receta, Tratamiento, Hospitalizacion, EdoHosp, ServCons, ServHosp, SignosVitales, Pago
 from django.utils import timezone
 from datetime import date, time, datetime, timedelta
 import re, json
 from django.db import connection
+
 
 from .utils.validaciones import (
     validar_texto,
@@ -11,7 +14,7 @@ from .utils.validaciones import (
     formatear_texto,
     limpiar_espacios
 )
-#--------------------------------------------- P R O P I E T A R I O S -----------------------------------------------------------------------------------
+#----------------------------------------------------------------- P R O P I E T A R I O S -----------------------------------------------------------------------------------
 
 def generar_folio():
     folios = Propietario.objects.values_list('folio', flat=True)
@@ -103,10 +106,29 @@ def formatear_telefono(numero):
 
     return f"({numeros[:3]}) {numeros[3:6]}-{numeros[6:]}"
 
+
+#--------------------------------------------------------------------- M A S C O T A S ------------------------------------------------------------------------------------------------
+
+from .models import Mascota, EdoMasc
+
+def generar_folio_mascota():
+    ultimo = Mascota.objects.order_by('-folio').first()
+
+    if not ultimo:
+        return "M-00001"
+
+    try:
+        num = int(ultimo.folio.split('-')[1])
+    except:
+        num = 0
+
+    return f"M-{num + 1:05d}"
+
 #--------------------------------------------- C I T A S -----------------------------------------------------------------------------------
 def generar_folio_cita():
     # Folios: C-00001
     folios = Cita.objects.values_list('folio', flat=True)
+
 
     max_num = 0
     for f in folios:
@@ -724,7 +746,78 @@ def _insertar_tratamientos(cursor, receta_numero, medicamentos_list):
             print(f"[tratamiento INSERT error] {e}")
             continue
 
-#--------------------------------------------- M E D I C A M E N T O S -----------------------------------------------------------------------------------
+def validar_datos_mascota(data):
+    # 🔹 Campos obligatorios
+    campos = {
+        'nombre': 'Nombre de la mascota',
+        'sexo': 'Sexo',
+        'fechanacimiento': 'Fecha de nacimiento',
+        'especie': 'Especie',
+        'raza': 'Raza',
+        'propietario': 'Propietario'
+    }
+
+    for key, nombre in campos.items():
+        if not data.get(key):
+            return False, f'El campo "{nombre}" es obligatorio'
+
+    ok, msg = validar_texto(data.get('nombre'), "nombre de la mascota")
+    if not ok:
+        return False, msg
+
+    if data.get('sexo') not in ['M', 'H']:
+        return False, "El sexo debe ser 'M' o 'H'"
+
+    peso = data.get('peso')
+    if peso:
+        try:
+            float(peso)
+        except ValueError:
+            return False, "El peso debe ser un número válido"
+
+    return True, None
+
+from datetime import datetime
+
+def crear_mascota_db(data):
+    # Usamos clave/folio para asegurar la relación
+    
+    especie = Especie.objects.get(clave=data.get('especie'))
+    raza = Raza.objects.get(clave=data.get('raza'))
+    propietario = Propietario.objects.get(folio=data.get('propietario'))
+
+    estado_activo = EdoMasc.objects.get(clave='ACTV')
+    folio_generado = generar_folio_mascota()
+
+    # Manejo de fecha con limpieza de posibles espacios
+    fecha_str = data.get('fechanacimiento')
+    if fecha_str and fecha_str.strip():
+        fecha = datetime.strptime(fecha_str.strip(), "%Y-%m-%d").date()
+    else:
+        fecha = None
+
+    # Limpieza de peso (por si llega cadena vacía)
+    peso_raw = data.get('peso')
+    peso_final = float(peso_raw) if peso_raw and str(peso_raw).strip() else None
+
+    mascota = Mascota.objects.create(
+        folio=folio_generado,
+        nombre=formatear_texto(data.get('nombre')),
+        sexo=data.get('sexo'),
+        fechanacimiento=fecha,
+        peso=peso_final,
+        color=formatear_texto(data.get('color')) if data.get('color') else None,
+        alergias=formatear_texto(data.get('alergias')) if data.get('alergias') else None,
+        caracunica=formatear_texto(data.get('caracunica')) if data.get('caracunica') else None,
+        especie=especie,
+        raza=raza,
+        propietario=propietario,
+        estado=estado_activo
+    )
+
+    return mascota
+
+#------------------------------------------------------------------ M E D I C A M E N T O S -----------------------------------------------------------------------------------
 def generar_clave_medicamento():
     #claves : MED-001
     claves = Medicamento.objects.values_list('clave', flat=True)

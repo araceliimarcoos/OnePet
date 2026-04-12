@@ -7,6 +7,9 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from .models import Mascota, Propietario, Especie, Raza, Servicio, Medicamento, Usuario, Veterinario, Recepcionista, Administrador, Cita, Hospitalizacion, SignosVitales, Especialidad, Telefono, Pago, Expediente, Consulta, Receta, EdoCita, ServCons, ServHosp
 
+from django.db.models import Value, CharField
+from django.db.models.functions import Concat
+
 from django.core.paginator import Paginator
 from django.db.models import Q, Count
 from django.db import connection
@@ -46,30 +49,59 @@ def api_citas(request):
 def dashboard (request):
     return render(request, 'dashboard.html', { 'seccion_activa': 'dashboard' })
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#----------------------------------------------------------------- M A S C O T A S --------------------------------------------------------------------------------------------#
+#------------------------------------------------------------------------------ M A S C O T A S --------------------------------------------------------------------------------------------#
 #------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+from django.db.models import Prefetch
+
+from django.core.cache import cache
+
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.core.cache import cache
+from .models import Mascota, Especie, Raza
+
 @login_required
 def mascotas(request):
+    # 1. OPTIMIZACIÓN DE CACHE: Evitamos consultar Especies y Razas en cada carga.
+    # Si no usas un sistema de cache (como Redis), Django usará Local Memory por defecto.
+    especies = cache.get('lista_especies')
+    if not especies:
+        especies = list(Especie.objects.values('clave', 'nombre').order_by('nombre'))
+        cache.set('lista_especies', especies, 86400) # Expira en 24h
 
-    mascotas_list = Mascota.objects.select_related(
+    # 2. QUERYSET PRINCIPAL: Solo pedimos lo que la tabla muestra.
+    # Usamos select_related para traer Propietario, Especie y Raza en UN SOLO viaje.
+    # Usamos defer() para ignorar campos pesados que no están en la tabla.  
+    mascotas_queryset = Mascota.objects.select_related(
         'propietario', 'especie', 'raza'
-    ).all()
+    ).defer(
+        'alergias', 'caracunica', 'imagen', 'sexo', 'peso', 'color', 'fechanacimiento'
+    ).order_by('-folio')
 
-    paginator = Paginator(mascotas_list, 15)  # 15 por página en cada tablita
 
+    # 3. PAGINACIÓN: Manejo de errores y eficiencia.
+    paginator = Paginator(mascotas_queryset, 15)
     page_number = request.GET.get('page')
-    mascotas = paginator.get_page(page_number)
+    
+    try:
+        mascotas_paginadas = paginator.get_page(page_number)
+    except Exception:
+        mascotas_paginadas = paginator.get_page(1)
 
+    # 4. CONTEXTO: Limpio y eficiente.
     contexto = {
         'seccion_activa': 'mascotas',
-        'mascotas': mascotas,  #  ahora es paginado
-        'especies': Especie.objects.all().order_by('nombre'),
-        'razas': Raza.objects.all().order_by('nombre'),
-        'total_conteo': paginator.count  #  mejor que count()
+        'mascotas': mascotas_paginadas,
+        'especies': especies,
+        # Si las razas son demasiadas, limitamos a 100 para no matar la latencia.
+        # Lo ideal sería que este filtro fuera dinámico por AJAX.
+        'razas': Raza.objects.values('clave', 'nombre').order_by('nombre')[:100],
+        'total_conteo': paginator.count
     }
 
     return render(request, 'mascotas/mascotas_lista.html', contexto)
-#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 @login_required
 def detalles_mascota(request, folio):
     mascota = get_object_or_404(
@@ -108,8 +140,102 @@ def detalles_mascota(request, folio):
     }
 
     return render(request, 'mascotas/mascotas_detalles.html', contexto)
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+from .services import validar_datos_mascota, crear_mascota_db, generar_folio_mascota
+
+def crear_mascota(request):
+    if request.method != 'POST':
+        return JsonResponse({'ok': False, 'error': 'Método no permitido'}, status=405)
+
+    try:
+        # Hacemos una copia para poder manipular los datos si es necesario
+        data = request.POST.copy()
+
+        with transaction.atomic():
+            # 1. VALIDACIÓN
+            # Asegúrate de que esta función devuelva (True, None) o (False, "Error")
+            valido, error = validar_datos_mascota(data)
+            if not valido:
+                return JsonResponse({'ok': False, 'error': error})
+
+            # 2. CREACIÓN EN DB
+            # Esta función debe usar Especie.objects.get(clave=...) y Raza.objects.get(clave=...)
+            mascota = crear_mascota_db(data)
+
+        # RESPUESTA DE ÉXITO
+        return JsonResponse({
+            'ok': True,
+            'message': 'Mascota guardada correctamente', # <--- Esta clave lee el JS
+            'id': mascota.folio
+        })
+
+    except IntegrityError as e:
+        print(f"ERROR DE INTEGRIDAD: {e}") # Mira esto en tu terminal de VS Code
+        return JsonResponse({
+            'ok': False,
+            'error': f'Error de base de datos: {str(e)}' # Esto te dirá el campo exacto
+        })
+
+    except ValueError as e:
+        # Captura errores de conversión (ej: float() de un peso inválido o formato de fecha)
+        return JsonResponse({
+            'ok': False,
+            'error': f'Error en el formato de los datos: {str(e)}'
+        })
+
+    except Exception as e:
+        # Captura cualquier otro error inesperado
+        return JsonResponse({
+            'ok': False,
+            'error': f'Ocurrió un error inesperado: {str(e)}'
+        })
 
 
+def obtener_folio_mascota(request):
+    if request.method != 'GET':
+        return JsonResponse({'ok': False}, status=405)
+
+    return JsonResponse({'folio': generar_folio_mascota()})
+
+
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+def buscar_propietario(request):
+    folio = request.GET.get('folio')
+
+    try:
+        propietario = Propietario.objects.get(folio=folio)
+
+        nombre_completo = f"{propietario.nombrepila} {propietario.primerapellido} {propietario.segundoapellido or ''}".strip()
+
+        return JsonResponse({
+            'ok': True,
+            'folio': propietario.folio,
+            'nombre': nombre_completo
+        })
+
+    except Propietario.DoesNotExist:
+        return JsonResponse({
+            'ok': False,
+            'error': 'Propietario no encontrado'
+        })
+        
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+def obtener_razas(request):
+    especie_id = request.GET.get('especie_id')
+    
+    # Filtramos las razas por el ID/Clave de la especie
+    # Usamos 'especie' porque ese es el nombre del campo ForeignKey en tu modelo Raza
+    razas = Raza.objects.filter(especie=especie_id).order_by('nombre')
+    
+    # IMPORTANTE: Vamos a imprimir en la terminal para estar 100% seguros
+    print(f"Buscando razas para especie: {especie_id}")
+    
+    # Enviamos 'clave' (que es tu PK) y 'nombre'
+    data = list(razas.values('clave', 'nombre'))
+    
+    print(f"Datos enviados al JS: {data}") # <--- Mira esto en tu terminal de VS Code/PyCharm
+    
+    return JsonResponse(data, safe=False)
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------- P R O P I E T A R I O S --------------------------------------------------------------------------------------------#
 #------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
