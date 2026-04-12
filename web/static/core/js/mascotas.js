@@ -1,42 +1,101 @@
 // ==========================================
-// 1. LÓGICA DEL MODAL (NUEVA MASCOTA) - INTACTA
+// 0. ELEMENTOS DOM
 // ==========================================
-const overlay       = document.getElementById('modalNuevaMascota');
-const btnAbrir      = document.getElementById('btnNuevaMascota');
-const btnCerrar     = document.getElementById('btnCerrarModal');
-const btnCancelar   = document.getElementById('btnCancelar');
-const form          = document.getElementById('formNuevaMascota');
+const overlay     = document.getElementById('modalNuevaMascota');
+const btnAbrir    = document.getElementById('btnNuevaMascota');
+const btnCerrar   = document.getElementById('btnCerrarModal');
+const btnCancelar = document.getElementById('btnCancelar');
+const form        = document.getElementById('formNuevaMascota'); // ID vital para el submit
 
-if (btnAbrir) {
-    btnAbrir.addEventListener('click', () => {
-        overlay.classList.add('visible');
-        document.body.style.overflow = 'hidden';
-    });
+const folioInput  = document.getElementById('folioAuto');
+
+// Búsqueda de propietario dentro del modal
+const inputFolio   = document.getElementById('folio_propietario');
+const inputNombre  = document.getElementById('nombre_propietario');
+const inputHidden  = document.getElementById('propietario_id');
+
+// Filtros de la tabla
+const inputBusqueda = document.getElementById('mascotaSearch');
+const selEspecie    = document.getElementById('filterEspecie');
+const selRaza       = document.getElementById('filterRaza');
+const selEstado     = document.getElementById('filterEstado');
+
+// ==========================================
+// 1. MODAL Y CONTROL DE FOLIO
+// ==========================================
+
+// Buscar propietario por folio al perder el foco (blur)
+inputFolio?.addEventListener('blur', async () => {
+    const folio = inputFolio.value.trim();
+    if (!folio) return;
+
+    try {
+        const response = await fetch(`/buscar-propietario/?folio=${encodeURIComponent(folio)}`);
+        const data = await response.json();
+
+        if (data.ok) {
+            inputNombre.value = data.nombre;
+            inputHidden.value = data.folio;
+        } else {
+            inputNombre.value = '';
+            inputHidden.value = '';
+            alert('Propietario no encontrado');
+        }
+    } catch (error) {
+        console.error('Error al buscar propietario:', error);
+    }
+});
+
+// Cargar folio automático
+async function cargarFolio() {
+    try {
+        const response = await fetch('/mascotas/folio/');
+        const data = await response.json();
+        if (folioInput) folioInput.value = data.folio;
+    } catch (error) {
+        console.error('Error folio:', error);
+    }
 }
 
+// Abrir modal
+btnAbrir?.addEventListener('click', () => {
+    overlay?.classList.add('visible');
+    document.body.style.overflow = 'hidden';
+    cargarFolio();
+});
+
+// Cerrar modal
 function cerrarModal() {
-    overlay.classList.remove('visible');
+    overlay?.classList.remove('visible');
+    form?.reset();
     document.body.style.overflow = '';
-    form.reset();
+    if (inputNombre) inputNombre.value = '';
 }
 
-if (btnCerrar) btnCerrar.addEventListener('click', cerrarModal);
-if (btnCancelar) btnCancelar.addEventListener('click', cerrarModal);
+btnCerrar?.addEventListener('click', cerrarModal);
+btnCancelar?.addEventListener('click', cerrarModal);
 
 overlay?.addEventListener('click', (e) => {
     if (e.target === overlay) cerrarModal();
 });
 
 document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && overlay.classList.contains('visible')) cerrarModal();
+    if (e.key === 'Escape' && overlay?.classList.contains('visible')) {
+        cerrarModal();
+    }
 });
 
+// ==========================================
+// 2. ENVÍO DEL FORMULARIO (Mismo flujo que Propietarios)
+// ==========================================
 form?.addEventListener('submit', async (e) => {
+    // ESTO EVITA LA PANTALLA BLANCA CON EL JSON
     e.preventDefault();
+
     const formData = new FormData(form);
 
     try {
-        const response = await fetch('/mascotas/nueva/', {
+        const response = await fetch('/mascotas/crear/', {
             method: 'POST',
             body: formData,
             headers: {
@@ -48,100 +107,94 @@ form?.addEventListener('submit', async (e) => {
 
         if (data.ok) {
             cerrarModal();
-            mostrarToast('Mascota registrada correctamente');
-            setTimeout(() => location.reload(), 1000);
+            // El alert pausa la ejecución, así el usuario lee el mensaje
+            alert(data.message); 
+            // Al dar OK, se recarga la página
+            location.reload();
         } else {
             alert('Error: ' + data.error);
         }
+
     } catch (error) {
         console.error('Error al guardar:', error);
+        alert('Ocurrió un error crítico al intentar guardar.');
     }
 });
 
 // ==========================================
-// 2. LÓGICA DE FILTROS AJUSTADA (Buscador, Especie, Raza, Estado)
+// 3. LÓGICA ESPECIE -> RAZA (Cascada AJAX)
 // ==========================================
-const inputBusqueda = document.getElementById('mascotaSearch');
-const selEspecie    = document.getElementById('filterEspecie');
-const selRaza       = document.getElementById('filterRaza');
-const selEstado     = document.getElementById('filterEstado');
+document.addEventListener('DOMContentLoaded', () => {
+    const especieModal = document.getElementById('especieModal');
+    const razaModal = document.getElementById('razaModal');
 
-function filtrarTabla() {
-    const filas = document.querySelectorAll('#mascotasBody tr');
-    
-    // Obtenemos valores de los filtros
-    const busqueda  = inputBusqueda.value.toLowerCase();
-    const espEleg   = selEspecie.value;
-    const razaEleg  = selRaza.value;
-    const estEleg   = selEstado ? selEstado.value.toLowerCase() : "";
+    if (!especieModal || !razaModal) return;
 
-    filas.forEach(fila => {
-        // Datos para búsqueda de texto (Nombre, Propietario, Folio)
-        const contenidoTexto = fila.innerText.toLowerCase();
-        
-        // Datos de atributos
-        const fEsp  = fila.getAttribute('data-especie') || "";
-        const fRaza = fila.getAttribute('data-raza') || "";
-        // El estado lo sacamos de un atributo o buscamos el texto "Activo/Inactivo" en la fila
-        const fEst  = contenidoTexto.includes('activo') ? 'activo' : 'inactivo';
+    especieModal.addEventListener('change', async function() {
+        const especieClave = this.value; 
+        razaModal.innerHTML = '<option value="">Seleccionar...</option>';
 
-        // Lógica de coincidencia cruzada
-        const coincideBusqueda = contenidoTexto.includes(busqueda);
-        const coincideEsp      = (espEleg === "" || fEsp === espEleg);
-        const coincideRaza     = (razaEleg === "" || fRaza === razaEleg);
-        const coincideEstado   = (estEleg === "" || fEst === estEleg);
+        if (!especieClave) {
+            razaModal.innerHTML = '<option value="">-- Selecciona una especie primero --</option>';
+            return;
+        }
 
-        // Se muestra solo si cumple TODOS los filtros activos
-        if (coincideBusqueda && coincideEsp && coincideRaza && coincideEstado) {
-            fila.style.display = "";
-        } else {
-            fila.style.display = "none";
+        razaModal.innerHTML = '<option value="">Cargando razas...</option>';
+
+        try {
+            const response = await fetch(`/mascotas/obtener-razas/?especie_id=${encodeURIComponent(especieClave)}`);
+            const data = await response.json();
+
+            razaModal.innerHTML = '<option value="">Seleccionar...</option>';
+
+            if (data && data.length > 0) {
+                const fragment = document.createDocumentFragment();
+                data.forEach(raza => {
+                    const option = document.createElement('option');
+                    option.value = raza.clave || raza.id;
+                    option.textContent = raza.nombre;
+                    fragment.appendChild(option);
+                });
+                razaModal.appendChild(fragment);
+            } else {
+                razaModal.innerHTML = '<option value="">Sin razas registradas</option>';
+            }
+        } catch (error) {
+            console.error("Error al cargar razas:", error);
         }
     });
-}
+});
 
-// Listeners para los filtros
-inputBusqueda?.addEventListener('input', filtrarTabla);
-if (selEstado) selEstado.addEventListener('change', filtrarTabla);
+// ==========================================
+// 4. FILTROS DE LA TABLA PRINCIPAL
+// ==========================================
+function filtrarTabla() {
+    const filas = document.querySelectorAll('#mascotasBody tr');
+    const busqueda = inputBusqueda?.value.toLowerCase() || "";
+    const espEleg  = selEspecie?.value || "";
+    const razaEleg = selRaza?.value || "";
+    const estEleg  = selEstado?.value?.toLowerCase() || "";
 
-if (selEspecie) {
-    selEspecie.addEventListener('change', function() {
-        const esp = this.value;
-        selRaza.value = ""; // Resetear raza al cambiar especie
+    filas.forEach(fila => {
+        const texto = fila.innerText.toLowerCase();
+        const fEsp  = fila.getAttribute('data-especie') || "";
+        const fRaza = fila.getAttribute('data-raza') || "";
+        const fEst  = texto.includes('activo') ? 'activo' : 'inactivo';
 
-        Array.from(selRaza.options).forEach(opt => {
-            if (opt.value === "") {
-                opt.style.display = "";
-            } else {
-                const espOpt = opt.getAttribute('data-especie');
-                const mostrar = (esp === "" || espOpt === esp);
-                opt.style.display = mostrar ? "" : "none";
-                opt.disabled = !mostrar;
-            }
-        });
-        filtrarTabla();
+        const ok = texto.includes(busqueda) &&
+                   (espEleg === "" || fEsp === espEleg) &&
+                   (razaEleg === "" || fRaza === razaEleg) &&
+                   (estEleg === "" || fEst === estEleg);
+
+        fila.style.display = ok ? "" : "none";
     });
 }
 
-if (selRaza) {
-    selRaza.addEventListener('change', filtrarTabla);
-}
-
-// ==========================================
-// 3. NOTIFICACIÓN VISUAL - INTACTA
-// ==========================================
-function mostrarToast(mensaje) {
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.textContent = mensaje;
-    toast.style.position = 'fixed';
-    toast.style.bottom = '20px';
-    toast.style.right = '20px';
-    toast.style.backgroundColor = '#10B981';
-    toast.style.color = 'white';
-    toast.style.padding = '10px 20px';
-    toast.style.borderRadius = '8px';
-    toast.style.zIndex = '1000';
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-}
+inputBusqueda?.addEventListener('input', filtrarTabla);
+selEstado?.addEventListener('change', filtrarTabla);
+selRaza?.addEventListener('change', filtrarTabla);
+selEspecie?.addEventListener('change', function() {
+    // Reset de razas en el filtro
+    if (selRaza) selRaza.value = "";
+    filtrarTabla();
+});
