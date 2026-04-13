@@ -745,9 +745,9 @@ def _insertar_tratamientos(cursor, receta_numero, medicamentos_list):
         except Exception as e:
             print(f"[tratamiento INSERT error] {e}")
             continue
-
+#-------------------------------------------------------------------------------------------------------------------------------------
 def validar_datos_mascota(data):
-    # 🔹 Campos obligatorios
+    
     campos = {
         'nombre': 'Nombre de la mascota',
         'sexo': 'Sexo',
@@ -814,8 +814,14 @@ def crear_mascota_db(data):
         propietario=propietario,
         estado=estado_activo
     )
-
+    
+    Expediente.objects.get_or_create(
+    mascota=mascota,
+    defaults={'fechaapertura': timezone.now().date()}
+    )
+    
     return mascota
+
 
 #------------------------------------------------------------------ M E D I C A M E N T O S -----------------------------------------------------------------------------------
 def generar_clave_medicamento():
