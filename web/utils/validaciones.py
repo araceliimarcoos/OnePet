@@ -17,15 +17,21 @@ def formatear_texto(texto):
 
 # QUITAR ESPACIOS (TELEFONO)
 def limpiar_espacios(texto):
-    return texto.replace(" ", "")
+    return re.sub(r'\D', '', texto) if texto else ''
 
 # VALIDAR TELEFONO - SOLO NUMEROS
 def validar_telefono(telefono):
     if not telefono:
         return False, "El teléfono es obligatorio"
+    
+    solo_numeros = re.sub(r'\D', '', telefono)
+    
+    if not solo_numeros:
+        return False, "El teléfono debe es obligatorio"
 
-    if not re.match(r'^[0-9\s]+$', telefono):
-        return False, "El teléfono solo debe contener números"
+    if len(solo_numeros) != 10:
+        return False, "El teléfono debe tener exactamente 10 dígitos"
+    
     return True, None
 
 # VALIDAR EMAIL

@@ -62,7 +62,7 @@ def validar_datos(data):
         return False, msg
 
     # Teléfono principal
-    tel = limpiar_espacios(data.get('tel_principal'))
+    tel = data.get('tel_principal', '')
     ok, msg = validar_telefono(tel)
     if not ok:
         return False, msg

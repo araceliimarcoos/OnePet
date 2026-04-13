@@ -21,301 +21,340 @@
 
 {% block contenido %}
 <div class="page active" id="page-mascotas-detalles">
+<div class="mascota-grid-container">
 
-    
+    <!-- ============ COLUMNA IZQUIERDA ============ -->
+    <div class="mascota-main-col">
 
-    <!-- ===== GRID PRINCIPAL ===== -->
-    <div class="mascota-grid-container">
-
-        <!-- ============ COLUMNA IZQUIERDA ============ -->
-        <div class="mascota-main-col">
-
-            <!-- Tarjeta de perfil -->
-            <div class="card mascota-profile-card">
-                <div class="mascota-foto-section">
-                    <div class="mascota-avatar-wrapper">
-                        <img src="{% static 'core/imagenes/dog.png' %}" alt="Max" class="mascota-img-large">
-                        
+        <!-- Tarjeta de perfil -->
+        <div class="card mascota-profile-card">
+            <div class="mascota-foto-section">
+                <div class="mascota-avatar-wrapper">
+                    {% if mascota.imagen %}
+                        <img src="{{ mascota.imagen }}" alt="{{ mascota.nombre }}" class="mascota-img-large">
+                    {% else %}
+                        <img src="{% static 'core/imagenes/dog.png' %}" alt="{{ mascota.nombre }}" class="mascota-img-large">
+                    {% endif %}
+                </div>
+            </div>
+            <div class="mascota-details-section">
+                <div class="mascota-name-row">
+                    <h1 class="mascota-title">{{ mascota.nombre }}</h1>
+                    <span class="badge-estado-mascota badge-saludable">{{ mascota.estado.nombre }}</span>
+                </div>
+                <p class="mascota-meta">
+                    {{ mascota.especie.nombre }} &bull; {{ mascota.raza.nombre }} &bull;
+                    {% if mascota.sexo == 'M' %}Macho{% else %}Hembra{% endif %} &bull;
+                    Folio: {{ mascota.folio }}
+                </p>
+                <div class="mascota-quick-stats">
+                    <div class="q-stat">
+                        <span class="q-stat-label">EDAD</span>
+                        <strong>{{ mascota.edad }}</strong>
+                    </div>
+                    <div class="q-stat">
+                        <span class="q-stat-label">PESO</span>
+                        <strong>{{ mascota.peso }} kg</strong>
+                    </div>
+                    <div class="q-stat">
+                        <span class="q-stat-label">ALERGIA</span>
+                        <strong>{{ mascota.alergias|default:"Sin Alergias" }}</strong>
+                    </div>
+                    <div class="q-stat">
+                        <span class="q-stat-label">COLOR</span>
+                        <strong>{{ mascota.color }}</strong>
+                    </div>
+                    <div class="q-stat">
+                        <span class="q-stat-label">CARACTERÍSTICA</span>
+                        <strong>{{ mascota.caracunica }}</strong>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <div class="mascota-details-section">
-                    <div class="mascota-name-row">
-                        <h1 class="mascota-title">{{ mascota.nombre }}</h1>
-                    </div>
-                    <p class="mascota-meta">{{ mascota.especie.nombre }} &bull; {{ mascota.raza.nombre }} &bull; {% if mascota.sexo == 'M' %}Macho{% else %}Hembra{% endif %} &bull; Folio: {{ mascota.folio }}</p>
-
-                    <div class="mascota-quick-stats">
-                        <div class="q-stat">
-                            <span class="q-stat-label">EDAD</span>
-                            <strong>{{ mascota.edad }}</strong>
-                        </div>
-                        <div class="q-stat">
-                            <span class="q-stat-label">PESO</span>
-                            <strong>{{ mascota.peso }} kg</strong>
-                        </div>
-                        
-                        <div class="q-stat">
-                            <span class="q-stat-label">ALERGIA</span>
-                            {% if mascota.alergias %}
-                            <strong>{{ mascota.alergias }}</strong>
-                            {% else %}
-                            <strong>Sin Alergias</strong>
-                            {% endif %}
-                        </div>
-
-                        <div class="q-stat">
-                            <span class="q-stat-label">COLOR</span>
-                            <strong>{{ mascota.color }}</strong>
-                        </div>
-
-                        <div class="q-stat">
-                            <span class="q-stat-label">CARACTERISTICA PARTICULAR</span>
-                            <strong>{{ mascota.caracunica }}</strong>
-                        </div>
-                    </div>
-                </div>
-
+        <!-- Tabs -->
+        <div class="mascota-tabs">
+            <button class="tab-item active" data-tab="historial">
+                <span class="material-symbols-outlined">history</span>
+                Historial Médico
+            </button>
+            <button class="tab-item" data-tab="recetas">
+                <span class="material-symbols-outlined">description</span>
+                Recetas
+                {% if recetas %}<span class="tab-badge-orange">{{ recetas|length }}</span>{% endif %}
+            </button>
+        </div>
+        
+        <!-- TAB: Historial Médico -->
+        <div class="card history-section tab-content active" id="tab-historial">
+            <div class="history-header">
+                <h3>Historial</h3>
+                <span style="font-size:0.8rem; color:var(--text-muted);">
+                    {{ num_consultas }} consulta(s) · {{ num_hosp }} hospitalización(es)
+                </span>
             </div>
 
-            <!-- Tabs -->
-            <div class="mascota-tabs">
-                <button class="tab-item active" data-tab="historial">
-                    <span class="material-symbols-outlined">history</span>
-                    Historial Médico
-                </button>
-                <button class="tab-item" data-tab="vacunas">
-                    <span class="material-symbols-outlined">vaccines</span>
-                    Vacunaciones
-                    <span class="tab-badge-orange">1 Due</span>
-                </button>
-                <button class="tab-item" data-tab="recetas">
-                    <span class="material-symbols-outlined">description</span>
-                    Recetas
-                </button>
-            </div>
+            {% if not historial %}
+            <p class="tab-empty">No hay registros médicos para esta mascota.</p>
+            {% else %}
+            <div class="timeline">
+                {% for evento in historial %}
 
-            <!-- TAB: Historial Médico -->
-            <div class="card history-section tab-content active" id="tab-historial">
-                <div class="history-header">
-                    <h3>Historial</h3>
-                    <button class="btn-text-add">
-                        <span class="material-symbols-outlined">add</span>
-                        Añadir
-                    </button>
-                </div>
-
-                <div class="timeline">
-
-                    <!-- Entrada 1: Chequeo Anual -->
+                    {% if evento.tipo == 'consulta' %}
                     <div class="timeline-item">
                         <div class="timeline-dot dot-green">
-                            <span class="material-symbols-outlined">check_circle</span>
+                            <span class="material-symbols-outlined">stethoscope</span>
                         </div>
                         <div class="timeline-content card">
                             <div class="timeline-meta">
-                                <span class="timeline-fecha">OCT 12, 2023 &bull; 10:30 AM</span>
+                                <span class="timeline-fecha">{{ evento.fecha|date:"M d, Y" }} &bull; {{ evento.obj.cita.hora|time:"H:i" }}</span>
                                 <span class="timeline-doctor">
                                     <span class="material-symbols-outlined">person</span>
-                                    Dr. Sarah Wilson
+                                    Dr. {{ evento.obj.cita.veterinario.nombrepila }} {{ evento.obj.cita.veterinario.primerapellido }}
                                 </span>
                             </div>
-                            <h4 class="timeline-title">Chequeo Anual</h4>
-                            <p class="timeline-desc">Max presented for his routine annual exam. General appearance is excellent. Heart and lungs sound clear. Skin is healthy, though some mild wax buildup in left ear was cleaned. Body condition score maintained at 5/9.</p>
-                            <div class="timeline-tags">
-                                <span class="tag">Physical Exam</span>
-                                <span class="tag">Wellness</span>
-                                <span class="tag">Ear Cleaning</span>
+                            <h4 class="timeline-title">Consulta — {{ evento.obj.cita.motivo }}</h4>
+                            <p class="timeline-desc"><strong>Síntomas:</strong> {{ evento.obj.sintomas }}</p>
+                            <p class="timeline-desc"><strong>Diagnóstico:</strong> {{ evento.obj.diagnostico }}</p>
+                            {% if evento.obj.observaciones %}
+                            <p class="timeline-desc" style="color:var(--text-muted); font-size:0.82rem;">{{ evento.obj.observaciones }}</p>
+                            {% endif %}
+                            <div class="timeline-footer">
+                                <div class="timeline-tags">
+                                    <span class="tag">Consulta</span>
+                                    <span class="tag">{{ evento.obj.cita.estado.nombre }}</span>
+                                </div>
+                                <a href="{% url 'ver_consulta' evento.obj.numero %}" class="link-reporte">
+                                    Ver detalles
+                                    <span class="material-symbols-outlined">chevron_right</span>
+                                </a>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Entrada 2: Hospitalización -->
+                    {% elif evento.tipo == 'hospitalizacion' %}
                     <div class="timeline-item">
                         <div class="timeline-dot dot-blue">
                             <span class="material-symbols-outlined">local_hospital</span>
                         </div>
                         <div class="timeline-content card">
                             <div class="timeline-meta">
-                                <span class="timeline-fecha">AUG 05, 2023 &bull; 03:15 PM</span>
+                                <span class="timeline-fecha">{{ evento.fecha|date:"M d, Y" }} &bull; {{ evento.horaingreso|time:"H:i" }}</span>
                                 <span class="timeline-doctor">
                                     <span class="material-symbols-outlined">person</span>
-                                    Dr. Kevin Miller
+                                    Dr. {{ evento.obj.veterinario.nombrepila }} {{ evento.obj.veterinario.primerapellido }}
                                 </span>
                             </div>
-                            <h4 class="timeline-title">Hospitalización – Minor Laceration</h4>
-                            <p class="timeline-desc">Owner reports Max cut his right front paw on glass while walking. Cleaned wound under mild sedation. Two stitches applied. Antibiotics and pain management prescribed for 7 days.</p>
-                            <!-- Alerta de follow-up -->
-                            <div class="timeline-alerta">
-                                <span class="material-symbols-outlined">warning</span>
+                            <h4 class="timeline-title">Hospitalización — {{ evento.obj.diagnoingreso }}</h4>
+                            <p class="timeline-desc">{{ evento.obj.obsergenerales }}</p>
+                            {% if evento.obj.fechaalta %}
+                            <div class="timeline-alerta" style="background:var(--green-light); border-color:var(--green-dark);">
+                                <span class="material-symbols-outlined" style="color:var(--green-dark);">check_circle</span>
                                 <div>
-                                    <strong>Follow-up Required</strong>
-                                    <p>Stitch removal completed on Aug 15. Wound healed nicely.</p>
+                                    <strong style="color:var(--green-dark);">Alta médica</strong>
+                                    <p>{{ evento.obj.fechaalta|date:"M d, Y" }} a las {{ evento.obj.horaalta|time:"H:i" }}</p>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- Entrada 3: Bloodwork -->
-                    <div class="timeline-item">
-                        <div class="timeline-dot dot-orange">
-                            <span class="material-symbols-outlined">science</span>
-                        </div>
-                        <div class="timeline-content card">
-                            <div class="timeline-meta">
-                                <span class="timeline-fecha">MAY 15, 2023 &bull; 09:00 AM</span>
-                                <span class="timeline-doctor">
-                                    <span class="material-symbols-outlined">person</span>
-                                    Dr. Sarah Wilson
-                                </span>
+                            {% else %}
+                            <div class="timeline-alerta">
+                                <span class="material-symbols-outlined">vital_signs</span>
+                                <div>
+                                    <strong>En curso</strong>
+                                    <p>La mascota sigue hospitalizada.</p>
+                                </div>
                             </div>
-                            <h4 class="timeline-title">Bloodwork & Heartworm Test</h4>
-                            <p class="timeline-desc">Senior blood panel and annual heartworm screen. Results returned within normal ranges.</p>
-                            <a href="#" class="link-reporte">
-                                <span class="material-symbols-outlined">picture_as_pdf</span>
-                                View Lab Report (PDF)
-                            </a>
+                            {% endif %}
+
+                            <div class="timeline-footer">
+                                <div class="timeline-tags">
+                                    <span class="tag">Hospitalización</span>
+                                    <span class="tag">{{ evento.obj.estado.nombre }}</span>
+                                </div>
+                                <a href="{% url 'ver_hospitalizacion' evento.obj.numero %}" class="link-reporte">
+                                    Ver detalle
+                                    <span class="material-symbols-outlined">chevron_right</span>
+                                </a>
+                            </div>
                         </div>
                     </div>
+                    {% endif %}
 
-                </div>
+                {% endfor %}
+
             </div>
-
-            <!-- TAB: Vacunaciones (oculto por defecto) -->
-            <div class="card history-section tab-content" id="tab-vacunas">
-                <div class="history-header">
-                    <h3>Vacunaciones</h3>
-                    <button class="btn-text-add">
-                        <span class="material-symbols-outlined">add</span>
-                        Añadir
-                    </button>
-                </div>
-                <p class="tab-empty">Contenido de vacunaciones próximamente.</p>
-            </div>
-
-            <!-- TAB: Recetas (oculto por defecto) -->
-            <div class="card history-section tab-content" id="tab-recetas">
-                <div class="history-header">
-                    <h3>Recetas</h3>
-                    <button class="btn-text-add">
-                        <span class="material-symbols-outlined">add</span>
-                        Añadir
-                    </button>
-                </div>
-                <p class="tab-empty">Contenido de recetas próximamente.</p>
-            </div>
-
+            {% endif %}
         </div>
-        <!-- FIN COLUMNA IZQUIERDA -->
 
-        <!-- ============ COLUMNA DERECHA (ASIDE) ============ -->
-        <div class="mascota-sidebar-col">
-
-            <!-- Widget: Propietario -->
-            <div class="card sidebar-widget">
-                <div class="widget-header">
-                    <span class="material-symbols-outlined">group</span>
-                    <h4>Detalles del Propietario</h4>
-                </div>
-                <div class="owner-info">
-                    <div class="owner-avatar">{{ mascota.propietario.nombrepila|slice:":1" }}{{ mascota.propietario.primerapellido|slice:":1" }}</div>
-                    <div class="owner-text">
-                        <strong>{{ mascota.propietario.nombrepila }} {{ mascota.propietario.primerapellido }}</strong>
-                        <span>{{ mascota.propietario.folio }}</span>
-                    </div>
-                </div>
-                <ul class="owner-contact-list">
-                    <li>
-                        <span class="material-symbols-outlined">call</span>
-                        {{ telefonos.numprincipal }}
-                    </li>
-                    <li>
-                        <span class="material-symbols-outlined">mail</span>
-                        {{ mascota.propietario.correo }}
-                    </li>
-                    <li>
-                        <span class="material-symbols-outlined">home</span>
-                        {{ mascota.propietario.dircalle|add:" "|add:mascota.propietario.dirnum|add:", "|add:mascota.propietario.dircolonia }}
-                    </li>
-                </ul>
-                <a href="{% url 'detalles_propietario' mascota.propietario.folio %}" class="btn-full-gray">Ver Perfil</a>
+        <!-- TAB: Recetas -->
+        <div class="card history-section tab-content" id="tab-recetas">
+            <div class="history-header">
+                <h3>Recetas</h3>
             </div>
 
-            <!-- Widget: Tratamiento -->
-            <div class="card sidebar-widget">
-                <div class="widget-header">
-                    <span class="material-symbols-outlined">medication</span>
-                    <h4>Tratamiento</h4>
-                    <span class="chip-active-tiny">ACTIVO</span>
-                </div>
-
-                <!-- Medicamento 1 -->
-                <div class="treatment-item">
-                    <div class="treatment-item-header">
-                        <strong>Apoquel (16mg)</strong>
-                        <span class="treatment-refills">Refills: 2</span>
+            {% if not recetas %}
+            <p class="tab-empty">No hay recetas registradas para esta mascota.</p>
+            {% else %}
+            <div class="timeline">
+                {% for receta in recetas %}
+                <div class="timeline-item">
+                    <div class="timeline-dot dot-orange">
+                        <span class="material-symbols-outlined">medication</span>
                     </div>
-                    <p>1 tablet daily for allergy management.</p>
-                    <small>
-                        <span class="material-symbols-outlined">calendar_today</span>
-                        Next refill: Nov 15
-                    </small>
-                </div>
+                    <div class="timeline-content card">
+                        <div class="timeline-meta">
+                            <span class="timeline-fecha">{{ receta.fecha|date:"M d, Y" }}</span>
+                            <span class="timeline-doctor">
+                                <span class="material-symbols-outlined">
+                                    {% if receta.origen == 'Consulta' %}stethoscope{% else %}local_hospital{% endif %}
+                                </span>
+                                {{ receta.origen }}
+                            </span>
+                        </div>
+                        <h4 class="timeline-title">Receta #{{ receta.numero|stringformat:"04d" }}</h4>
+                        {% if receta.instrugenerales %}
+                        <p class="timeline-desc" style="margin-bottom:12px;">
+                            <strong>Indicaciones:</strong> {{ receta.instrugenerales }}
+                        </p>
+                        {% endif %}
 
-                <!-- Medicamento 2 -->
-                <div class="treatment-item">
-                    <div class="treatment-item-header">
-                        <strong>Heartgard Plus</strong>
-                        <span class="treatment-refills">Refills: 5</span>
+                        {% if receta.tratamientos %}
+                        <div style="display:flex; flex-direction:column; gap:8px;">
+                            {% for t in receta.tratamientos %}
+                            <div style="background:var(--bg); border-radius:var(--radius-sm); padding:10px 14px; border:1px solid var(--border);">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                                    <strong style="font-size:0.88rem;">{{ t.nombre }}</strong>
+                                    <span style="font-size:0.75rem; color:{% if t.estado == 'Activo' %}var(--green-dark){% else %}var(--text-muted){% endif %}; font-weight:700;">
+                                        {{ t.estado }}
+                                    </span>
+                                </div>
+                                <p style="font-size:0.8rem; color:var(--text-muted); margin:0; line-height:1.6;">
+                                    Dosis: {{ t.dosis }} &bull;
+                                    Frecuencia: {{ t.frecuencia }} &bull;
+                                    Duración: {{ t.duracion }}
+                                    {% if t.notas %} &bull; {{ t.notas }}{% endif %}
+                                </p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="tab-empty" style="margin:0;">Sin medicamentos en esta receta.</p>
+                        {% endif %}
                     </div>
-                    <p>Monthly chewable preventative.</p>
                 </div>
+                {% endfor %}
             </div>
-
-            <!-- Widget: Reminders -->
-            <div class="card sidebar-widget">
-                <div class="widget-header">
-                    <span class="material-symbols-outlined">notifications</span>
-                    <h4>Reminders</h4>
-                </div>
-
-                <div class="reminder-item">
-                    <span class="reminder-dot reminder-red"></span>
-                    <div>
-                        <p class="reminder-title reminder-overdue">Rabies Vaccine Overdue</p>
-                        <small>Last administered: Oct 2020</small>
-                    </div>
-                </div>
-
-                <div class="reminder-item">
-                    <span class="reminder-dot reminder-green"></span>
-                    <div>
-                        <p class="reminder-title">Dental Prophylaxis</p>
-                        <small>Recommended by Dec 2023</small>
-                    </div>
-                </div>
-            </div>
-
+            {% endif %}
         </div>
-        <!-- FIN COLUMNA DERECHA -->
 
     </div>
+    <!-- FIN COLUMNA IZQUIERDA -->
+
+    <!-- ============ COLUMNA DERECHA ============ -->
+    <div class="mascota-sidebar-col">
+
+        <!-- Widget: Propietario -->
+        <div class="card sidebar-widget">
+            <div class="widget-header">
+                <span class="material-symbols-outlined">group</span>
+                <h4>Propietario</h4>
+            </div>
+            <div class="owner-info">
+                <div class="owner-avatar">
+                    {{ mascota.propietario.nombrepila|slice:":1" }}{{ mascota.propietario.primerapellido|slice:":1" }}
+                </div>
+                <div class="owner-text">
+                    <strong>{{ mascota.propietario.nombrepila }} {{ mascota.propietario.primerapellido }}</strong>
+                    <span>{{ mascota.propietario.folio }}</span>
+                </div>
+            </div>
+            <ul class="owner-contact-list">
+                <li>
+                    <span class="material-symbols-outlined">call</span>
+                    {{ telefonos.numprincipal|default:"Sin teléfono" }}
+                </li>
+                <li>
+                    <span class="material-symbols-outlined">mail</span>
+                    {{ mascota.propietario.correo }}
+                </li>
+                <li>
+                    <span class="material-symbols-outlined">home</span>
+                    {{ mascota.propietario.dircalle }} {{ mascota.propietario.dirnum }}, {{ mascota.propietario.dircolonia }}
+                </li>
+            </ul>
+            <a href="{% url 'detalles_propietario' mascota.propietario.folio %}" class="btn-full-gray">Ver Perfil</a>
+        </div>
+
+        <!-- Widget: Próxima cita -->
+        <div class="card sidebar-widget">
+            <div class="widget-header">
+                <span class="material-symbols-outlined">event</span>
+                <h4>Próxima Cita</h4>
+            </div>
+            {% if proxima_cita %}
+            <div style="display:flex; flex-direction:column; gap:8px; font-size:0.85rem;">
+                <div style="display:flex; align-items:center; gap:8px; color:var(--text);">
+                    <span class="material-symbols-outlined" style="font-size:16px; color:var(--blue-dark);">calendar_today</span>
+                    <strong>{{ proxima_cita.fecha|date:"M d, Y" }}</strong>
+                    &nbsp;{{ proxima_cita.hora|time:"H:i" }}
+                </div>
+                <div style="display:flex; align-items:center; gap:8px; color:var(--text-muted);">
+                    <span class="material-symbols-outlined" style="font-size:16px;">person</span>
+                    Dr. {{ proxima_cita.veterinario.nombrepila }} {{ proxima_cita.veterinario.primerapellido }}
+                </div>
+                <div style="color:var(--text-muted);">{{ proxima_cita.motivo }}</div>
+            </div>
+            {% else %}
+            <p style="font-size:0.85rem; color:var(--text-muted); margin:0;">Sin citas pendientes agendadas.</p>
+            {% endif %}
+        </div>
+
+        <!-- Widget: Últimas consultas rápidas -->
+        <div class="card sidebar-widget">
+            <div class="widget-header">
+                <span class="material-symbols-outlined">summarize</span>
+                <h4>Resumen de Visitas</h4>
+            </div>
+            {% if consultas or hospitalizaciones %}
+            <ul class="owner-contact-list" style="gap:10px;">
+                <li>
+                    <span class="material-symbols-outlined" style="color:var(--green-dark);">stethoscope</span>
+                    <span>{{ consultas|length }} consulta(s) registrada(s)</span>
+                </li>
+                <li>
+                    <span class="material-symbols-outlined" style="color:var(--blue-dark);">local_hospital</span>
+                    <span>{{ hospitalizaciones|length }} hospitalización(es)</span>
+                </li>
+                <li>
+                    <span class="material-symbols-outlined" style="color:var(--orange, #e67e22);">description</span>
+                    <span>{{ recetas|length }} receta(s) emitida(s)</span>
+                </li>
+                {% if expediente %}
+                <li>
+                    <span class="material-symbols-outlined" style="color:var(--text-muted);">folder_open</span>
+                    <span>Expediente desde {{ expediente.fechaapertura|date:"M d, Y" }}</span>
+                </li>
+                {% endif %}
+            </ul>
+            {% else %}
+            <p style="font-size:0.85rem; color:var(--text-muted); margin:0;">Sin visitas registradas aún.</p>
+            {% endif %}
+        </div>
+
+    </div>
+    <!-- FIN COLUMNA DERECHA -->
+
+</div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    // Lógica de tabs
-    const tabBtns    = document.querySelectorAll('.tab-item');
-    const tabPanels  = document.querySelectorAll('.tab-content');
-
+    const tabBtns   = document.querySelectorAll('.tab-item');
+    const tabPanels = document.querySelectorAll('.tab-content');
     tabBtns.forEach(btn => {
         btn.addEventListener('click', () => {
-            // Quitar activo de todos
             tabBtns.forEach(b => b.classList.remove('active'));
             tabPanels.forEach(p => p.classList.remove('active'));
-
-            // Activar el clickeado
             btn.classList.add('active');
             document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
         });
