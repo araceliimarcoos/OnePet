@@ -314,15 +314,15 @@
                 <span class="material-symbols-outlined">summarize</span>
                 <h4>Resumen de Visitas</h4>
             </div>
-            {% if consultas or hospitalizaciones %}
+            {% if historial %}
             <ul class="owner-contact-list" style="gap:10px;">
                 <li>
                     <span class="material-symbols-outlined" style="color:var(--green-dark);">stethoscope</span>
-                    <span>{{ consultas|length }} consulta(s) registrada(s)</span>
+                    <span>{{ num_consultas|length }} consulta(s) registrada(s)</span>
                 </li>
                 <li>
                     <span class="material-symbols-outlined" style="color:var(--blue-dark);">local_hospital</span>
-                    <span>{{ hospitalizaciones|length }} hospitalización(es)</span>
+                    <span>{{ num_hosp|length }} hospitalización(es)</span>
                 </li>
                 <li>
                     <span class="material-symbols-outlined" style="color:var(--orange, #e67e22);">description</span>
