@@ -68,7 +68,7 @@
                 <input type="text" placeholder="Buscar por folio, mascota, propietario..." id="citasSearch" />
             </div>
             <div class="filters-right">
-                <input type="date" class="filter-select" id="filterFecha" title="Filtrar por fecha">
+                
                 <select class="filter-select" id="filterEstado">
                     <option value="">Todos los estados</option>
                     {% for edo in estados_cita %}
@@ -242,7 +242,7 @@
                     </div>
                     <div class="form-field">
                         <label>Hora</label>
-                        <input type="time" id="hora" name="hora" min="08:00" max="20:00" required>
+                        <input type="time" id="hora" name="hora" min="08:00" max="19:30" required>
                     </div>
                 </div>
 
@@ -281,40 +281,55 @@
                 <span class="material-symbols-outlined">close</span>
             </button>
         </div>
-        <div class="modal-body">
-            <div class="detalle-grid">
-                <div class="detalle-item">
-                    <span class="detalle-label">Folio</span>
-                    <span class="detalle-valor folio-badge" id="det-folio">—</span>
+        <div class="modal-body" style="padding: 0;">
+
+            <!-- Cabecera con ícono + folio + estado -->
+            <div style="display:flex; align-items:center; gap:16px; padding:20px 24px; border-bottom:1px solid var(--border);">
+                <div style="width:56px; height:56px; border-radius:50%; background:var(--blue-light); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                    <span class="material-symbols-outlined" style="font-size:26px; color:var(--blue-dark);">event_note</span>
                 </div>
-                <div class="detalle-item">
-                    <span class="detalle-label">Estado</span>
-                    <span class="detalle-valor" id="det-estado">—</span>
+                <div style="flex:1; min-width:0;">
+                    <p style="font-size:0.78rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; margin:0 0 4px;">Cita programada</p>
+                    <div id="det-estado" style="display:inline-flex;"></div>
                 </div>
-                <div class="detalle-item">
-                    <span class="detalle-label">Fecha</span>
-                    <span class="detalle-valor" id="det-fecha">—</span>
+                <span class="folio-badge" id="det-folio">—</span>
+            </div>
+
+            <!-- Grid de datos -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0; padding:4px 0;">
+
+                <div style="padding:14px 24px; border-bottom:1px solid var(--border); border-right:1px solid var(--border);">
+                    <p style="font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; margin:0 0 4px;">Fecha</p>
+                    <p style="font-size:0.88rem; color:var(--text); margin:0;" id="det-fecha">—</p>
                 </div>
-                <div class="detalle-item">
-                    <span class="detalle-label">Hora</span>
-                    <span class="detalle-valor" id="det-hora">—</span>
+
+                <div style="padding:14px 24px; border-bottom:1px solid var(--border);">
+                    <p style="font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; margin:0 0 4px;">Hora</p>
+                    <p style="font-size:0.88rem; color:var(--text); margin:0;" id="det-hora">—</p>
                 </div>
-                <div class="detalle-item detalle-full">
-                    <span class="detalle-label">Propietario</span>
-                    <span class="detalle-valor" id="det-propietario">—</span>
+
+                <div style="padding:14px 24px; border-bottom:1px solid var(--border); border-right:1px solid var(--border);">
+                    <p style="font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; margin:0 0 4px;">Propietario</p>
+                    <p style="font-size:0.88rem; color:var(--text); margin:0;" id="det-propietario">—</p>
                 </div>
-                <div class="detalle-item detalle-full">
-                    <span class="detalle-label">Mascota</span>
-                    <span class="detalle-valor" id="det-mascota">—</span>
+
+                <div style="padding:14px 24px; border-bottom:1px solid var(--border);">
+                    <p style="font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; margin:0 0 4px;">Mascota</p>
+                    <p style="font-size:0.88rem; color:var(--text); margin:0;" id="det-mascota">—</p>
                 </div>
-                <div class="detalle-item detalle-full">
-                    <span class="detalle-label">Veterinario</span>
-                    <span class="detalle-valor" id="det-veterinario">—</span>
+
+                <div style="padding:14px 24px; border-right:1px solid var(--border);">
+                    <p style="font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; margin:0 0 4px;">Veterinario</p>
+                    <p style="font-size:0.88rem; color:var(--text); margin:0;" id="det-veterinario">—</p>
                 </div>
-                <div class="detalle-item detalle-full">
-                    <span class="detalle-label">Motivo</span>
-                    <span class="detalle-valor" id="det-motivo">—</span>
+
+                <div style="padding:14px 24px;">
+                    <p style="font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; margin:0 0 4px;">Motivo</p>
+                    <p style="font-size:0.88rem; color:var(--text); margin:0;" id="det-motivo">—</p>
                 </div>
+
+                
+
             </div>
         </div>
         <div class="modal-footer">
@@ -345,7 +360,7 @@
                     </div>
                     <div class="form-field">
                         <label>Hora</label>
-                        <input type="time" id="editar-hora" name="hora" min="08:00" max="20:00" required>
+                        <input type="time" id="editar-hora" name="hora" min="08:00" max="19:30" required>
                     </div>
                 </div>
 
@@ -363,7 +378,9 @@
                     <label>Estado</label>
                     <select id="editar-estado" name="estado" required>
                         {% for edo in estados_cita %}
-                        <option value="{{ edo.clave }}">{{ edo.nombre }}</option>
+                        {% if edo.nombre != 'Pagada' %}
+                            <option value="{{ edo.clave }}">{{ edo.nombre }}</option>
+                        {% endif %}
                         {% endfor %}
                     </select>
                 </div>

@@ -148,7 +148,18 @@ def validar_datos_cita(data):
     fecha_str         = data.get('fecha', '').strip()
     hora_str          = data.get('hora', '').strip()
     motivo            = data.get('motivo', '').strip()
- 
+    
+    try:
+        hora_nueva = datetime.strptime(hora_str, '%H:%M').time()
+    except:
+        return False, 'Formato de hora inválido'
+    
+    hora_apertura = time(8, 0)
+    hora_cierre   = time(19, 30)
+    
+    if hora_nueva < hora_apertura or hora_nueva > hora_cierre:
+        return False, 'El horario de citas es de 8:00 AM a 7:30 PM'
+    
     if not propietario_folio:
         return False, 'Selecciona un propietario'
     
@@ -230,6 +241,9 @@ def validar_datos_editar_cita(data, folio_actual):
 
     try:
         fecha    = date.fromisoformat(data['fecha'])
+        if fecha <= date.today():
+            return False, 'La fecha debe ser a partir de mañana'
+        
         hora_str = data['hora']
 
         hora_nueva = datetime.strptime(hora_str, '%H:%M').time()

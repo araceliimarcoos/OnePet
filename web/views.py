@@ -1652,7 +1652,7 @@ def personal(request):
         'especialidades': especialidades,
         'query': query,
         'inicio': inicio_sem.isoformat(),
-        'citas_json': json.dumps(citas_json),
+        'citas_json': citas_json,
     }
 
     return render(request, 'personal/personal_lista.html', contexto)
