@@ -24,7 +24,7 @@
     En Django esto quedaría así:
     <body data-rol="{{ request.user.rol }}">
 -->
-<body data-rol="admin">
+<body data-rol="{{ user.tipo.codigo|lower }}">
 
     <!-- ================= SIDEBAR ================= -->
     <aside class="sidebar" id="sidebar">
@@ -74,7 +74,7 @@
             <a href="{% url 'propietarios' %}"
                class="nav-item {% block nav_propietarios %}{% endblock %}"
                data-seccion="propietarios"
-               data-roles="admin,recepcionista">
+               data-roles="adm,rec">
                 <span class="material-symbols-outlined">group</span>
                 <span class="nav-label">Propietarios</span>
             </a>
@@ -82,7 +82,7 @@
             <a href="{% url 'mascotas' %}"
                class="nav-item {% block nav_mascotas %}{% endblock %}"
                data-seccion="mascotas"
-               data-roles="admin,veterinario,recepcionista">
+               data-roles="adm,vet,rec">
                 <span class="material-symbols-outlined">pets</span>
                 <span class="nav-label">Mascotas</span>
             </a>
@@ -90,7 +90,7 @@
             <a href="{% url 'citas' %}"
                class="nav-item {% block nav_citas %}{% endblock %}"
                data-seccion="citas"
-               data-roles="admin,veterinario,recepcionista">
+               data-roles="adm,vet,rec">
                 <span class="material-symbols-outlined">calendar_today</span>
                 <span class="nav-label">Citas</span>
             </a>
@@ -98,7 +98,7 @@
             <a href="{% url 'consultas' %}"
                class="nav-item {% block nav_consultas %}{% endblock %}"
                data-seccion="consultas"
-               data-roles="admin,veterinario">
+               data-roles="adm,vet">
                 <span class="material-symbols-outlined">stethoscope</span>
                 <span class="nav-label">Consultas</span>
             </a>
@@ -106,7 +106,7 @@
             <a href="{% url 'hospitalizacion' %}"
                class="nav-item {% block nav_hospitalizacion %}{% endblock %}"
                data-seccion="hospitalizacion"
-               data-roles="admin,veterinario">
+               data-roles="adm,vet">
                 <span class="material-symbols-outlined">bed</span>
                 <span class="nav-label">Hospitalización</span>
             </a>
@@ -114,7 +114,7 @@
             <a href="{% url 'pagos' %}"
                class="nav-item {% block nav_pagos %}{% endblock %}"
                data-seccion="pagos"
-               data-roles="admin,recepcionista">
+               data-roles="adm,rec">
                 <span class="material-symbols-outlined">payments</span>
                 <span class="nav-label">Pagos</span>
             </a>
@@ -122,7 +122,7 @@
             <a href="{% url 'servicios' %}"	
                class="nav-item {% block nav_catalogo %}{% endblock %}"
                data-seccion="catalogo"
-               data-roles="admin,recepcionista">
+               data-roles="adm,rec">
                 <span class="material-symbols-outlined">menu_book</span>
                 <span class="nav-label">Servicios</span>
             </a>
@@ -130,7 +130,7 @@
             <a href="{% url 'medicamentos' %}"
                class="nav-item {% block nav_medicamentos %}{% endblock %}"
                data-seccion="medicamentos"
-               data-roles="admin,veterinario">
+               data-roles="adm,vet">
                 <span class="material-symbols-outlined">pill</span>
                 <span class="nav-label">Medicamentos</span>
             </a>
@@ -138,7 +138,7 @@
             <a href="{% url 'usuarios' %}"
                class="nav-item {% block nav_usuarios %}{% endblock %}"
                data-seccion="usuarios"
-               data-roles="admin">
+               data-roles="adm">
                 <span class="material-symbols-outlined">person</span>
                 <span class="nav-label">Usuarios</span>
             </a>
@@ -146,7 +146,7 @@
             <a href="{% url 'especies' %}"
                class="nav-item {% block nav_especies %}{% endblock %}"
                data-seccion="especies"
-               data-roles="admin">
+               data-roles="adm">
                 <span class="material-symbols-outlined">stars_2</span>
                 <span class="nav-label">Especies Animales</span>
             </a>
@@ -154,7 +154,7 @@
             <a href="{% url 'personal' %}"
                class="nav-item {% block nav_personal %}{% endblock %}"
                data-seccion="personal"
-               data-roles="admin">
+               data-roles="adm">
                 <span class="material-symbols-outlined">health_cross</span>
                 <span class="nav-label">Personal Veterinario</span>
             </a>
@@ -162,7 +162,7 @@
             <a href="{% url 'reportes' %}"
                class="nav-item {% block nav_reportes %}{% endblock %}"
                data-seccion="reportes"
-               data-roles="admin">
+               data-roles="adm">
                 <span class="material-symbols-outlined">bar_chart</span>
                 <span class="nav-label">Reportes</span>
             </a>
