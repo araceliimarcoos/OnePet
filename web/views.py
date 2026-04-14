@@ -80,7 +80,7 @@ def veterinario_dashboard(request):
 @login_required
 @user_passes_test(es_recepcionista, login_url='login')
 def recepcionista_dashboard(request):
-    return render(request, 'dashboard_recepcionista.html')
+    return render(request, 'dashboard_rep.html')
 
 # --- VISTA DE LOGIN Y LOGOUT ---
 
