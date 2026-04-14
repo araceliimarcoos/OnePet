@@ -208,8 +208,13 @@
                         {{ request.user.get_full_name }}
                         {{ request.user.rol|upper }}
                     -->
-                    <span class="user-name">{{ user.nombre_real }}</span>
-                    <span class="user-role">{{ user.tipo.nombre|upper }}</span>
+                
+                    {% if user.is_authenticated %}
+                        <span class="user-name">{{ user.nombre_real }}</span>
+                        <span class="user-role">{{ user.tipo.nombre|upper }}</span>
+                    {% else %}
+                        <span class="user-name">Invitado</span>
+                    {% endif %}
                 </div>
                 <img src="{% static 'core/imagenes/user01.png' %}" alt="Avatar" class="user-avatar">
 
