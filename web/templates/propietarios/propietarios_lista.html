@@ -71,7 +71,7 @@
                                 </div>
 
                                 <div class="user-info-text">
-                                    <span class="user-name-table">
+                                    <span class="med-name">
                                         {{ propietario.nombrepila }} {{ propietario.primerapellido }} {{ propietario.segundoapellido }}
                                     </span>
                                     <span class="user-email-table">
@@ -88,7 +88,7 @@
                                 <!-- 📞 Teléfono principal -->
                                 {% with tel=propietario.telefono_set.first %}
                                     {% if tel %}
-                                        <span class="user-name-table">{{ tel.numprincipal }}</span>
+                                        <span class="med-name">{{ tel.numprincipal }}</span>
                                     {% else %}
                                         <span class="user-name-table">Sin teléfono</span>
                                     {% endif %}
@@ -107,7 +107,7 @@
                                     {{ mascota.nombre }}
                                 </span>
                             {% empty %}
-                                <span class="badge">Sin mascotas</span>
+                                <span class="user-name-table">Sin mascotas</span>
                             {% endfor %}
                         </td>
 

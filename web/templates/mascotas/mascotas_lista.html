@@ -76,19 +76,39 @@
 <!--##################################################################################################333-->
                   <tbody id="mascotasBody">
                     {% for m in mascotas %}
-                    <tr data-especie="{{ m.especie.nombre }}" data-raza="{{ m.raza.nombre }}">
+                    <tr data-especie="{{ m.especie.nombre }}" data-raza="{{ m.raza.nombre }}" data-estado="{{ m.estado.nombre|lower }}">
+
                         <td>
+                            <div class="mascota-cell">
+                                <div class="mascota-avatar"><span class="material-symbols-outlined">pets</span></div>
+                                <div class="user-info-text">
+                                <!-- Solo el nombre y folio, sin divs adicionales -->
+                                    <span class="med-name">{{ m.nombre }}</span>
+                                    <span class="user-email-table">{{ m.folio }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="user-info-text">
+                                <span class="med-name">{{ m.especie.nombre }}</span>
+                            </div>
+                        </td>
+
+
+                        <td>
+                            <div class="user-info-text">
+                                <span class="med-name">{{ m.raza.nombre }}</span>
+                            </div>
+                        </td>
+
+                        <td>
+                            <div class="user-info-text">
                             <!-- Solo el nombre y folio, sin divs adicionales -->
-                            <strong>{{ m.nombre }}</strong><br>
-                            <small>{{ m.folio }}</small>
+                                <span class="med-name">{{ m.propietario.nombrepila }} {{ m.propietario.primerapellido }}</span>
+                                <span class="user-email-table">{{ m.propietario.correo }}</span>
+                            </div>
                         </td>
-                        <td>{{ m.especie.nombre }}</td>
-                        <td>{{ m.raza.nombre }}</td>
-                        <td>
-                            <!-- Información del propietario en líneas simples -->
-                            {{ m.propietario.nombrepila }} {{ m.propietario.primerapellido }}<br>
-                            <small>{{ m.propietario.correo }}</small>
-                        </td>
+
                         <td>
                             <a href="{% url 'detalles_mascota' m.folio %}" class="link-green">Ver perfil</a>
                         </td>

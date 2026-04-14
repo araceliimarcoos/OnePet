@@ -32,13 +32,16 @@
        reportes        → admin
   ───────────────────────────────────────────────────── */
   function aplicarPermisosSidebar() {
-    const rol = document.body.dataset.rol || 'recepcionista';
+    const rol = document.body.dataset.rol || 'rec';
     const items = document.querySelectorAll('.nav-item[data-roles]');
 
     items.forEach(item => {
-      const rolesPermitidos = item.dataset.roles.split(',');
+      const rolesPermitidos = item.dataset.roles
+        .split(',')
+        .map(r => r.trim());
+
       if (!rolesPermitidos.includes(rol)) {
-        item.style.display = 'none';
+        item.remove(); 
       }
     });
   }

@@ -9,9 +9,17 @@ urlpatterns = [
     
     path('api/citas/', views.api_citas, name='api_citas'),
     
-    # ── Login / Logout ──────────────────────────
-    path('login/',  auth_views.LoginView.as_view(template_name='login.html'),  name='login'),
-    path('logout/', auth_views.LogoutView.as_view(next_page='inicio'),         name='logout'),
+    # Login y Logout
+    path('login/', views.login_view, name='login'),
+    path('logout/', views.logout_view, name='logout'),
+    
+    # El enrutador que decide a dónde ir según el Rol
+    path('enrutador/', views.enrutador_principal, name='enrutador_principal'),
+    
+    # Dashboards específicos
+    path('dashboard/admin/', views.admin_dashboard, name='admin_dashboard'),
+    path('dashboard/veterinario/', views.veterinario_dashboard, name='veterinario_dashboard'),
+    path('dashboard/recepcionista/', views.recepcionista_dashboard, name='recepcionista_dashboard'),
     
     #Resto del app
     path('dashboard/', views.dashboard, name='dashboard'),

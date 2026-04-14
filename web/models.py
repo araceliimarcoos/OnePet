@@ -328,45 +328,79 @@ class Tratamiento(models.Model):
             )
         ]
 
-
 class Usuario(models.Model):
     numero = models.AutoField(primary_key=True)
     usuario = models.CharField(unique=True, max_length=20)
     contrasena = models.CharField(max_length=255)
-    tipo = models.ForeignKey(TipoUsuario, models.DO_NOTHING, db_column='tipo')
-    propietario = models.OneToOneField(Propietario, models.DO_NOTHING, db_column='propietario', blank=True, null=True)
-    recepcionista = models.OneToOneField(Recepcionista, models.DO_NOTHING, db_column='recepcionista', blank=True, null=True)
+    tipo = models.ForeignKey('TipoUsuario', models.DO_NOTHING, db_column='tipo')
+    propietario = models.OneToOneField('Propietario', models.DO_NOTHING, db_column='propietario', blank=True, null=True)
+    recepcionista = models.OneToOneField('Recepcionista', models.DO_NOTHING, db_column='recepcionista', blank=True, null=True)
     veterinario = models.OneToOneField('Veterinario', models.DO_NOTHING, db_column='veterinario', blank=True, null=True)
-    administrador = models.OneToOneField(Administrador, models.DO_NOTHING, db_column='administrador', blank=True, null=True)
+    administrador = models.OneToOneField('Administrador', models.DO_NOTHING, db_column='administrador', blank=True, null=True)
     imagen = models.CharField(max_length=255, blank=True, null=True)
-    
     estado = models.ForeignKey('EdoUsuario', on_delete=models.DO_NOTHING, db_column='estado')
 
-
-    class Meta:
-        managed = False
-        db_table = 'usuario'
-
+    from django.db import models
     
+    # --- PROPIEDADES VIRTUALES ---
+    @property
+    def is_authenticated(self): return True
+    @property
+    def is_active(self): return True
+    @property
+    def is_anonymous(self): return False
+    @property
+    def is_superuser(self):
+        return str(self.tipo).lower().strip() == 'adm'
+    @property
+    def is_staff(self):
+        return self.is_superuser
+
+    def has_module_perms(self, app_label): return True
+    def has_perm(self, perm, obj=None): return True
+
+    # Evita que el ORM lo busque en la base de datos
+    last_login = None 
+
+    # --- INTERCEPTOR DE GUARDADO (De tu guía) ---
+    def save(self, *args, **kwargs):
+        update_fields = kwargs.get('update_fields')
+        if update_fields:
+            update_fields = list(update_fields)
+            if 'last_login' in update_fields:
+                update_fields.remove('last_login')
+            kwargs['update_fields'] = update_fields
+            if not kwargs['update_fields']:
+                return # Cancela si solo iba a guardar last_login
+        super().save(*args, **kwargs)
+
+    # --- LÓGICA DE NEGOCIO ---
     @property
     def nombre_real(self):
-        if self.tipo.codigo == 'VET' and self.veterinario:
+        # Usamos getattr para evitar errores si las relaciones están vacías
+        codigo = getattr(self.tipo, 'codigo', '').upper()
+
+        if codigo == 'VET' and self.veterinario:
             v = self.veterinario
             return f"{v.nombrepila} {v.primerapellido}"
 
-        if self.tipo.codigo == 'PRO' and self.propietario:
+        if codigo == 'PRO' and self.propietario:
             p = self.propietario
             return f"{p.nombrepila} {p.primerapellido}"
 
-        if self.tipo.codigo == 'REC' and self.recepcionista:
+        if codigo == 'REC' and self.recepcionista:
             r = self.recepcionista
-            return f"{r.nombrepila} {r.primerapellido} "
+            return f"{r.nombrepila} {r.primerapellido}"
 
-        if self.tipo.codigo == 'ADM' and self.administrador:
+        if codigo == 'ADM' and self.administrador:
             a = self.administrador
             return f"{a.nombrepila} {a.primerapellido}"
 
-        return ""
+        return "Usuario sin asignar"
+
+    class Meta:
+        managed = False  # No crea ni modifica la tabla en la BD
+        db_table = 'usuario'
 
 class Veterinario(models.Model):
     folio = models.CharField(primary_key=True, max_length=7)

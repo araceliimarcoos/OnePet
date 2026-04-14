@@ -215,9 +215,9 @@ function filtrarTabla() {
 
     filas.forEach(fila => {
         const texto = fila.innerText.toLowerCase();
-        const fEsp  = fila.getAttribute('data-especie') || '';
-        const fRaza = fila.getAttribute('data-raza')    || '';
-        const fEst  = texto.includes('activo') ? 'activo' : 'inactivo';
+        const fEsp  = fila.getAttribute('data-especie') || "";
+        const fRaza = fila.getAttribute('data-raza') || "";
+        const fEst = fila.getAttribute('data-estado') || "";
 
         const ok = texto.includes(busqueda) &&
                    (espEleg  === '' || fEsp  === espEleg) &&

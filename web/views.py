@@ -3,7 +3,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth import authenticate, login, logout
+from django.contrib import messages
 from django.utils import timezone
 from .models import Mascota, Propietario, Especie, Raza, Servicio, Medicamento, Usuario, Veterinario, Recepcionista, Administrador, Cita, Hospitalizacion, SignosVitales, Especialidad, Telefono, Pago, Expediente, Consulta, Receta, EdoCita, ServCons, ServHosp
 
@@ -17,12 +19,101 @@ from datetime import date, timedelta
 import re
 import json
 #........................................................................................................................................................
+# --- FUNCIONES DE VERIFICACIÓN DE ROLES ---
+
+# En web/views.py
+
+def es_admin(user):
+    # El decorador usa esta función. Si devuelve False, te manda al login.
+    if not user.is_authenticated:
+        return False
+    # Usamos la misma lógica que nos funcionó en el enrutador
+    rol = str(getattr(user.tipo, 'codigo', user.tipo)).lower().strip()
+    return rol == 'adm'
+
+def es_veterinario(user):   
+    if not user.is_authenticated: return False
+    rol = str(getattr(user.tipo, 'codigo', user.tipo)).lower().strip()
+    return rol == 'vet'
+
+def es_recepcionista(user):
+    if not user.is_authenticated: return False
+    rol = str(getattr(user.tipo, 'codigo', user.tipo)).lower().strip()
+    return rol in ['rep', 'recepcionista', 'rec']
+
+# --- VISTAS DE CONTROL DE ACCESO ---
+
+@login_required
+def enrutador_principal(request):
+    # 1. Debug: Imprime en la terminal qué está viendo Django exactamente
+    tipo_obj = request.user.tipo
+    # Intentamos obtener el código (ej: 'ADM') o el nombre (ej: 'Administrador')
+    # Ajusta esto según los campos de tu tabla TipoUsuario
+    rol_codigo = str(tipo_obj.codigo).lower().strip() if hasattr(tipo_obj, 'codigo') else str(tipo_obj).lower().strip()
+    
+    print(f"DEBUG: El rol detectado es: '{rol_codigo}'") # Mira esto en tu terminal
+
+    if rol_codigo == 'adm':
+        return redirect('admin_dashboard')
+    elif rol_codigo == 'vet':
+        return redirect('veterinario_dashboard')
+    elif rol_codigo in ['rep', 'recepcionista', 'rec']: # Agregamos 'rec' por si acaso
+        return redirect('recepcionista_dashboard')
+    else:
+        # Si entra aquí, es que 'rol_codigo' no es ninguno de los de arriba
+        print("DEBUG: Rol no reconocido, cerrando sesión...")
+        logout(request)
+        return redirect('login')
+
+# --- VISTAS DE DASHBOARDS (EJEMPLO) ---
+
+@login_required
+@user_passes_test(es_admin, login_url='login')
+def admin_dashboard(request):
+    return render(request, 'dashboard_admin.html')
+
+@login_required
+@user_passes_test(es_veterinario, login_url='login')
+def veterinario_dashboard(request):
+    return render(request, 'dashboard_vet.html')
+
+@login_required
+@user_passes_test(es_recepcionista, login_url='login')
+def recepcionista_dashboard(request):
+    return render(request, 'dashboard_rep.html')
+
+# --- VISTA DE LOGIN Y LOGOUT ---
+
+def login_view(request):
+    if request.method == 'POST':
+        u = request.POST.get('username')
+        p = request.POST.get('password')
+        
+        user = authenticate(request, username=u, password=p)
+        
+        if user is not None:
+            # Forzamos la asociación del backend antes del login
+            if not hasattr(user, 'backend'):
+                user.backend = 'web.backend.UsuarioBackend'
+            
+            login(request, user)
+            return redirect('enrutador_principal')
+        else:
+            return render(request, 'login.html', {'error': 'Credenciales inválidas'})
+            
+    return render(request, 'login.html')
+
+def logout_view(request):
+    logout(request)
+    return redirect('login')
 
 def inicio(request):
     """Página de inicio pública (landing page)."""
     if request.user.is_authenticated:
-        return redirect('dashboard')          # si ya inició sesión, ir directo al panel
+        return redirect('enrutador_principal')
     return render(request, 'inicio.html')
+#........................................................................................................................................................
+
 
 @login_required
 def api_citas(request):
@@ -55,11 +146,6 @@ from django.db.models import Prefetch
 
 from django.core.cache import cache
 
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
-from django.core.paginator import Paginator
-from django.core.cache import cache
-from .models import Mascota, Especie, Raza
 
 @login_required
 def mascotas(request):
@@ -74,11 +160,15 @@ def mascotas(request):
     # Usamos select_related para traer Propietario, Especie y Raza en UN SOLO viaje.
     # Usamos defer() para ignorar campos pesados que no están en la tabla.  
     mascotas_queryset = Mascota.objects.select_related(
-        'propietario', 'especie', 'raza'
+        'propietario', 'especie', 'raza', 'estado'
     ).defer(
         'alergias', 'caracunica', 'imagen', 'sexo', 'peso', 'color', 'fechanacimiento'
     ).order_by('-folio')
 
+    
+    estado_filtro = request.GET.get('estado')
+    if estado_filtro:
+        mascotas_queryset = mascotas_queryset.filter(estado__clave=estado_filtro)
 
     # 3. PAGINACIÓN: Manejo de errores y eficiencia.
     paginator = Paginator(mascotas_queryset, 15)
@@ -97,7 +187,8 @@ def mascotas(request):
         # Si las razas son demasiadas, limitamos a 100 para no matar la latencia.
         # Lo ideal sería que este filtro fuera dinámico por AJAX.
         'razas': Raza.objects.values('clave', 'nombre').order_by('nombre')[:100],
-        'total_conteo': paginator.count
+        'total_conteo': paginator.count,
+        'estado_actual': estado_filtro
     }
 
     return render(request, 'mascotas/mascotas_lista.html', contexto)

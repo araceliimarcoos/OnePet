@@ -95,7 +95,7 @@
                 <tbody id="citasBody">
                     {% for cita in citas %}
                     <tr data-estado="{{ cita.estado.nombre }}" data-fecha="{{ cita.fecha }}">
-                        <td><span class="folio-badge">#{{ cita.folio }}</span></td>
+                        <td><span class="folio-badge">{{ cita.folio }}</span></td>
                         <td>
                             <div class="fecha-cell">
                                 <span class="fecha-dia">{{ cita.fecha|date:"M d, Y" }}</span>
