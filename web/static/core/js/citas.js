@@ -117,6 +117,17 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         limpiarError(overlayNuevo);
 
+        const horaInput = document.getElementById('hora').value;
+        if (horaInput) {
+            const [horas, minutos] = horaInput.split(':').map(Number);
+
+            if (horas < 8 || horas > 19 || (horas === 19 && minutos > 30)) {
+                mostrarError(overlayNuevo, 'El horario de atención es 8:00 am a 7:30 pm');
+                mostrarError(overlayNuevo, 'El horario de atención es 8:00 am a 7:30 pm');
+                return;
+            }
+        }
+
         const btnGuardar    = formNuevo.querySelector('[type=submit]');
         const textoOriginal = btnGuardar.innerHTML;
         btnGuardar.disabled = true;
@@ -149,9 +160,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const overlayDetalles = document.getElementById('modalVerDetalles');
 
+    function badgeCita(estado) {
+        const map = {
+            'Atendida':  ['badge-confirmada', 'check_circle'],
+            'Pendiente': ['badge-en-curso',   'schedule'],
+            'Cancelada': ['badge-cancelada',  'cancel'],
+            'Pagada':    ['badge-pendiente',  'credit_card'],
+        };
+        const [cls, icon] = map[estado] ?? ['badge-en-curso', 'schedule'];
+        return `<span class="badge-cita ${cls}">
+                    <span class="material-symbols-outlined">${icon}</span>${estado}
+                </span>`;
+    }
+
     function abrirDetalles(d) {
         document.getElementById('det-folio').textContent       = `#${d.folio || '—'}`;
-        document.getElementById('det-estado').textContent      = d.estado      || '—';
+        document.getElementById('det-estado').innerHTML        = d.estado ? badgeCita(d.estado) : '—';
         document.getElementById('det-fecha').textContent       = d.fecha       || '—';
         document.getElementById('det-hora').textContent        = d.hora        || '—';
         document.getElementById('det-propietario').textContent = d.propietario || '—';
@@ -200,6 +224,16 @@ document.addEventListener('DOMContentLoaded', () => {
     formEditar?.addEventListener('submit', async (e) => {
     e.preventDefault();
     limpiarError(overlayEditar);
+
+    const horaInput = document.getElementById('hora').value;
+        if (horaInput) {
+            const [horas, minutos] = horaInput.split(':').map(Number);
+
+            if (horas < 8 || horas > 19 || (horas === 19 && minutos > 30)) {
+                mostrarError(overlayNuevo, 'El horario de atención es 8:00 am a 7:30 pm');
+                return;
+            }
+        }
 
     const folio         = document.getElementById('editar-folio').value;
     const btnGuardar    = formEditar.querySelector('[type=submit]');

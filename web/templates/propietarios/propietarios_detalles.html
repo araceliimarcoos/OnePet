@@ -393,18 +393,18 @@
 
     <!-- ===== TARJETA PRINCIPAL ===== --> 
     <div class="prop-header-card">
+        <div class="prop-foto-placeholder">
+            {{ propietario.nombrepila|slice:":1"|upper }}{{ propietario.primerapellido|slice:":1"|upper }}
+        </div>
 
-        <!-- Foto -->
-        <div class="prop-foto-placeholder">CRM</div>
-
-        <!-- Info -->
         <div class="prop-header-info">
-            <h1 class="prop-nombre">{{ propietario.nombrepila }} {{ propietario.primerapellido }} {{ propietario.segundoapellido }}</h1>
+            <h1 class="prop-nombre">
+                {{ propietario.nombrepila }} {{ propietario.primerapellido }} {{ propietario.segundoapellido }}
+            </h1>
             <div class="prop-meta">
                 <span class="material-symbols-outlined">badge</span>
                 FOLIO: {{ propietario.folio }}
             </div>
-
             <div class="prop-contacto-grid">
                 <div class="prop-contacto-item">
                     <div class="prop-contacto-label">Correo Electrónico</div>
@@ -416,30 +416,35 @@
                 </div>
                 <div class="prop-contacto-item">
                     <div class="prop-contacto-label">Teléfono Principal</div>
-                    <div class="prop-contacto-valor">{{ telefonos.numprincipal }}</div>
+                    <div class="prop-contacto-valor">{{ telefonos.numprincipal|default:"—" }}</div>
                 </div>
                 <div class="prop-contacto-item">
                     <div class="prop-contacto-label">Teléfono Secundario</div>
-                    <div class="prop-contacto-valor">
-                        {% if telefonos.numsecundario %}
-                        {{ telefonos.numsecundario }}
-                        {% else %}
-                        <span>No registrado</span>
-                        {% endif %}
-                    </div>
+                    <div class="prop-contacto-valor">{{ telefonos.numsecundario|default:"No registrado" }}</div>
                 </div>
             </div>
         </div>
 
-        <!-- Acciones -->
         <div class="prop-header-acciones">
-            <button class="btn-editar-perfil">Editar Perfil</button>
-            <button class="btn-primary">
+            <button class="btn-editar-perfil" id="btnEditarPerfil"
+                    data-folio="{{ propietario.folio }}"
+                    data-nombre="{{ propietario.nombrepila }}"
+                    data-ap="{{ propietario.primerapellido }}"
+                    data-am="{{ propietario.segundoapellido }}"
+                    data-correo="{{ propietario.correo }}"
+                    data-calle="{{ propietario.dircalle }}"
+                    data-num="{{ propietario.dirnum }}"
+                    data-colonia="{{ propietario.dircolonia }}"
+                    data-tel="{{ telefonos.numprincipal|default:'' }}"
+                    data-tel2="{{ telefonos.numsecundario|default:'' }}">
+                <span class="material-symbols-outlined" style="font-size:16px; vertical-align:middle; margin-right:4px;">edit</span>
+                Editar Perfil
+            </button>
+            <button class="btn-primary" id="btnNuevaMascota">
                 <span class="material-symbols-outlined">add_circle</span>
                 Nueva Mascota
             </button>
         </div>
-
     </div>
 
     <!-- ===== MASCOTAS REGISTRADAS ===== -->
@@ -451,81 +456,31 @@
                 {{ mascotas_count }} mascota(s) registrada(s)
             </div>
         </div>
-
         <div class="mascotas-grid">
             {% for mascota in mascotas %}
-            <!-- Mascota 1 -->
-            <div class="mascota-card">
-                <div class="mascota-card-top">
-                    <div class="mascota-foto-placeholder">
-                        <span class="material-symbols-outlined">pets</span>
+            <a href="{% url 'detalles_mascota' mascota.folio %}" style="text-decoration:none;">
+                <div class="mascota-card">
+                    <div class="mascota-card-top">
+                        <div class="mascota-foto-placeholder">
+                            <span class="material-symbols-outlined">pets</span>
+                        </div>
+                        <div>
+                            <span class="mascota-card-nombre">{{ mascota.nombre }}</span>
+                            <span class="mascota-card-especie">{{ mascota.especie.nombre }}</span>
+                            <span class="mascota-card-detalle">{{ mascota.raza.nombre }} • {{ mascota.edad_formateada }}</span>
+                        </div>
                     </div>
-                    <div>
-                        <span class="mascota-card-nombre">{{ mascota.nombre }}</span>
-                        <span class="mascota-card-especie">{{ mascota.especie.nombre }}</span>
-                        <span class="mascota-card-detalle">{{ mascota.raza.nombre }} • {{ mascota.edad }}</span>
+                    <div class="mascota-card-footer">
+                        <span class="badge-estado-mascota badge-saludable">{{ mascota.estado.nombre }}</span>
+                        <div class="mascota-arrow">
+                            <span class="material-symbols-outlined">arrow_forward</span>
+                        </div>
                     </div>
                 </div>
-                <div class="mascota-card-footer">
-                    <span class="badge-estado-mascota badge-saludable">Saludable</span>
-                    <div class="mascota-arrow">
-                        <span class="material-symbols-outlined">arrow_forward</span>
-                    </div>
-                </div>
-            </div>
-
+            </a>
+            {% empty %}
+            <p style="color:var(--text-muted); font-size:0.88rem;">Este propietario aún no tiene mascotas registradas.</p>
             {% endfor %}
-
-            <!-- Mascota 2 -->
-            <!-- 
-            <div class="mascota-card">
-                <div class="mascota-card-top">
-                    <div class="mascota-foto-placeholder" style="background:#fde8ff;">
-                        <span class="material-symbols-outlined" style="color:#9b4dc0;">pets</span>
-                    </div>
-                    <div>
-                        <span class="mascota-card-nombre">Luna</span>
-                        <span class="mascota-card-especie">Gato</span>
-                        <span class="mascota-card-detalle">Siamés • 2 años</span>
-                    </div>
-                </div>
-                <div class="mascota-card-footer">
-                    <span class="badge-estado-mascota badge-cita-proxima">Cita Próxima</span>
-                    <div class="mascota-arrow">
-                        <span class="material-symbols-outlined">arrow_forward</span>
-                    </div>
-                </div>
-            </div> -->
-
-            <!-- Mascota 3 
-            <div class="mascota-card">
-                <div class="mascota-card-top">
-                    <div class="mascota-foto-placeholder" style="background:#fff3d6;">
-                        <span class="material-symbols-outlined" style="color:var(--orange);">pets</span>
-                    </div>
-                    <div>
-                        <span class="mascota-card-nombre">Max</span>
-                        <span class="mascota-card-especie">Perro</span>
-                        <span class="mascota-card-detalle">Golden Retriever • 3 años</span>
-                    </div>
-                </div>
-                <div class="mascota-card-footer">
-                    <span class="badge-estado-mascota badge-tratamiento">Tratamiento Activo</span>
-                    <div class="mascota-arrow">
-                        <span class="material-symbols-outlined">arrow_forward</span>
-                    </div>
-                </div>
-            </div> -->
-
-            <!-- Tarjeta "Registrar Mascota" 
-            <div class="mascota-card-nueva">
-                <div class="plus-icon">
-                    <span class="material-symbols-outlined">add</span>
-                </div>
-                <span class="mascota-card-nueva-label">Registrar Mascota</span>
-                <span class="mascota-card-nueva-sub">Añadir nueva ficha médica</span>
-            </div> -->
-            
         </div>
     </div>
 
@@ -533,39 +488,248 @@
     <div class="visitas-section">
         <div class="section-header">
             <h2 class="section-title">Últimas Visitas</h2>
-            <a href="#" class="link-historial">Ver Historial Completo</a>
         </div>
 
         <table class="visitas-table">
             <thead>
                 <tr>
                     <th>Fecha</th>
+                    <th>Tipo</th>
                     <th>Mascota</th>
-                    <th>Motivo</th>
+                    <th>Motivo / Diagnóstico</th>
                     <th>Veterinario</th>
-                    <th>Acciones</th>
+                    <th>Estado</th>
+                    <th>ACCIONES</th>
                 </tr>
             </thead>
             <tbody>
-                {% for cita in citas %}
+                {% for v in visitas %}
                 <tr>
-                    <td>{{ cita.fecha|date:"M d, Y" }}</td>
-                    <td><strong>{{ cita.mascota.nombre }}</strong></td>
-                    <td>{{ cita.motivo }}</td>
-                    <td>{{ cita.veterinario.nombrepila }} {{ cita.veterinario.primerapellido }}</td>
+                    <td>{{ v.fecha|date:"M d, Y" }}</td>
                     <td>
-                        <a class="link-historial">Ver detalles</a>
+                        {% if v.tipo == 'consulta' %}
+                        <span style="display:flex; align-items:center; gap:5px; font-size:0.8rem; font-weight:600; color:var(--blue-dark);">
+                            <span class="material-symbols-outlined" style="font-size:15px;">stethoscope</span>
+                            Consulta
+                        </span>
+                        {% else %}
+                        <span style="display:flex; align-items:center; gap:5px; font-size:0.8rem; font-weight:600; color:var(--green-dark);">
+                            <span class="material-symbols-outlined" style="font-size:15px;">bed</span>
+                            Hospitalización
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td><strong>{{ v.mascota }}</strong></td>
+                    <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ v.motivo }}">
+                        {{ v.motivo }}
+                    </td>
+                    <td>{{ v.veterinario }}</td>
+                    <td>
+                        <span class="badge-cita
+                            {% if v.estado == 'Atendida' or v.estado == 'Alta' %}badge-confirmada
+                            {% elif v.estado == 'Hospitalizado' %}badge-en-curso
+                            {% else %}badge-pendiente{% endif %}">
+                            {{ v.estado }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{{ v.url }}" class="btn-ver-visita" title="Ver detalles" style="text-decoration:none;">
+                            <span class="material-symbols-outlined">arrow_forward</span>
+                        </a>
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="4">No hay citas registradas para esta mascota.</td>
+                    <td colspan="7" style="color:var(--text-muted); text-align:center; padding:24px;">
+                        No hay visitas registradas aún.
+                    </td>
                 </tr>
-
                 {% endfor %}
             </tbody>
         </table>
     </div>
-
 </div>
+
+<!-- ===== MODAL: EDITAR PROPIETARIO ===== -->
+<div class="modal-overlay" id="modalEditarPropietario">
+    <div class="modal-big">
+        <div class="modal-header">
+            <h2>Editar Propietario</h2>
+            <button class="modal-close" id="btnCerrarEditar" type="button">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <form id="formEditarPropietario">
+            {% csrf_token %}
+            <input type="hidden" id="editFolio" name="folio">
+            <div class="modal-body">
+                <div class="modal-section">
+                    <div class="modal-section-title"><span>Información General</span></div>
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label>Nombre(s)</label>
+                            <input type="text" id="editNombre" name="nombre" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Apellido Paterno</label>
+                            <input type="text" id="editApellidoP" name="apellido_paterno" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Apellido Materno</label>
+                            <input type="text" id="editApellidoM" name="apellido_materno">
+                        </div>
+                    </div>
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label>Correo Electrónico</label>
+                            <input type="email" id="editCorreo" name="correo" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Teléfono Principal</label>
+                            <input type="tel" id="editTel" name="tel_principal" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Teléfono Secundario</label>
+                            <input type="tel" id="editTel2" name="tel_secundario">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-section">
+                    <div class="modal-section-title"><span>Dirección</span></div>
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label>Calle</label>
+                            <input type="text" id="editCalle" name="calle">
+                        </div>
+                        <div class="form-group">
+                            <label>Número</label>
+                            <input type="text" id="editNum" name="numero">
+                        </div>
+                        <div class="form-group">
+                            <label>Colonia</label>
+                            <input type="text" id="editColonia" name="colonia">
+                        </div>
+                    </div>
+                </div>
+                <div id="editError" style="display:none; color:var(--red); font-size:0.85rem; margin-top:8px; padding:10px; background:#fde8e8; border-radius:var(--radius-sm);"></div>
+            </div>
+            <div class="modal-footer-full">
+                <button type="button" class="btn-cancelar" id="btnCancelarEditar">Cancelar</button>
+                <button type="submit" class="btn-primary">
+                    <span class="material-symbols-outlined">save</span>
+                    Guardar Cambios
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ===== MODAL: NUEVA MASCOTA ===== -->
+<div class="modal-overlay" id="modalNuevaMascota">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>Nueva Mascota</h2>
+            <button class="modal-close" id="btnCerrarMascota" type="button">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <form id="formNuevaMascota">
+            {% csrf_token %}
+            <div class="modal-body">
+
+                <div class="form-group">
+                    <label>Folio Único</label>
+                    <input type="text" class="folio-input" id="folioMascotaAuto" name="folio" readonly tabindex="-1" value="Cargando...">
+                </div>
+
+                <!-- Propietario pre-cargado (no editable) -->
+                <input type="hidden" name="propietario" value="{{ propietario.folio }}">
+                <div class="form-group">
+                    <label>Propietario</label>
+                    <input type="text" value="{{ propietario.nombrepila }} {{ propietario.primerapellido }}" readonly tabindex="-1" style="background:var(--bg); color:var(--text-muted);">
+                </div>
+
+                <div class="modal-section">
+                    <div class="modal-section-title"><span>Información General</span></div>
+
+                    <div class="form-group">
+                        <label>Nombre</label>
+                        <input type="text" name="nombre" id="mascNombre" placeholder="Buddy" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Especie</label>
+                            <select name="especie" id="mascEspecie" required>
+                                <option value="">Seleccionar...</option>
+                                {% for e in especies %}
+                                    <option value="{{ e.clave }}">{{ e.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Raza</label>
+                            <select name="raza" id="mascRaza" required>
+                                <option value="">— Selecciona una especie —</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Fecha de Nacimiento</label>
+                            <input type="date" name="fechanacimiento" id="mascFecha" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Sexo</label>
+                            <select name="sexo" id="mascSexo" required>
+                                <option value="M">Macho</option>
+                                <option value="H">Hembra</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Peso (kg)</label>
+                            <input type="number" step="0.1" name="peso" placeholder="0.0" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Color</label>
+                            <input type="text" name="color" placeholder="Café claro" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Característica única</label>
+                        <input type="text" name="caracunica" placeholder="Ej: Mancha en el ojo">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Alergia(s)</label>
+                        <input type="text" name="alergias" placeholder="Ninguna">
+                    </div>
+                </div>
+
+                <div id="mascError" style="display:none; color:var(--red); font-size:0.85rem; margin-top:8px; padding:10px; background:#fde8e8; border-radius:var(--radius-sm);"></div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-cancelar" id="btnCancelarMascota">Cancelar</button>
+                <button type="submit" class="btn-primary" id="btnGuardarMascota">
+                    <span class="material-symbols-outlined">save</span>
+                    Guardar Mascota
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container" style="position:fixed; bottom:24px; right:24px; z-index:9999; display:flex; flex-direction:column; gap:10px;"></div>
+
+{% endblock %}
+
+{% block scripts %}
+    <script src="{% static 'core/js/propietario_detalles.js' %}"></script>
 {% endblock %}

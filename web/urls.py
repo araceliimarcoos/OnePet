@@ -29,6 +29,7 @@ urlpatterns = [
     path('mascotas/perfiles/<str:folio>/', views.detalles_mascota, name='detalles_mascota'), 
     path('propietarios/perfiles/<str:folio>/', views.propietarios_detalles, name='detalles_propietario'),
     
+    
     path('propietarios/', views.propietarios, name='propietarios'),
     
     path('citas/', views.citas, name='citas'),
@@ -83,8 +84,8 @@ urlpatterns = [
     
     path('propietarios/nuevo/', views.nuevo_propietario, name='nuevo_propietario'), #Este es del modal
     path('propietarios/folio/', views.obtener_folio, name='obtener_folio'),#Este obtiene el folio
-    path('propietarios/crear/', views.crear_propietario, name='crear_propietario')#Este es para crear uno nuevo
-    
+    path('propietarios/crear/', views.crear_propietario, name='crear_propietario'),#Este es para crear uno nuevo
+    path('propietarios/<str:folio>/editar/', views.editar_propietario, name='editar_propietario'),
     
 
 ]

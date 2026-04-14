@@ -40,406 +40,220 @@
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
 
-/* ===== AGENDA ===== */
-.agenda-layout {
-    display: grid;
-    grid-template-columns: 240px 1fr;
-    gap: 0;
-    height: calc(100vh - 220px);
-    min-height: 600px;
+/* ===== AGENDA — LISTA DE CITAS ===== */
+.agenda-wrap {
     background: var(--surface);
-    border-radius: 0 0 var(--radius) var(--radius);
-    overflow: hidden;
     border: 1px solid var(--border);
     border-top: none;
+    border-radius: 0 0 var(--radius) var(--radius);
+    padding: 24px;
 }
 
-/* --- Sidebar de la agenda --- */
-.agenda-sidebar {
-    background: var(--surface);
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-}
-
-.agenda-nueva-cita {
-    padding: 16px;
-    border-bottom: 1px solid var(--border);
-}
-
-.btn-nueva-cita {
-    width: 100%;
-    padding: 11px 16px;
-    background: var(--blue-dark);
-    color: #fff;
-    border: none;
-    border-radius: var(--radius-sm);
-    font-family: 'Manrope', sans-serif;
-    font-size: 0.88rem;
-    font-weight: 700;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    transition: background 0.2s;
-}
-.btn-nueva-cita:hover { background: var(--green); }
-.btn-nueva-cita .material-symbols-outlined { font-size: 18px !important; }
-
-.agenda-sidebar-section {
-    padding: 16px;
-    border-bottom: 1px solid var(--border);
-}
-
-.agenda-sidebar-label {
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: var(--text-muted);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    margin-bottom: 10px;
-}
-
-/* Veterinarios */
-.vet-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 7px 8px;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: background 0.15s;
-    margin-bottom: 2px;
-}
-.vet-item:hover { background: var(--bg); }
-
-.vet-avatar {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    object-fit: cover;
-    flex-shrink: 0;
-    background: var(--blue-light);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 0.8rem;
-    color: var(--blue-dark);
-}
-
-.vet-info { flex: 1; }
-.vet-name { font-size: 0.85rem; font-weight: 700; color: var(--text); display: block; }
-.vet-role { font-size: 0.75rem; color: var(--text-muted); display: block; }
-
-.vet-check {
-    width: 20px;
-    height: 20px;
-    border-radius: 5px;
-    background: var(--blue-dark);
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-.vet-check .material-symbols-outlined { font-size: 14px !important; color: #fff; }
-
-/* Categorías */
-.categoria-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--text);
-    padding: 4px 0;
-}
-.cat-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-
-/* Estatus de clínica */
-.clinic-status-box {
-    background: var(--bg);
-    border-radius: var(--radius-sm);
-    padding: 12px;
-}
-.clinic-status-title {
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: var(--text);
-    margin-bottom: 4px;
-}
-.clinic-status-sub {
-    font-size: 0.78rem;
-    color: var(--text-muted);
-    margin-bottom: 8px;
-}
-.clinic-status-bar {
-    height: 6px;
-    background: var(--border);
-    border-radius: 10px;
-    overflow: hidden;
-}
-.clinic-status-fill {
-    height: 100%;
-    width: 60%;
-    background: var(--green);
-    border-radius: 10px;
-}
-
-/* --- Cuerpo del calendario --- */
-.agenda-calendar {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-/* Toolbar del calendario */
-.cal-toolbar {
+/* Toolbar superior */
+.agenda-toolbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 20px;
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
     gap: 12px;
     flex-wrap: wrap;
+    margin-bottom: 20px;
 }
 
-.cal-nav {
+.agenda-toolbar-left {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
 }
 
-.cal-nav-title {
+.agenda-title {
     font-size: 1rem;
     font-weight: 700;
     color: var(--text);
-    min-width: 180px;
 }
 
-.cal-btn {
-    width: 30px;
-    height: 30px;
+.agenda-badge {
+    background: var(--blue-light);
+    color: var(--blue-dark);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 2px 9px;
+    border-radius: 20px;
+}
+
+.agenda-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg);
     border: 1px solid var(--border);
-    background: var(--surface);
-    border-radius: 7px;
+    border-radius: var(--radius-sm);
+    padding: 7px 12px;
+    min-width: 220px;
+}
+.agenda-search .material-symbols-outlined { font-size: 17px !important; color: var(--text-muted); }
+.agenda-search input {
+    border: none;
+    background: none;
+    font-family: 'Manrope', sans-serif;
+    font-size: 0.85rem;
+    color: var(--text);
+    outline: none;
+    width: 100%;
+}
+.agenda-search input::placeholder { color: var(--text-muted); }
+
+/* Grupos por veterinario */
+.vet-group {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    margin-bottom: 14px;
+}
+
+.vet-group-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
     cursor: pointer;
+    user-select: none;
+}
+.vet-group-header:hover { background: #eef5f8; }
+
+.vet-group-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--blue-light);
+    color: var(--blue-dark);
+    font-size: 0.82rem;
+    font-weight: 800;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-muted);
-    transition: background 0.15s;
+    flex-shrink: 0;
 }
-.cal-btn:hover { background: var(--bg); color: var(--text); }
-.cal-btn .material-symbols-outlined { font-size: 16px !important; }
 
-.cal-hoy {
-    padding: 6px 14px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    border-radius: 7px;
-    font-family: 'Manrope', sans-serif;
-    font-size: 0.82rem;
-    font-weight: 700;
-    color: var(--text);
-    cursor: pointer;
-    transition: background 0.15s;
-}
-.cal-hoy:hover { background: var(--bg); }
+.vet-group-info { flex: 1; }
+.vet-group-name { font-size: 0.9rem; font-weight: 700; color: var(--text); display: block; }
+.vet-group-esp  { font-size: 0.75rem; color: var(--text-muted); display: block; }
 
-.cal-view-btns {
-    display: flex;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    overflow: hidden;
-}
-.cal-view-btn {
-    padding: 6px 14px;
-    border: none;
-    background: var(--surface);
-    font-family: 'Manrope', sans-serif;
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: var(--text-muted);
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s;
-    border-right: 1px solid var(--border);
-}
-.cal-view-btn:last-child { border-right: none; }
-.cal-view-btn.active {
+.vet-group-count {
     background: var(--blue-dark);
     color: #fff;
-    font-weight: 700;
-}
-
-/* Grid del calendario */
-.cal-grid-wrapper {
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: auto;
-}
-
-.cal-grid {
-    display: grid;
-    grid-template-columns: 70px repeat(7, 1fr);
-    min-width: 700px;
-}
-
-/* Encabezados de días */
-.cal-header-row {
-    display: contents;
-}
-
-.cal-header-cell {
-    padding: 10px 8px;
-    text-align: center;
-    border-bottom: 1px solid var(--border);
-    border-right: 1px solid var(--border);
-    background: var(--bg);
-    position: sticky;
-    top: 0;
-    z-index: 2;
-}
-.cal-header-cell:first-child {
-    font-size: 0.72rem;
-    color: var(--text-muted);
-    font-weight: 600;
-}
-.cal-day-name {
     font-size: 0.72rem;
     font-weight: 700;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    display: block;
-}
-.cal-day-num {
-    font-size: 1.1rem;
-    font-weight: 800;
-    color: var(--text);
-    display: block;
-    margin-top: 2px;
-}
-.cal-header-cell.today .cal-day-num {
-    color: var(--blue-dark);
-}
-.cal-header-cell.today .cal-day-name {
-    color: var(--blue-dark);
-}
-
-/* Filas de horas */
-.cal-time-cell {
-    padding: 0 8px;
-    height: 60px;
-    border-bottom: 1px solid var(--border);
-    border-right: 1px solid var(--border);
-    display: flex;
-    align-items: flex-start;
-    padding-top: 6px;
-    font-size: 0.72rem;
-    color: var(--text-muted);
-    font-weight: 600;
+    padding: 2px 9px;
+    border-radius: 20px;
     white-space: nowrap;
-    background: var(--surface);
-    position: sticky;
-    left: 0;
-    z-index: 1;
+}
+.vet-group-count.zero {
+    background: var(--border);
+    color: var(--text-muted);
 }
 
-.cal-slot {
-    height: 60px;
-    border-bottom: 1px solid var(--border);
-    border-right: 1px solid var(--border);
-    padding: 3px;
-    position: relative;
-    background: var(--surface);
-    transition: background 0.1s;
+.vet-group-chevron {
+    font-size: 18px !important;
+    color: var(--text-muted);
+    transition: transform 0.2s;
 }
-.cal-slot:hover { background: #f8fcfe; }
+.vet-group.collapsed .vet-group-chevron { transform: rotate(-90deg); }
 
-/* Línea de hora actual */
-.cal-now-line {
-    position: absolute;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: var(--blue-dark);
-    z-index: 3;
-    pointer-events: none;
-}
-.cal-now-line::before {
-    content: '';
-    position: absolute;
-    left: -4px;
-    top: -4px;
-    width: 10px;
-    height: 10px;
-    background: var(--blue-dark);
-    border-radius: 50%;
-}
+/* Tabla de citas dentro de cada grupo */
+.citas-table-wrap { overflow-x: auto; }
 
-/* Eventos del calendario */
-.cal-event {
-    border-radius: 6px;
-    padding: 5px 8px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    cursor: pointer;
-    overflow: hidden;
-    height: calc(100% - 4px);
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-    transition: filter 0.15s;
-    border-left: 3px solid;
+.citas-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.84rem;
 }
-.cal-event:hover { filter: brightness(0.95); }
-
-.cal-event.green {
-    background: var(--green-light);
-    border-left-color: var(--green);
-    color: var(--green-dark);
-}
-.cal-event.blue {
-    background: var(--blue-light);
-    border-left-color: var(--blue-dark);
-    color: #1a6b82;
-}
-.cal-event.canceled {
-    background: #f5f5f5;
-    border-left-color: #ccc;
-    color: #aaa;
-    text-decoration: line-through;
-}
-
-.cal-event-title { font-weight: 700; line-height: 1.2; }
-.cal-event-sub { font-weight: 500; opacity: 0.85; font-size: 0.72rem; }
-.cal-event-time { font-size: 0.7rem; opacity: 0.75; display: flex; align-items: center; gap: 2px; }
-.cal-event-time .material-symbols-outlined { font-size: 11px !important; }
-
-.cal-closed {
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
+.citas-table thead th {
+    padding: 9px 14px;
     font-size: 0.7rem;
     font-weight: 700;
     color: var(--text-muted);
-    letter-spacing: 0.1em;
     text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    background: var(--surface);
+    white-space: nowrap;
+}
+.citas-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.12s;
+}
+.citas-table tbody tr:last-child { border-bottom: none; }
+.citas-table tbody tr:hover { background: var(--bg); }
+
+.citas-table td {
+    padding: 11px 14px;
+    color: var(--text);
+    vertical-align: middle;
+}
+
+.cita-mascota-name { font-weight: 700; display: block; }
+.cita-propietario  { font-size: 0.78rem; color: var(--text-muted); display: block; }
+
+.cita-hora {
     display: flex;
     align-items: center;
-    justify-content: center;
-    height: 100%;
-    opacity: 0.5;
+    gap: 4px;
+    font-weight: 600;
+    white-space: nowrap;
 }
+.cita-hora .material-symbols-outlined { font-size: 14px !important; color: var(--text-muted); }
+
+.cita-fecha {
+    white-space: nowrap;
+    font-weight: 600;
+}
+
+/* Badge de estado */
+.estado-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.73rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+.estado-badge.pendiente  { background: #fff8e1; color: #b7791f; }
+.estado-badge.confirmada { background: var(--blue-light); color: var(--blue-dark); }
+.estado-badge.atendida   { background: var(--green-light); color: var(--green-dark); }
+.estado-badge.cancelada  { background: #fff0f0; color: #c0392b; }
+
+/* Estado vacío por vet */
+.citas-empty {
+    padding: 20px 16px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.84rem;
+}
+.citas-empty .material-symbols-outlined {
+    font-size: 28px !important;
+    display: block;
+    margin-bottom: 6px;
+    opacity: 0.4;
+}
+
+/* Estado vacío global */
+.agenda-empty-global {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+}
+.agenda-empty-global .material-symbols-outlined {
+    font-size: 48px !important;
+    display: block;
+    margin-bottom: 12px;
+    opacity: 0.3;
+}
+.agenda-empty-global p { font-size: 0.9rem; }
 </style>
 {% endblock %}
 
@@ -655,93 +469,50 @@
 
     <!-- ===== TAB: AGENDA ===== -->
     <div class="tab-panel" id="tab-agenda">
-        <div class="agenda-layout">
+        <div class="agenda-wrap">
 
-            <!-- Sidebar izquierdo -->
-            <div class="agenda-sidebar">
-
-                <div class="agenda-nueva-cita">
-                    <button class="btn-nueva-cita">
-                        <span class="material-symbols-outlined">add</span>
-                        Nueva Cita
-                    </button>
+            <!-- Toolbar -->
+            <div class="agenda-toolbar">
+                <div class="agenda-toolbar-left">
+                    <span class="agenda-title">Citas Pendientes</span>
+                    <span class="agenda-badge" id="agendaBadge">0</span>
                 </div>
+                <div class="agenda-search">
+                    <span class="material-symbols-outlined">search</span>
+                    <input type="text" id="agendaSearch" placeholder="Buscar mascota, propietario...">
+                </div>
+            </div>
 
-                <!-- Veterinarios -->
-                <div class="agenda-sidebar-section">
-                    <p class="agenda-sidebar-label">Veterinarios</p>
-                    {% for v in veterinarios %}
-                    <div class="vet-item" data-vet="{{ v.folio }}" onclick="toggleVet(this)">
-                        <div class="vet-avatar">
+            <!-- Lista agrupada por veterinario -->
+            <div id="agendaLista">
+                {% for v in veterinarios %}
+                <div class="vet-group" id="grupo-{{ v.folio }}" data-folio="{{ v.folio }}">
+                    <div class="vet-group-header" onclick="toggleGrupo(this)">
+                        <div class="vet-group-avatar">
                             {{ v.nombrepila|slice:":1"|upper }}{{ v.primerapellido|slice:":1"|upper }}
                         </div>
-                        <div class="vet-info">
-                            <span class="vet-name">{{ v.nombrepila }} {{ v.primerapellido }}</span>
-                            <span class="vet-role">{{ v.especialidad.nombre }}</span>
+                        <div class="vet-group-info">
+                            <span class="vet-group-name">{{ v.nombrepila }} {{ v.primerapellido }}</span>
+                            <span class="vet-group-esp">{{ v.especialidad.nombre }}</span>
                         </div>
-                        <div class="vet-check vet-check-active">
-                            <span class="material-symbols-outlined">check</span>
-                        </div>
+                        <span class="vet-group-count zero" id="count-{{ v.folio }}">0 citas</span>
+                        <span class="material-symbols-outlined vet-group-chevron">expand_more</span>
                     </div>
-                    {% endfor %}
-                </div>
-
-                <!-- Categorías -->
-                <div class="agenda-sidebar-section">
-                    <p class="agenda-sidebar-label">Categorías</p>
-                    <div class="categoria-item">
-                        <span class="cat-dot" style="background: var(--green);"></span>
-                        Revisión
-                    </div>
-                    <div class="categoria-item" style="margin-top: 6px;">
-                        <span class="cat-dot" style="background: var(--blue-dark);"></span>
-                        Cirugía
-                    </div>
-                </div>
-
-                <!-- Estatus clínica -->
-                <div class="agenda-sidebar-section">
-                    <div class="clinic-status-box">
-                        <p class="clinic-status-title">Estatus de la Clínica</p>
-                        <p class="clinic-status-sub">Hoy está lleno</p>
-                        <div class="clinic-status-bar">
-                            <div class="clinic-status-fill"></div>
+                    <div class="vet-group-body" id="body-{{ v.folio }}">
+                        <div class="citas-empty">
+                            <span class="material-symbols-outlined">event_busy</span>
+                            Sin citas pendientes
                         </div>
                     </div>
                 </div>
-
+                {% empty %}
+                <div class="agenda-empty-global">
+                    <span class="material-symbols-outlined">person_off</span>
+                    <p>No hay veterinarios registrados.</p>
+                </div>
+                {% endfor %}
             </div>
 
-            <!-- Calendario semanal -->
-            <div class="agenda-calendar">
-
-                <!-- Toolbar -->
-                <div class="cal-toolbar">
-                    <div class="cal-nav">
-                        <button class="cal-btn" id="prevWeek">
-                            <span class="material-symbols-outlined">chevron_left</span>
-                        </button>
-                        <span class="cal-nav-title" id="weekTitle">Oct 14 – Oct 20, 2023</span>
-                        <button class="cal-btn" id="nextWeek">
-                            <span class="material-symbols-outlined">chevron_right</span>
-                        </button>
-                        <button class="cal-hoy" id="todayBtn">Hoy</button>
-                    </div>
-                    <div class="cal-view-btns">
-                        <button class="cal-view-btn">Día</button>
-                        <button class="cal-view-btn active">Semana</button>
-                        <button class="cal-view-btn">Mes</button>
-                    </div>
-                </div>
-
-                <!-- Grid -->
-                <div class="cal-grid-wrapper">
-                    <div class="cal-grid" id="calGrid">
-                        <!-- Se genera con JS -->
-                    </div>
-                </div>
-
-            </div>
         </div>
     </div>
 
@@ -1059,7 +830,7 @@ pageTabs.forEach(btn => {
         tabPanels.forEach(p => p.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
-        if (btn.dataset.tab === 'agenda') renderCalendar();
+        if (btn.dataset.tab === 'agenda') renderAgenda();
     });
 });
  
@@ -1080,156 +851,123 @@ document.getElementById('espSearch')?.addEventListener('input', function() {
 });
  
 // ── AGENDA ────────────────────────────────────────────────────────────────────
+// ── AGENDA — LISTA DE CITAS PENDIENTES ───────────────────────────────────────
 const CITAS_DATA = JSON.parse(document.getElementById('citas-data')?.textContent || '[]');
-const HORAS = ['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00'];
-const DIAS  = ['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'];
- 
-let weekOffset  = 0;
-let vetsActivos = new Set();
- 
-// Calcula el lunes de la semana actual en el cliente (sin depender de Django)
-function getLunesActual() {
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-    const dia = hoy.getDay(); // 0=Dom, 1=Lun...
-    const diff = dia === 0 ? -6 : 1 - dia;
-    hoy.setDate(hoy.getDate() + diff);
-    return hoy;
-}
-const LUNES_BASE = getLunesActual();
- 
-function getWeekDates(offset) {
-    return Array.from({ length: 7 }, (_, i) => {
-        const d = new Date(LUNES_BASE);
-        d.setDate(LUNES_BASE.getDate() + offset * 7 + i);
-        return d;
+
+// Construir la tabla de citas de cada veterinario al entrar al tab
+function renderAgenda() {
+    const pendientes = CITAS_DATA.filter(c => c.estado !== 'Atendida' && c.estado !== 'Cancelada');
+
+    // Actualizar badge global
+    document.getElementById('agendaBadge').textContent =
+        pendientes.length + ' cita' + (pendientes.length !== 1 ? 's' : '');
+
+    // Agrupar por veterinario
+    const porVet = {};
+    pendientes.forEach(c => {
+        if (!porVet[c.veterinario]) porVet[c.veterinario] = [];
+        porVet[c.veterinario].push(c);
+    });
+
+    // Rellenar cada grupo
+    document.querySelectorAll('.vet-group').forEach(grupo => {
+        const folio  = grupo.dataset.folio;
+        const body   = document.getElementById('body-' + folio);
+        const countEl = document.getElementById('count-' + folio);
+        const citas  = porVet[folio] || [];
+
+        // Actualizar badge del vet
+        countEl.textContent = citas.length + ' cita' + (citas.length !== 1 ? 's' : '');
+        countEl.classList.toggle('zero', citas.length === 0);
+
+        if (citas.length === 0) {
+            body.innerHTML = `
+                <div class="citas-empty">
+                    <span class="material-symbols-outlined">event_busy</span>
+                    Sin citas pendientes
+                </div>`;
+            return;
+        }
+
+        // Ordenar por fecha y hora
+        citas.sort((a, b) => a.dia - b.dia || a.hora - b.hora);
+
+        const DIAS_ES = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+
+        const filas = citas.map(c => {
+            const estadoClass = {
+                'Pendiente':  'pendiente',
+                'Confirmada': 'confirmada',
+                'Atendida':   'atendida',
+                'Cancelada':  'cancelada',
+            }[c.estado] || 'pendiente';
+
+            return `
+            <tr>
+                <td>
+                    <span class="cita-mascota-name">${c.titulo}</span>
+                </td>
+                <td>
+                    <span class="cita-propietario">${c.sub}</span>
+                </td>
+                <td>
+                    <span class="cita-fecha">${DIAS_ES[c.dia] ?? '—'}</span>
+                </td>
+                <td>
+                    <span class="cita-hora">
+                        <span class="material-symbols-outlined">schedule</span>
+                        ${c.tiempo}
+                    </span>
+                </td>
+                <td>
+                    <span class="estado-badge ${estadoClass}">${c.estado}</span>
+                </td>
+            </tr>`;
+        }).join('');
+
+        body.innerHTML = `
+            <div class="citas-table-wrap">
+                <table class="citas-table">
+                    <thead>
+                        <tr>
+                            <th>Mascota</th>
+                            <th>Motivo · Propietario</th>
+                            <th>Día</th>
+                            <th>Hora</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>${filas}</tbody>
+                </table>
+            </div>`;
     });
 }
- 
-function formatWeekTitle(days) {
-    const s = days[0].toLocaleDateString('es-MX', { month: 'short', day: 'numeric' });
-    const e = days[6].toLocaleDateString('es-MX', { month: 'short', day: 'numeric', year: 'numeric' });
-    return `${s} – ${e}`;
+
+// Colapsar / expandir grupos
+function toggleGrupo(header) {
+    const grupo = header.closest('.vet-group');
+    grupo.classList.toggle('collapsed');
+    const body = grupo.querySelector('.vet-group-body');
+    body.style.display = grupo.classList.contains('collapsed') ? 'none' : '';
 }
- 
-function colorEvento(estado) {
-    if (estado === 'Cancelada') return 'canceled';
-    if (estado === 'Atendida')  return 'green';
-    return 'blue';
-}
- 
-// Inicializar vets activos desde el sidebar
-document.querySelectorAll('.vet-item[data-vet]').forEach(el => {
-    vetsActivos.add(el.dataset.vet);
+
+// Búsqueda en tiempo real
+document.getElementById('agendaSearch')?.addEventListener('input', function () {
+    const q = this.value.toLowerCase();
+    document.querySelectorAll('.vet-group').forEach(grupo => {
+        let hayCoincidencia = false;
+        grupo.querySelectorAll('tbody tr').forEach(row => {
+            const match = row.textContent.toLowerCase().includes(q);
+            row.style.display = match ? '' : 'none';
+            if (match) hayCoincidencia = true;
+        });
+        // Si hay búsqueda, expandir grupos con resultados
+        if (q) {
+            const body = grupo.querySelector('.vet-group-body');
+            body.style.display = '';
+            grupo.classList.remove('collapsed');
+        }
+    });
 });
- 
-function toggleVet(el) {
-    const folio = el.dataset.vet;
-    const check = el.querySelector('.vet-check');
-    if (vetsActivos.has(folio)) {
-        vetsActivos.delete(folio);
-        check.style.opacity = '0.3';
-    } else {
-        vetsActivos.add(folio);
-        check.style.opacity = '1';
-    }
-    renderCalendar();
-}
- 
-function renderCalendar() {
-    const grid  = document.getElementById('calGrid');
-    if (!grid) return;
-    const days  = getWeekDates(weekOffset);
-    const today = new Date();
-    today.setHours(0,0,0,0);
-    grid.innerHTML = '';
- 
-    // Filtrar citas según la semana visible y vets activos
-    const lunesOffset = new Date(LUNES_BASE);
-    lunesOffset.setDate(LUNES_BASE.getDate() + weekOffset * 7);
- 
-    const citas = CITAS_DATA.filter(c => {
-        const activo = vetsActivos.size === 0 || vetsActivos.has(c.veterinario);
-        return activo;
-    });
- 
-    // Lookup [dia][hora] = cita (solo aplica para semana actual, offset=0)
-    const lookup = {};
-    if (weekOffset === 0) {
-        citas.forEach(c => {
-            if (!lookup[c.dia]) lookup[c.dia] = {};
-            lookup[c.dia][c.hora] = c;
-        });
-    }
- 
-    // ── Encabezado ──────────────────────────────────────────────────────────
- 
-    // Celda GMT
-    const gmtCell = document.createElement('div');
-    gmtCell.className = 'cal-header-cell';
-    gmtCell.innerHTML = '<span style="font-size:0.7rem;color:var(--text-muted);font-weight:600;">GMT-7</span>';
-    grid.appendChild(gmtCell);
- 
-    days.forEach((d, i) => {
-        const isToday = d.getTime() === today.getTime();
-        const cell = document.createElement('div');
-        cell.className = 'cal-header-cell' + (isToday ? ' today' : '');
-        cell.innerHTML = `<span class="cal-day-name">${DIAS[i]}</span><span class="cal-day-num">${d.getDate()}</span>`;
-        grid.appendChild(cell);
-    });
- 
-    // ── Filas de horas ───────────────────────────────────────────────────────
-    // El grid tiene 8 columnas: 1 tiempo + 7 días.
-    // IMPORTANTE: siempre hay que añadir exactamente 8 celdas por fila.
- 
-    HORAS.forEach((hora, hi) => {
-        // Celda de tiempo
-        const timeCell = document.createElement('div');
-        timeCell.className = 'cal-time-cell';
-        timeCell.textContent = hora;
-        grid.appendChild(timeCell);
- 
-        days.forEach((d, di) => {
-            const slot = document.createElement('div');
-            slot.className = 'cal-slot';
- 
-            if (di === 6) {
-                // Domingo — cerrar clínica
-                if (hi === 0) {
-                    // Solo en la primera hora hacemos el span visual
-                    slot.style.gridRow = `span ${HORAS.length}`;
-                    slot.innerHTML = `<div class="cal-closed">CLÍNICA CERRADA</div>`;
-                } else {
-                    // Las demás horas del domingo: celda invisible que mantiene el grid
-                    slot.style.visibility = 'hidden';
-                }
-                grid.appendChild(slot); // SIEMPRE se añade para mantener alineación
-                return;
-            }
- 
-            const ev = lookup[di]?.[hi];
-            if (ev) {
-                const color = colorEvento(ev.estado);
-                slot.innerHTML = `
-                    <div class="cal-event ${color}">
-                        <span class="cal-event-title">${ev.titulo}</span>
-                        <span class="cal-event-sub">${ev.sub}</span>
-                        <span class="cal-event-time">
-                            <span class="material-symbols-outlined">schedule</span>${ev.tiempo}
-                        </span>
-                    </div>`;
-            }
- 
-            grid.appendChild(slot);
-        });
-    });
- 
-    document.getElementById('weekTitle').textContent = formatWeekTitle(days);
-}
- 
-// Navegación de semanas
-document.getElementById('prevWeek')?.addEventListener('click', () => { weekOffset--; renderCalendar(); });
-document.getElementById('nextWeek')?.addEventListener('click', () => { weekOffset++; renderCalendar(); });
-document.getElementById('todayBtn')?.addEventListener('click', () => { weekOffset = 0; renderCalendar(); });
 </script>
 {% endblock %}

@@ -200,6 +200,8 @@ def detalles_mascota(request, folio):
         folio=folio
     )
     telefonos = Telefono.objects.filter(propietario=mascota.propietario).first()
+    expediente = Expediente.objects.filter(mascota=mascota).first()
+    
     hoy = timezone.now().date()
     anios = hoy.year - mascota.fechanacimiento.year
     meses = hoy.month - mascota.fechanacimiento.month
@@ -214,20 +216,72 @@ def detalles_mascota(request, folio):
     else:
         mascota.edad = f"{anios} año{'s' if anios != 1 else ''}"
 
-    # Expediente y historial
-    expediente = Expediente.objects.filter(mascota=mascota).first()
     consultas = []
+    hospitalizaciones = []
+    recetas = []
+    
     if expediente:
         consultas = Consulta.objects.filter(
             expediente=expediente
-        ).select_related('cita__veterinario').order_by('-numero')
+        ).select_related('cita__veterinario', 'cita__estado').order_by('-cita__fecha')
+        
+        hospitalizaciones = Hospitalizacion.objects.filter(
+            expediente=expediente
+        ).select_related('veterinario', 'estado').order_by('-fechaingreso')
+        
+        recetas_qs = Receta.objects.filter(
+            consulta__expediente=expediente
+        ).select_related('consulta__cita').order_by('-fecha')
+        
+        receta_hosp_qs = Receta.objects.filter(
+            hospitalizacion__expediente=expediente
+        ).select_related('hospitalizacion').order_by('-fecha')
+        
+        #todas las recetas + tratamientos
+        todas_recetas = list(recetas_qs) + list(receta_hosp_qs)
+        todas_recetas.sort(key=lambda r: r.fecha, reverse=True)
+
+        with connection.cursor() as cursor:
+            for receta in todas_recetas:
+                cursor.execute("""
+                    SELECT m.nombre, m.clave, t.dosis, t.frecuencia,
+                           t.duracion, t.notas, t.cantidad, t.estado
+                    FROM tratamiento t
+                    JOIN medicamento m ON t.medicamento = m.clave
+                    WHERE t.receta = %s
+                """, [receta.numero])
+                cols = [c[0] for c in cursor.description]
+                receta.tratamientos = [dict(zip(cols, row)) for row in cursor.fetchall()]
+                receta.origen = 'Consulta' if receta.consulta_id else 'Hospitalización'
+            recetas = todas_recetas
+    
+    historial = []
+    for c in consultas:
+        historial.append({'tipo': 'consulta', 'fecha': c.cita.fecha, 'obj': c})
+    for h in hospitalizaciones:
+        historial.append({'tipo': 'hospitalizacion', 'fecha': h.fechaingreso, 'obj': h})
+    historial.sort(key=lambda x: x['fecha'], reverse=True)
+    
+    num_consultas = len([e for e in historial if e['tipo'] == 'consulta'])
+    num_hosp = len([e for e in historial if e['tipo'] == 'hospitalizacion'])
+    
+    # Última cita próxima pendiente
+    proxima_cita = Cita.objects.filter(
+        mascota=mascota,
+        estado__nombre='Pendiente',
+        fecha__gte=hoy
+    ).order_by('fecha', 'hora').first()
 
     contexto = {
-        'seccion_activa': 'mascotas',
-        'mascota': mascota,
-        'expediente': expediente,
-        'consultas': consultas,
-        'telefonos': telefonos
+        'seccion_activa':   'mascotas',
+        'mascota':           mascota,
+        'expediente':        expediente,
+        'telefonos':         telefonos,
+        'historial':         historial,
+        'num_consultas':     num_consultas,
+        'num_hosp':          num_hosp,
+        'recetas':           recetas,
+        'proxima_cita':      proxima_cita,
     }
 
     return render(request, 'mascotas/mascotas_detalles.html', contexto)
@@ -368,31 +422,114 @@ def propietarios(request):
 
 @login_required
 def propietarios_detalles(request,folio):
-    propietario = get_object_or_404(Propietario,folio=folio)
-    telefonos = Telefono.objects.filter(propietario=propietario).first()
-    mascotas = Mascota.objects.filter(propietario=propietario)
-    citas = Cita.objects.filter(propietario=propietario).select_related('mascota', 'veterinario').order_by('-fecha')[:5]
-    # Edades de las mascotas
-    hoy = timezone.now().date()
-    mascotas_con_edad = []
+    propietario = get_object_or_404(Propietario, folio=folio)
+    telefonos   = Telefono.objects.filter(propietario=propietario).first()
+    mascotas    = Mascota.objects.select_related('especie', 'raza', 'estado').filter(propietario=propietario)
+    hoy         = timezone.now().date()
+    
     for m in mascotas:
         anios = hoy.year - m.fechanacimiento.year
-        if (hoy.month, hoy.day) < (m.fechanacimiento.month, m.fechanacimiento.day):
+        meses = hoy.month - m.fechanacimiento.month
+        
+        # Ajusta si aun no a pasado el dia de su cumpleaños este mes/año
+        if hoy.day < m.fechanacimiento.day:
             anios -= 1
-        m.edad = f"{anios} año{'s' if anios != 1 else ''}"
-        mascotas_con_edad.append(m)
-
+            
+        if meses < 0:
+            anios -= 1
+            meses += 12
+            
+        if anios == 0:
+            m.edad_formateada = f"{meses} mes{'es' if meses != 1 else ''}"
+        else:
+            m.edad_formateada = f"{anios} año{'s' if anios != 1 else ''}"
+    
+    # Consultas de todas las mascotas del propietario
+    consultas = Consulta.objects.select_related(
+        'cita__mascota', 'cita__veterinario'
+    ).filter(
+        cita__propietario=propietario
+    ).order_by('-cita__fecha')[:10]
+    
+    # Hospitalizaciones de todas las mascotas del propietario
+    hospitalizaciones = Hospitalizacion.objects.select_related(
+        'expediente__mascota', 'veterinario', 'estado'
+    ).filter(
+        expediente__mascota__propietario=propietario
+    ).order_by('-fechaingreso')[:10]
+    
+    # Mezclar y ordenar las últimas visitas por fecha descendente
+    visitas = []
+    for c in consultas:
+        visitas.append({
+            'tipo':        'consulta',
+            'fecha':        c.cita.fecha,
+            'mascota':      c.cita.mascota.nombre,
+            'motivo':       c.cita.motivo,
+            'veterinario':  f"{c.cita.veterinario.nombrepila} {c.cita.veterinario.primerapellido}",
+            'estado':       c.cita.estado.nombre,
+            'url':          f"/consultas/{c.numero}/ver/",
+        })
+    
+    for h in hospitalizaciones:
+        visitas.append({
+            'tipo':        'hospitalizacion',
+            'fecha':        h.fechaingreso,
+            'mascota':      h.expediente.mascota.nombre,
+            'motivo':       h.diagnoingreso,
+            'veterinario':  f"{h.veterinario.nombrepila} {h.veterinario.primerapellido}",
+            'estado':       h.estado.nombre,
+            'url':          f"/hospitalizacion/{h.numero}/ver/",
+        })
+        
+    visitas.sort(key=lambda v: v['fecha'], reverse=True)
+    visitas = visitas[:8]  # máximo 8 en el perfil
+      
     contexto = {
         'seccion_activa': 'propietarios',
         'propietario': propietario,
         'telefonos': telefonos,
         'mascotas': mascotas,
-        'mascotas_count': len(mascotas_con_edad),
-        'citas': citas
+        'mascotas_count': mascotas.count(),
+        'especies': Especie.objects.order_by('nombre'),
+        'visitas': visitas,
     }
 
     return render(request, 'propietarios/propietarios_detalles.html', contexto)
-    
+
+@require_POST
+def editar_propietario(request, folio):
+    from .services import validar_datos, formatear_telefono
+    propietario = get_object_or_404(Propietario, folio=folio)
+
+    data = request.POST.copy()
+    valido, error = validar_datos(data)
+    if not valido:
+        return JsonResponse({'ok': False, 'error': error})
+
+    try:
+        from .services import formatear_texto, limpiar_espacios
+        propietario.nombrepila      = data.get('nombre', '').strip().title()
+        propietario.primerapellido  = data.get('apellido_paterno', '').strip().title()
+        propietario.segundoapellido = data.get('apellido_materno', '').strip().title() or None
+        propietario.correo          = data.get('correo', '').strip().lower()
+        propietario.dircalle        = data.get('calle', '').strip().title()
+        propietario.dirnum          = data.get('numero', '').strip()
+        propietario.dircolonia      = data.get('colonia', '').strip().title()
+        propietario.save()
+
+        # Actualizar teléfono
+        tel = Telefono.objects.filter(propietario=propietario).first()
+        if tel:
+            from .services import formatear_telefono, limpiar_espacios
+            tel.numprincipal  = formatear_telefono(limpiar_espacios(data.get('tel_principal')))
+            tel.numsecundario = formatear_telefono(limpiar_espacios(data.get('tel_secundario'))) if data.get('tel_secundario') else None
+            tel.save()
+
+        return JsonResponse({'ok': True})
+    except Exception as e:
+        return JsonResponse({'ok': False, 'error': str(e)})
+      
 #. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
 
 from django.db import transaction, IntegrityError
@@ -1606,7 +1743,7 @@ def personal(request):
         'especialidades': especialidades,
         'query': query,
         'inicio': inicio_sem.isoformat(),
-        'citas_json': json.dumps(citas_json),
+        'citas_json': citas_json,
     }
 
     return render(request, 'personal/personal_lista.html', contexto)
