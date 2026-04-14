@@ -42,10 +42,10 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware', # Gestiona la cookie
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware', # Asocia el usuario a la request
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -144,7 +144,7 @@ STATICFILES_DIRS = [
 ]
 
 # A dónde redirigir después del login exitoso
-LOGIN_REDIRECT_URL = '/dashboard/'
+LOGIN_REDIRECT_URL = '/enrutador_principal/'
 
 # A dónde redirigir si alguien intenta entrar sin estar logueado
 LOGIN_URL = '/login/'
@@ -153,3 +153,9 @@ LOGIN_URL = '/login/'
 import os
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+#LOGIN USER BY MICK
+AUTHENTICATION_BACKENDS = [
+    'web.backend.UsuarioBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]

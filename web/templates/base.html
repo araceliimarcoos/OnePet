@@ -51,13 +51,25 @@
                 class="nav-item {% if seccion_activa == 'dashboard' %}active{% endif %}"
             -->
 
-            <a href="{% url 'dashboard' %}"
-               class="nav-item {% block nav_dashboard %}{% endblock %}"
-               data-seccion="dashboard"
-               data-roles="admin,veterinario,recepcionista">
-                <span class="material-symbols-outlined">dashboard</span>
-                <span class="nav-label">Dashboard</span>
-            </a>
+            {% if user.tipo.codigo.lower == 'adm' %}
+                {# Enlace para Admin #}
+                <a href="{% url 'admin_dashboard' %}" class="nav-item {% block nav_dashboard %}{% endblock %}">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span class="nav-label">Dashboard</span>
+                </a>
+            {% elif user.tipo.codigo.lower == 'vet' %}
+                {# Enlace para Veterinario #}
+                <a href="{% url 'veterinario_dashboard' %}" class="nav-item">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span class="nav-label">Dashboard</span>
+                </a>
+            {% else %}
+                {# Enlace para Recepcionista #}
+                <a href="{% url 'recepcionista_dashboard' %}" class="nav-item">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span class="nav-label">Dashboard</span>
+                </a>
+            {% endif %}
 
             <a href="{% url 'propietarios' %}"
                class="nav-item {% block nav_propietarios %}{% endblock %}"
@@ -196,8 +208,8 @@
                         {{ request.user.get_full_name }}
                         {{ request.user.rol|upper }}
                     -->
-                    <span class="user-name">Dr. Mateo Sanz</span>
-                    <span class="user-role">VETERINARIO</span>
+                    <span class="user-name">{{ user.nombre_real }}</span>
+                    <span class="user-role">{{ user.tipo.nombre|upper }}</span>
                 </div>
                 <img src="{% static 'core/imagenes/user01.png' %}" alt="Avatar" class="user-avatar">
 
