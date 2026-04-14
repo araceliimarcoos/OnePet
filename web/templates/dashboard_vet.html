@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Dashboard{%endblock%}
+
+{% block nav_dashboard %}active{% endblock %}
+
+{% block breadcrumb %}
+  
+    <span class="breadcrumb-current">Dashboard</span>
+  
+{% endblock %}
+
+{% block topbar_titulo %}Panel de Control{% endblock %}
+
+{% block contenido%} 
+
+      <!-- ===== DASHBOARD PAGE ===== -->
+      <div class="page active" id="page-dashboard">
+        <div class="page-header">
+            <div>
+              <h1 class="page-title">Dashboard de Hoy</h1>
+              <p class="page-sub">{% now "l, j F Y" %}</p>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card green">
+            <span class="stat-icon material-symbols-outlined">calendar_today</span>
+            <div class="stat-body">
+              <p class="stat-label">Citas hoy</p>
+              <p class="stat-value">12</p>
+              <p class="stat-sub">4 pendientes por atender</p>
+            </div>
+          </div>
+          <div class="stat-card blue">
+            <span class="stat-icon material-symbols-outlined">apartment</span>
+            <div class="stat-body">
+              <p class="stat-label">Mascotas Hospitalizadas</p>
+              <p class="stat-value">8</p>
+              <p class="stat-sub">2 citas programadas para hoy</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2>Citas de hoy</h2>
+            <a href="{% url 'citas' %}" class="link-green">Ver todas</a>
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>HORA</th>
+                  <th>MASCOTA</th>
+                  <th>PROPIETARIO</th>
+                  <th>MOTIVO</th>
+                  <th>ESTADO</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>09:00</td>
+                  <td>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                      <div class="user-avatar-p" style="background-color: #FFEDD5; color: #EA580C;">
+                        <span class="material-symbols-outlined">pets</span>
+                      </div>
+                      <div>
+                        <strong>Luna</strong>
+                      </div>
+                    </div>
+                  </td>
+                  <td>María López</td>
+                  <td>Vacunación</td>
+                  <td><span class="badge confirmed">CONFIRMADO</span></td>
+                </tr>
+
+                <tr>
+                  <td>10:30</td>
+                  <td><div style="display: flex; align-items: center; gap: 10px;">
+                      <div class="user-avatar-p" style="background-color: #DBEAFE; color: #2563EB;">
+                        <span class="material-symbols-outlined">pets</span>
+                      </div>
+                      <div>
+                        <strong>Thor</strong>
+                      </div>
+                    </div></td>
+                  <td>Juan Pérez</td>
+                  <td>Consulta General</td>
+                  <td><span class="badge waiting">EN ESPERA</span></td>
+                </tr>
+
+                <tr>
+                  <td>11:15</td>
+                  <td><div style="display: flex; align-items: center; gap: 10px;">
+                      <div class="user-avatar-p" style="background-color: #DBEAFE; color: #2563EB;">
+                        <span class="material-symbols-outlined">pets</span>
+                      </div>
+                      <div>
+                        <strong>Kira</strong>
+                      </div>
+                    </div></td>
+                  <td>Ana Gómez</td>
+                  <td>Cirugía</td>
+                  <td><span class="badge in-consult">EN CONSULTA</span></td>
+                </tr>
+                <tr>
+                  <td>12:00</td>
+                  <td><div style="display: flex; align-items: center; gap: 10px;">
+                      <div class="user-avatar-p" style="background-color: #FFEDD5; color: #EA580C;">
+                        <span class="material-symbols-outlined">pets</span>
+                      </div>
+                      <div>
+                        <strong>Thor</strong>
+                      </div>
+                    </div></td>
+                  <td>Carlos Ruiz</td>
+                  <td>Revisión</td>
+                  <td><span class="badge pending">PENDIENTE</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- PLACEHOLDER PAGES -->
+      
+      <div class="page" id="page-citas">
+        <div class="page-header"><h1 class="page-title">Citas</h1></div>
+        <div class="card placeholder-card">
+          <div class="placeholder-icon">📅</div>
+          <p>Módulo de Citas</p>
+        </div>
+      </div>
+
+      <div class="page" id="page-consultas">
+        <div class="page-header"><h1 class="page-title">Consultas</h1></div>
+        <div class="card placeholder-card"><div class="placeholder-icon">🩺</div><p>Módulo de Consultas</p></div>
+      </div>
+      <div class="page" id="page-hospitalizacion">
+        <div class="page-header"><h1 class="page-title">Hospitalización</h1></div>
+        <div class="card placeholder-card"><div class="placeholder-icon">🏥</div><p>Módulo de Hospitalización</p></div>
+      </div>
+      <div class="page" id="page-pagos">
+        <div class="page-header"><h1 class="page-title">Pagos</h1></div>
+        <div class="card placeholder-card"><div class="placeholder-icon">💳</div><p>Módulo de Pagos</p></div>
+      </div>
+      <div class="page" id="page-catalogo">
+        <div class="page-header"><h1 class="page-title">Catálogo</h1></div>
+        <div class="card placeholder-card"><div class="placeholder-icon">📦</div><p>Módulo de Catálogo</p></div>
+      </div>
+      <div class="page" id="page-medicamentos">
+        <div class="page-header"><h1 class="page-title">Medicamentos</h1></div>
+        <div class="card placeholder-card"><div class="placeholder-icon">💊</div><p>Módulo de Medicamentos</p></div>
+      </div>
+      <div class="page" id="page-usuarios">
+        <div class="page-header"><h1 class="page-title">Usuarios</h1></div>
+        <div class="card placeholder-card"><div class="placeholder-icon">👥</div><p>Módulo de Usuarios</p></div>
+      </div>
+      <div class="page" id="page-especies">
+        <div class="page-header"><h1 class="page-title">Especies Animales</h1></div>
+        <div class="card placeholder-card"><div class="placeholder-icon">🦜</div><p>Módulo de Especies Animales</p></div>
+      </div>
+      <div class="page" id="page-reportes">
+        <div class="page-header"><h1 class="page-title">Reportes</h1></div>
+        <div class="card placeholder-card"><div class="placeholder-icon">📊</div><p>Módulo de Reportes</p></div>
+      </div>
+
+{% endblock %}
