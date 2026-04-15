@@ -98,7 +98,7 @@ DATABASES = {
         'OPTIONS': {
             'sslmode': 'require',
         },
-        'CONN_MAX_AGE': 600,  # 10 minutos. Evita reconexiones constantes.
+        'CONN_MAX_AGE': 0,  # 10 minutos. Evita reconexiones constantes.
     }
 }
 

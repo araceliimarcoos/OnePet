@@ -272,6 +272,25 @@ def validar_datos_editar_cita(data, folio_actual):
     return True, None
 
 #--------------------------------------------- C O N S U L T A S -----------------------------------------------------------------------------------
+TEMP_MIN,  TEMP_MAX  = 35.0, 42.0   # °C
+FC_MIN,    FC_MAX    = 20,   350     # lpm
+FR_MIN,    FR_MAX    = 5,    120     # rpm
+
+def validar_rango_signos(temp, fc, fr, requeridos=True):
+    if requeridos:
+        if temp <= 0: return False, 'La temperatura es obligatoria'
+        if fc   <= 0: return False, 'La frecuencia cardíaca es obligatoria'
+        if fr   <= 0: return False, 'La frecuencia respiratoria es obligatoria'
+
+    if temp > 0 and not (TEMP_MIN <= temp <= TEMP_MAX):
+        return False, f'La temperatura debe estar entre {TEMP_MIN} °C y {TEMP_MAX} °C (ingresado: {temp} °C)'
+    if fc > 0 and not (FC_MIN <= fc <= FC_MAX):
+        return False, f'La frecuencia cardíaca debe estar entre {FC_MIN} y {FC_MAX} lpm (ingresado: {fc} lpm)'
+    if fr > 0 and not (FR_MIN <= fr <= FR_MAX):
+        return False, f'La frecuencia respiratoria debe estar entre {FR_MIN} y {FR_MAX} rpm (ingresado: {fr} rpm)'
+
+    return True, None
+
 def validar_datos_consulta(data):
     sintomas    = data.get('sintomas', '').strip()
     diagnostico = data.get('diagnostico', '').strip()
@@ -280,7 +299,7 @@ def validar_datos_consulta(data):
 
     try:
         temp = float(data.get('temperatura', 0))
-        fc   = int(data.get('freccardiaca', 0))
+        fc   = int(data.get('freccardiaca',  0))
         fr   = int(data.get('frecrespiratoria', 0))
         peso = float(data.get('peso', 0))
     except (ValueError, TypeError):
@@ -296,12 +315,9 @@ def validar_datos_consulta(data):
         return False, 'El diagnóstico no puede superar 150 caracteres'
     if not observaciones:
         return False, 'Las observaciones son obligatorias'
-    if temp <= 0:
-        return False, 'La temperatura es obligatoria'
-    if fc <= 0:
-        return False, 'La frecuencia cardíaca es obligatoria'
-    if fr <= 0:
-        return False, 'La frecuencia respiratoria es obligatoria'
+    ok, msg = validar_rango_signos(temp, fc, fr, requeridos=False)
+    if not ok:
+        return False, msg
     if peso <= 0:
         return False, 'El peso es obligatorio'
     
