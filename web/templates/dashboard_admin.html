@@ -6,168 +6,364 @@
 {% block nav_dashboard %}active{% endblock %}
 
 {% block breadcrumb %}
-  
-    <span class="breadcrumb-current">Dashboard</span>
-  
+  <span class="breadcrumb-current">Dashboard</span>
 {% endblock %}
 
 {% block topbar_titulo %}Panel de Control{% endblock %}
 
 {% block contenido%} 
 
-      <!-- ===== DASHBOARD PAGE ===== -->
-      <div class="page active" id="page-dashboard">
-        <div class="page-header">
-            <div>
-              <h1 class="page-title">Dashboard de Hoy</h1>
-              <p class="page-sub">{% now "l, j F Y" %}</p>
+<!-- ===== DASHBOARD PAGE ===== -->
+<div class="page active" id="page-dashboard">
+
+  <div class="page-header dash-header">
+    <div>
+      <h1 class="page-title">Panel de Administrador</h1>
+      <p class="page-sub">{% now "l, j F Y" %}</p>
+    </div>
+    <div class="dash-header-badge">
+      <span class="material-symbols-outlined">admin_panel_settings</span>
+      Administrador
+    </div>
+  </div>
+
+  <!-- STAT CARDS -->
+  <div class="stats-grid dash-stats-grid">
+
+    <div class="stat-card dash-stat green">
+      <div class="dash-stat-icon green">
+        <span class="material-symbols-outlined">calendar_today</span>
+      </div>
+      <div class="stat-body">
+        <p class="stat-label">Citas hoy</p>
+        <p class="stat-value">{{ citas_hoy_count }}</p>
+        <p class="stat-sub dash-stat-pill green">Pendiente</p>
+      </div>
+      <div class="dash-stat-glow green"></div>
+    </div>
+
+    <div class="stat-card dash-stat blue">
+      <div class="dash-stat-icon blue">
+        <span class="material-symbols-outlined">apartment</span>
+      </div>
+      <div class="stat-body">
+        <p class="stat-label">Hospitalizadas</p>
+        <p class="stat-value">{{ hosp_activas_count }}</p>
+        <p class="stat-sub dash-stat-pill blue">Activas</p>
+      </div>
+      <div class="dash-stat-glow blue"></div>
+    </div>
+
+    <div class="stat-card dash-stat teal">
+      <div class="dash-stat-icon teal">
+        <span class="material-symbols-outlined">pets</span>
+      </div>
+      <div class="stat-body">
+        <p class="stat-label">Total mascotas</p>
+        <p class="stat-value">{{ sin_revision_count }}</p>
+        <p class="stat-sub dash-stat-pill teal">Sin revisión hoy</p>
+      </div>
+      <div class="dash-stat-glow teal"></div>
+    </div>
+
+    <div class="stat-card dash-stat gold">
+      <div class="dash-stat-icon gold">
+        <span class="material-symbols-outlined">payments</span>
+      </div>
+      <div class="stat-body">
+        <p class="stat-label">Recaudado hoy</p>
+        <p class="stat-value dash-stat-money">{{ pagos_hoy_total }}</p>
+        <p class="stat-sub dash-stat-pill gold">Pagos cobrados</p>
+      </div>
+      <div class="dash-stat-glow gold"></div>
+    </div>
+
+  </div>
+
+  <!-- MAIN ROW: Agenda + Alertas -->
+  <div class="dash-row-main">
+
+    <!-- Agenda del día -->
+    <div class="card dash-agenda-card">
+      <div class="card-header dash-card-header">
+        <div class="dash-card-title-group">
+          <span class="material-symbols-outlined dash-card-icon">event_note</span>
+          <h2>Agenda del día</h2>
+        </div>
+        <a href="{% url 'citas' %}" class="dash-link-btn">
+          Ver todas
+          <span class="material-symbols-outlined" style="font-size:14px">arrow_forward</span>
+        </a>
+      </div>
+      <div class="table-wrapper">
+        <table class="data-table dash-agenda-table">
+          <thead>
+            <tr>
+              <th>Hora</th>
+              <th>Mascota</th>
+              <th>Veterinario</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for cita in agenda_hoy %}
+            <tr class="dash-agenda-row">
+              <td>
+                <div class="dash-time-cell">
+                  <span class="dash-time-dot"></span>
+                  {{ cita.hora|time:"H:i" }}
+                </div>
+              </td>
+              <td>
+                <div class="dash-pet-cell">
+                  <div class="dash-pet-avatar">{{ cita.mascota.nombre|first }}</div>
+                  <span>{{ cita.mascota.nombre }}</span>
+                </div>
+              </td>
+              <td class="dash-vet-name">{{ cita.veterinario.nombrepila }} {{ cita.veterinario.primerapellido }}</td>
+              <td>
+                <span class="badge dash-badge {% if cita.estado.nombre == 'Atendida' %}confirmed{% else %}pending{% endif %}">
+                  {{ cita.estado.nombre }}
+                </span>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Alertas del Día -->
+    <div class="card dash-alerts-card">
+      <div class="card-header dash-card-header">
+        <div class="dash-card-title-group">
+          <span class="material-symbols-outlined dash-card-icon">notifications_active</span>
+          <h2>Alertas del Día</h2>
+        </div>
+        <span class="dash-alerts-count">
+          {% with total=pendientes_pago|length|add:sin_revision_lista|length %}{{ total }}{% endwith %}
+        </span>
+      </div>
+
+      <div class="dash-alerts-body">
+
+        <div class="dash-alert-section">
+          <div class="dash-alert-section-header">
+            <div class="dash-alert-section-title">
+              <span class="dash-section-dot orange"></span>
+              <h4>Pagos Pendientes</h4>
+            </div>
+            <a href="{% url 'pagos' %}" class="dash-micro-link">Ir a Pagos →</a>
           </div>
+          {% for consulta in pendientes_pago %}
+            <div class="dash-alert-item orange">
+              <span class="dash-alert-emoji material-symbols-outlined">money_bag</span>
+              <div class="dash-alert-text">
+                <span class="dash-alert-main">{{ consulta.cita.mascota.nombre }}</span>
+                <span class="dash-alert-sub">{{ consulta.cita.propietario.nombrepila }}</span>
+              </div>
+            </div>
+          {% empty %}
+            <div class="dash-empty-state">
+              <span class="material-symbols-outlined">check_circle</span>
+              Sin cobros pendientes
+            </div>
+          {% endfor %}
         </div>
 
-        <div class="stats-grid">
-          <div class="stat-card green">
-            <span class="stat-icon material-symbols-outlined">calendar_today</span>
-            <div class="stat-body">
-              <p class="stat-label">Citas hoy</p>
-              <p class="stat-value">12</p>
-              <p class="stat-sub">4 pendientes por atender</p>
+        <div class="dash-alerts-divider"></div>
+
+        <div class="dash-alert-section">
+          <div class="dash-alert-section-header">
+            <div class="dash-alert-section-title">
+              <span class="dash-section-dot red"></span>
+              <h4>Sin Revisión Hoy</h4>
             </div>
           </div>
-          <div class="stat-card blue">
-            <span class="stat-icon material-symbols-outlined">apartment</span>
-            <div class="stat-body">
-              <p class="stat-label">Mascotas Hospitalizadas</p>
-              <p class="stat-value">8</p>
-              <p class="stat-sub">2 citas programadas para hoy</p>
+          {% for hosp in sin_revision_lista %}
+            <div class="dash-alert-item red">
+              <span class="dash-alert-emoji material-symbols-outlined">warning</span>
+              <div class="dash-alert-text">
+                <span class="dash-alert-main">{{ hosp.expediente.mascota.nombre }}</span>
+              </div>
             </div>
+          {% empty %}
+            <div class="dash-empty-state">
+              <span class="material-symbols-outlined">check_circle</span>
+              Todas revisadas
+            </div>
+          {% endfor %}
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM ROW: Gráfica + Resumen -->
+  <div class="dash-row-bottom">
+
+    <div class="card dash-chart-card">
+      <div class="card-header dash-card-header">
+        <div class="dash-card-title-group">
+          <span class="material-symbols-outlined dash-card-icon">bar_chart</span>
+          <h2>Tendencia de Citas</h2>
+        </div>
+        <span class="dash-period-tag">Últimos 6 meses</span>
+      </div>
+      <div class="dash-chart-wrapper">
+        <canvas id="citasChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card dash-summary-card">
+      <div class="card-header dash-card-header">
+        <div class="dash-card-title-group">
+          <span class="material-symbols-outlined dash-card-icon">summarize</span>
+          <h2>Resumen General</h2>
+        </div>
+      </div>
+      <div class="dash-summary-grid">
+
+        <div class="dash-summary-item">
+          <div class="dash-summary-icon-wrap green">
+            <span class="material-symbols-outlined">pets</span>
+          </div>
+          <div class="dash-summary-body">
+            <span class="dash-summary-count">{{ resumen.total_mascotas }}</span>
+            <span class="dash-summary-label">Mascotas</span>
           </div>
         </div>
 
-        <div class="card">
-          <div class="card-header">
-            <h2>Citas de hoy</h2>
-            <a href="{% url 'citas' %}" class="link-green">Ver todas</a>
+        <div class="dash-summary-item">
+          <div class="dash-summary-icon-wrap blue">
+            <span class="material-symbols-outlined">people</span>
           </div>
-          <div class="table-wrapper">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>HORA</th>
-                  <th>MASCOTA</th>
-                  <th>PROPIETARIO</th>
-                  <th>MOTIVO</th>
-                  <th>ESTADO</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>09:00</td>
-                  <td>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                      <div class="user-avatar-p" style="background-color: #FFEDD5; color: #EA580C;">
-                        <span class="material-symbols-outlined">pets</span>
-                      </div>
-                      <div>
-                        <strong>Luna</strong>
-                      </div>
-                    </div>
-                  </td>
-                  <td>María López</td>
-                  <td>Vacunación</td>
-                  <td><span class="badge confirmed">CONFIRMADO</span></td>
-                </tr>
-
-                <tr>
-                  <td>10:30</td>
-                  <td><div style="display: flex; align-items: center; gap: 10px;">
-                      <div class="user-avatar-p" style="background-color: #DBEAFE; color: #2563EB;">
-                        <span class="material-symbols-outlined">pets</span>
-                      </div>
-                      <div>
-                        <strong>Thor</strong>
-                      </div>
-                    </div></td>
-                  <td>Juan Pérez</td>
-                  <td>Consulta General</td>
-                  <td><span class="badge waiting">EN ESPERA</span></td>
-                </tr>
-
-                <tr>
-                  <td>11:15</td>
-                  <td><div style="display: flex; align-items: center; gap: 10px;">
-                      <div class="user-avatar-p" style="background-color: #DBEAFE; color: #2563EB;">
-                        <span class="material-symbols-outlined">pets</span>
-                      </div>
-                      <div>
-                        <strong>Kira</strong>
-                      </div>
-                    </div></td>
-                  <td>Ana Gómez</td>
-                  <td>Cirugía</td>
-                  <td><span class="badge in-consult">EN CONSULTA</span></td>
-                </tr>
-                <tr>
-                  <td>12:00</td>
-                  <td><div style="display: flex; align-items: center; gap: 10px;">
-                      <div class="user-avatar-p" style="background-color: #FFEDD5; color: #EA580C;">
-                        <span class="material-symbols-outlined">pets</span>
-                      </div>
-                      <div>
-                        <strong>Thor</strong>
-                      </div>
-                    </div></td>
-                  <td>Carlos Ruiz</td>
-                  <td>Revisión</td>
-                  <td><span class="badge pending">PENDIENTE</span></td>
-                </tr>
-              </tbody>
-            </table>
+          <div class="dash-summary-body">
+            <span class="dash-summary-count">{{ resumen.total_propietarios }}</span>
+            <span class="dash-summary-label">Propietarios</span>
           </div>
         </div>
-      </div>
 
-
-      <!-- PLACEHOLDER PAGES -->
-      
-      <div class="page" id="page-citas">
-        <div class="page-header"><h1 class="page-title">Citas</h1></div>
-        <div class="card placeholder-card">
-          <div class="placeholder-icon">📅</div>
-          <p>Módulo de Citas</p>
+        <div class="dash-summary-item">
+          <div class="dash-summary-icon-wrap teal">
+            <span class="material-symbols-outlined">stethoscope</span>
+          </div>
+          <div class="dash-summary-body">
+            <span class="dash-summary-count">{{ resumen.total_vets }}</span>
+            <span class="dash-summary-label">Veterinarios</span>
+          </div>
         </div>
-      </div>
 
-      <div class="page" id="page-consultas">
-        <div class="page-header"><h1 class="page-title">Consultas</h1></div>
-        <div class="card placeholder-card"><div class="placeholder-icon">🩺</div><p>Módulo de Consultas</p></div>
+        <div class="dash-summary-item">
+          <div class="dash-summary-icon-wrap gold">
+            <span class="material-symbols-outlined">medication</span>
+          </div>
+          <div class="dash-summary-body">
+            <span class="dash-summary-count">{{ resumen.total_meds }}</span>
+            <span class="dash-summary-label">Medicamentos</span>
+          </div>
+        </div>
+
       </div>
-      <div class="page" id="page-hospitalizacion">
-        <div class="page-header"><h1 class="page-title">Hospitalización</h1></div>
-        <div class="card placeholder-card"><div class="placeholder-icon">🏥</div><p>Módulo de Hospitalización</p></div>
-      </div>
-      <div class="page" id="page-pagos">
-        <div class="page-header"><h1 class="page-title">Pagos</h1></div>
-        <div class="card placeholder-card"><div class="placeholder-icon">💳</div><p>Módulo de Pagos</p></div>
-      </div>
-      <div class="page" id="page-catalogo">
-        <div class="page-header"><h1 class="page-title">Catálogo</h1></div>
-        <div class="card placeholder-card"><div class="placeholder-icon">📦</div><p>Módulo de Catálogo</p></div>
-      </div>
-      <div class="page" id="page-medicamentos">
-        <div class="page-header"><h1 class="page-title">Medicamentos</h1></div>
-        <div class="card placeholder-card"><div class="placeholder-icon">💊</div><p>Módulo de Medicamentos</p></div>
-      </div>
-      <div class="page" id="page-usuarios">
-        <div class="page-header"><h1 class="page-title">Usuarios</h1></div>
-        <div class="card placeholder-card"><div class="placeholder-icon">👥</div><p>Módulo de Usuarios</p></div>
-      </div>
-      <div class="page" id="page-especies">
-        <div class="page-header"><h1 class="page-title">Especies Animales</h1></div>
-        <div class="card placeholder-card"><div class="placeholder-icon">🦜</div><p>Módulo de Especies Animales</p></div>
-      </div>
-      <div class="page" id="page-reportes">
-        <div class="page-header"><h1 class="page-title">Reportes</h1></div>
-        <div class="card placeholder-card"><div class="placeholder-icon">📊</div><p>Módulo de Reportes</p></div>
-      </div>
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('citasChart').getContext('2d');
+
+    // Array para traducir el número a mes
+    const nombresMeses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        // Usamos la fecha para obtener el nombre del mes del array
+        labels: [
+            {% for d in datos_grafica %}
+                nombresMeses[{{ d.mes_completo|date:"n" }} - 1], 
+            {% endfor %}
+        ],
+        datasets: [{
+          label: 'Número de Citas',
+          data: [{% for d in datos_grafica %}{{ d.total }},{% endfor %}],
+          backgroundColor: 'rgba(61,189,125,0.18)',
+          borderColor: '#3dbd7d',
+          borderWidth: 2,
+          borderRadius: 8,
+          borderSkipped: false,
+          hoverBackgroundColor: 'rgba(61,189,125,0.35)',
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#1a2535',
+            titleColor: '#fff',
+            bodyColor: '#adb5bd',
+            padding: 12,
+            cornerRadius: 8,
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            border: { display: false },
+            ticks: { color: '#7a8899', font: { family: 'Manrope', size: 12 } }
+          },
+          y: {
+            grid: { color: 'rgba(0,0,0,0.05)', drawBorder: false },
+            border: { display: false, dash: [4,4] },
+            ticks: { color: '#7a8899', font: { family: 'Manrope', size: 12 }, stepSize: 1 }
+          }
+        }
+      }
+    });
+</script>
+
+</div>
+
+<!-- PLACEHOLDER PAGES -->
+<div class="page" id="page-citas">
+  <div class="page-header"><h1 class="page-title">Citas</h1></div>
+  <div class="card placeholder-card"><div class="placeholder-icon">📅</div><p>Módulo de Citas</p></div>
+</div>
+<div class="page" id="page-consultas">
+  <div class="page-header"><h1 class="page-title">Consultas</h1></div>
+  <div class="card placeholder-card"><div class="placeholder-icon">🩺</div><p>Módulo de Consultas</p></div>
+</div>
+<div class="page" id="page-hospitalizacion">
+  <div class="page-header"><h1 class="page-title">Hospitalización</h1></div>
+  <div class="card placeholder-card"><div class="placeholder-icon">🏥</div><p>Módulo de Hospitalización</p></div>
+</div>
+<div class="page" id="page-pagos">
+  <div class="page-header"><h1 class="page-title">Pagos</h1></div>
+  <div class="card placeholder-card"><div class="placeholder-icon">💳</div><p>Módulo de Pagos</p></div>
+</div>
+<div class="page" id="page-catalogo">
+  <div class="page-header"><h1 class="page-title">Catálogo</h1></div>
+  <div class="card placeholder-card"><div class="placeholder-icon">📦</div><p>Módulo de Catálogo</p></div>
+</div>
+<div class="page" id="page-medicamentos">
+  <div class="page-header"><h1 class="page-title">Medicamentos</h1></div>
+  <div class="card placeholder-card"><div class="placeholder-icon">💊</div><p>Módulo de Medicamentos</p></div>
+</div>
+<div class="page" id="page-usuarios">
+  <div class="page-header"><h1 class="page-title">Usuarios</h1></div>
+  <div class="card placeholder-card"><div class="placeholder-icon">👥</div><p>Módulo de Usuarios</p></div>
+</div>
+<div class="page" id="page-especies">
+  <div class="page-header"><h1 class="page-title">Especies Animales</h1></div>
+  <div class="card placeholder-card"><div class="placeholder-icon">🦜</div><p>Módulo de Especies Animales</p></div>
+</div>
+<div class="page" id="page-reportes">
+  <div class="page-header"><h1 class="page-title">Reportes</h1></div>
+  <div class="card placeholder-card"><div class="placeholder-icon">📊</div><p>Módulo de Reportes</p></div>
+</div>
 
 {% endblock %}

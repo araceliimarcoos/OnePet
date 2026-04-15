@@ -7,15 +7,15 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.utils import timezone
-from .models import Mascota, Propietario, Especie, Raza, Servicio, Medicamento, Usuario, Veterinario, Recepcionista, Administrador, Cita, Hospitalizacion, SignosVitales, Especialidad, Telefono, Pago, Expediente, Consulta, Receta, EdoCita, ServCons, ServHosp
+from .models import Mascota, Propietario, Especie, Raza, Servicio, Medicamento, Usuario, Veterinario, Recepcionista, Administrador, Cita, Hospitalizacion, SignosVitales, Especialidad, Telefono, Pago, Expediente, Consulta, Receta, EdoCita, ServCons, ServHosp, EdoMasc
 
 from django.db.models import Value, CharField
-from django.db.models.functions import Concat
+from django.db.models.functions import Concat, TruncMonth
 
 from django.core.paginator import Paginator
-from django.db.models import Q, Count
+from django.db.models import Q, Count, Sum
 from django.db import connection
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 import re
 import json
 #........................................................................................................................................................
@@ -70,7 +70,64 @@ def enrutador_principal(request):
 @login_required
 @user_passes_test(es_admin, login_url='login')
 def admin_dashboard(request):
-    return render(request, 'dashboard_admin.html')
+    hoy = date.today()
+    
+    # --- MÉTRICAS SUPERIORES ---
+    # 1. Citas hoy con estado 'Pendiente' (asumiendo que la clave es 'PEND')
+    citas_hoy_count = Cita.objects.filter(fecha=hoy, estado__nombre__icontains='Pendiente').count()
+    
+    # 2. Mascotas hospitalizadas activas
+    hosp_activas = Hospitalizacion.objects.filter(fechaalta__isnull=True).select_related('mascota')
+    hosp_activas_count = hosp_activas.count()
+    
+    # 3. Revisiones pendientes (Hospitalizados sin signos vitales registrados hoy)
+    hosp_con_revision_hoy = SignosVitales.objects.filter(fecha=hoy).values_list('hospitalizacion_id', flat=True)
+    sin_revision = Hospitalizacion.objects.filter(fechaalta__isnull=True).exclude(numero__in=hosp_con_revision_hoy)
+    sin_revision_count = sin_revision.count()
+    
+    # 4. Pagos del día
+    pagos_hoy_total = Pago.objects.filter(fecha=hoy).aggregate(total=Sum('pagofinal'))['total'] or 0
+
+    # --- SECCIÓN MEDIA ---
+    # Agenda del día (ordenada por hora)
+    agenda_hoy = Cita.objects.filter(fecha=hoy).order_by('hora').select_related('mascota', 'propietario', 'veterinario', 'estado')
+    
+    # Alertas: Consultas atendidas pendientes de pago
+    # (Consultas que no tienen un registro de Pago asociado)
+    consultas_pendientes_pago = Consulta.objects.filter(
+        pago__isnull=True
+    ).select_related('cita__mascota', 'cita__propietario').order_by('-numero')[:3]
+
+    # --- SECCIÓN INFERIOR (Gráfica) ---
+    # Citas por mes (últimos 6 meses)
+    seis_meses_atras = hoy - timedelta(days=180)
+    datos_grafica = (Cita.objects.filter(fecha__gte=seis_meses_atras)
+                    .annotate(mes_completo=TruncMonth('fecha')) # Agrupa por mes y año
+                    .values('mes_completo')
+                    .annotate(total=Count('folio'))
+                    .order_by('mes_completo')) # Ordena cronológicamente
+
+    # --- RESUMEN DE CATÁLOGOS ---
+    resumen = {
+        'total_mascotas': Mascota.objects.count(),
+        'total_propietarios': Propietario.objects.count(),
+        'total_vets': Veterinario.objects.count(),
+        'total_meds': Medicamento.objects.count(),
+    }
+
+    contexto = {
+        'citas_hoy_count': citas_hoy_count,
+        'hosp_activas_count': hosp_activas_count,
+        'sin_revision_count': sin_revision_count,
+        'pagos_hoy_total': pagos_hoy_total,
+        'agenda_hoy': agenda_hoy,
+        'sin_revision_lista': sin_revision,
+        'pendientes_pago': consultas_pendientes_pago,
+        'datos_grafica': datos_grafica,
+        'resumen': resumen,
+    }
+    
+    return render(request, 'dashboard_admin.html', contexto)
 
 @login_required
 @user_passes_test(es_veterinario, login_url='login')
