@@ -126,10 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ?.addEventListener('click', () => cerrarOverlay(overlayDetalles));
     document.getElementById('btnCerrarDetalles2')
         ?.addEventListener('click', () => cerrarOverlay(overlayDetalles));
-    
-        
-        
-        Detalles?.addEventListener('click', (e) => {
+    overlayDetalles?.addEventListener('click', (e) => {
         if (e.target === overlayDetalles) cerrarOverlay(overlayDetalles);
     });
 
@@ -353,5 +350,32 @@ document.addEventListener('DOMContentLoaded', () => {
         toast.classList.add('hide');
         toast.addEventListener('transitionend', () => toast.remove(), { once: true });
     }
+
+
+    const buscador = document.querySelector("input[name='q']");
+    const filtro = document.getElementById("filterEspecialidad");
+    const filas = document.querySelectorAll("#personalBody tr");
+
+    function filtrar() {
+        const texto = buscador.value.toLowerCase();
+        const especialidad = filtro.value.toLowerCase();
+
+        filas.forEach(fila => {
+            const nombre = fila.innerText.toLowerCase();
+            const esp = fila.dataset.especialidad;
+
+            const coincideTexto = nombre.includes(texto);
+            const coincideEspecialidad = !especialidad || esp === especialidad;
+
+            if (coincideTexto && coincideEspecialidad) {
+                fila.style.display = "";
+            } else {
+                fila.style.display = "none";
+            }
+        });
+    }
+
+    buscador.addEventListener("input", filtrar);
+    filtro.addEventListener("change", filtrar);
 
 });
