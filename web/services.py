@@ -1403,3 +1403,18 @@ def crear_pago_db(tipo, referencia_id, total):
         hosp.save()
  
     return pago
+
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+from django.core.exceptions import ObjectDoesNotExist
+from .models import Usuario, EdoUsuario
+
+
+def dar_baja_usuario(usuario):
+    try:
+        user = Usuario.objects.get(usuario=usuario)
+    except Usuario.DoesNotExist:
+        return False
+
+    user.estado_id = 'I'
+    user.save()
+    return True

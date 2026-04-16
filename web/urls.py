@@ -60,6 +60,8 @@ urlpatterns = [
     path('medicamentos/nuevo/', views.nuevo_medicamento, name='nuevo_medicamento'),
     
     path('usuarios/', views.usuarios, name='usuarios'),
+    path('usuarios/<str:usuario>/cambiar-password/', views.cambiar_password, name='cambiar_password'),
+    path('usuarios/<str:usuario>/baja/', views.baja_usuario),
     
     path('especies/', views.especies, name='especies'),                     # para acceder a la lista de especies
     path('especies/nueva/', views.nueva_especie, name='nueva_especie'),     # para crear una nueva especie
