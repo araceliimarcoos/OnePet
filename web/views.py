@@ -1803,7 +1803,7 @@ def personal(request):
             especialidad__clave=especialidad
         )
 
-    veterinarios_list = veterinarios_list.order_by('primerapellido', 'nombrepila')
+    veterinarios_list = veterinarios_list.order_by('-folio')
     paginator = Paginator(veterinarios_list, 15)
     page_number = request.GET.get('page')
     veterinarios = paginator.get_page(page_number)
