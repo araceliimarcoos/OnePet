@@ -89,5 +89,7 @@ urlpatterns = [
     path('propietarios/crear/', views.crear_propietario, name='crear_propietario'),#Este es para crear uno nuevo
     path('propietarios/<str:folio>/editar/', views.editar_propietario, name='editar_propietario'),
     
-
+    path('consultas/<int:numero_consulta>/receta-pdf/', views.generar_pdf_receta_consulta, name='receta_consulta_pdf'),
+    path('hospitalizacion/<int:numero_hosp>/receta-pdf/', views.generar_pdf_receta_hospitalizacion, name='receta_hosp_pdf'),
+    
 ]

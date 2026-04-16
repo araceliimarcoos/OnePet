@@ -5,7 +5,7 @@
 {% block nav_pagos %}active{% endblock %}
 
 {% block breadcrumb %}
-    <a href="{% url 'dashboard' %}">Inicio</a>
+    <a href="{% url 'enrutador_principal' %}">Inicio</a>
     <span class="material-symbols-outlined">chevron_right</span>
     <a href="{% url 'pagos' %}">Pagos</a>
     <span class="material-symbols-outlined">chevron_right</span>
@@ -274,17 +274,6 @@
 <div class="page active">
     <div class="recibo-wrapper">
 
-        <!-- Acciones -->
-        <div class="recibo-actions">
-            <a href="{% url 'pagos' %}" class="btn-cancelar" style="text-decoration:none;">
-                ← Volver
-            </a>
-            <button type="button" onclick="window.print()" class="btn-primary">
-                <span class="material-symbols-outlined">print</span>
-                Imprimir
-            </button>
-        </div>
-
         <div class="recibo-card">
 
             <!-- CABECERA ─────────────────────────────────────────────────── -->
@@ -412,10 +401,6 @@
                     <div class="recibo-tot-row">
                         <span>Subtotal</span>
                         <span>${{ total|floatformat:2 }}</span>
-                    </div>
-                    <div class="recibo-tot-row">
-                        <span>IVA</span>
-                        <span style="color:var(--text-muted);">No aplica</span>
                     </div>
                     <div class="recibo-tot-final">
                         <span>Total</span>

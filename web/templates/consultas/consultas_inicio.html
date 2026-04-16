@@ -10,7 +10,7 @@
 {% block nav_consultas %}active{% endblock %}
 
 {% block breadcrumb %}
-    <a href="{% url 'dashboard' %}">Inicio</a>
+    <a href="{% url 'enrutador_principal' %}">Inicio</a>
     <span class="material-symbols-outlined breadcrumb-sep">chevron_right</span>
     <a href="{% url 'consultas' %}">Consultas</a>
     <span class="material-symbols-outlined breadcrumb-sep">chevron_right</span>
@@ -620,7 +620,7 @@
             <div class="card-section">
                 <div class="card-section-header">
                     <span class="material-symbols-outlined">prescriptions</span>
-                    Receta
+                    Receta / Tratamientos
                 </div>
                 <div class="card-section-body">
                     <div id="recetaLista">
@@ -642,13 +642,47 @@
                         {% else %}
                             <p id="recetaVacia" style="font-size:0.83rem; color:var(--text-muted); text-align:center; padding:6px 0;">Sin medicamentos agregados</p>
                         {% endif %}
+
+                        {% if modo == 'ver' and receta and receta.instrugenerales %}
+                            <div style="margin-top: 12px; padding: 8px 12px; background: #fef9e3; border-left: 3px solid #f59e0b;">
+                                <strong><span class="material-symbols-outlined" style="font-size:14px; color:#f59e0b; vertical-align:middle;">assignment</span> 
+                                    Instrucciones generales:
+                                </strong><br>
+                                {{ receta.instrugenerales|linebreaks }}
+                            </div>
+                        {% endif %}
+
+                        {% if modo == 'ver' and tratamientos %}
+                            <div style="display:flex; width:100%; justify-content:center; margin-top:12px;">
+                                <a href="{% url 'receta_consulta_pdf' consulta.numero %}"
+                                class="btn-primary"
+                                target="_blank"
+                                style="text-decoration:none; flex:1; display:flex; justify-content:center; align-items:center; gap:6px;">
+                                    <span class="material-symbols-outlined">picture_as_pdf</span>
+                                    Descargar Receta
+                                </a>
+                            </div>
+                        {% endif %}
+
+                        {% if modo == 'editar' and receta and receta.instrugenerales %}
+                            <div style="margin-top:8px; padding:8px 12px; background:#fef9e3; border-left:3px solid #f59e0b; font-size:0.82rem;">
+                                <strong>Instrucciones generales actuales:</strong><br>
+                                {{ receta.instrugenerales }}
+                            </div>
+                        {% endif %}
                     </div>
+
                     {% if modo == 'iniciar' %}
                     <button type="button" class="btn-add-med" id="btnAgregarMed">
                         <span class="material-symbols-outlined">add</span>
                         Añadir Medicamento
                     </button>
                     {% endif %}
+
+                    <div id="instruccionesContainer" style="display: {% if modo == 'editar' and tratamientos %}block{% else %}none{% endif %}; margin-top: 12px;">
+                        <label class="form-label">Instrucciones generales</label>
+                        <textarea name="instrugenerales" id="id_instrugenerales" class="form-textarea" rows="2" placeholder="Ej: Administrar con comida, evitar ejercicio...">{% if receta and receta.instrugenerales %}{{ receta.instrugenerales }}{% elif data.instrugenerales %}{{ data.instrugenerales }}{% endif %}</textarea>
+                    </div>
                 </div>
             </div>
 
@@ -931,6 +965,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const lista   = document.getElementById('recetaLista');
         const vacia   = document.getElementById('recetaVacia');
         const jsonInput = document.getElementById('medicamentosJson');
+        const instruccionesDiv = document.getElementById('instruccionesContainer');
+
+        // Mostrar/ocultar el campo de instrucciones según si hay medicamentos
+        if (medicamentosReceta.length > 0) {
+            instruccionesDiv.style.display = 'block';
+        } else {
+            instruccionesDiv.style.display = 'none';
+        }
 
         // Ocultar mensaje vacío si hay medicamentos
         if (vacia) vacia.style.display = medicamentosReceta.length ? 'none' : 'block';
@@ -1081,6 +1123,11 @@ document.addEventListener('DOMContentLoaded', () => {
         cerrarHistorial();
         {% if modo != 'ver' %}cerrarMed();{% endif %}
     });
+
+    if (typeof tratamientos !== 'undefined' && tratamientos.length > 0) {
+        const instruccionesDiv = document.getElementById('instruccionesContainer');
+        if (instruccionesDiv) instruccionesDiv.style.display = 'block';
+    }
 
 });
 </script>

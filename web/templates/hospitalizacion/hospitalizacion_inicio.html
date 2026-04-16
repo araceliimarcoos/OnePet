@@ -10,7 +10,7 @@
 {% block nav_hospitalizacion %}active{% endblock %}
 
 {% block breadcrumb %}
-    <a href="{% url 'dashboard' %}">Inicio</a>
+    <a href="{% url 'enrutador_principal' %}">Inicio</a>
     <span class="material-symbols-outlined breadcrumb-sep">chevron_right</span>
     <a href="{% url 'hospitalizacion' %}">Hospitalización</a>
     <span class="material-symbols-outlined breadcrumb-sep">chevron_right</span>
@@ -436,6 +436,23 @@
                                 </div>
                             </div>
                             {% endfor %}
+                            {% if receta and receta.instrugenerales %}
+                            <div style="margin-top:12px; padding:8px 12px; background:#fef9e3; border-left:3px solid #f59e0b;">
+                                <strong><span class="material-symbols-outlined" style="font-size:14px; color:#f59e0b; vertical-align:middle;">assignment</span>
+                                    Instrucciones generales:
+                                </strong><br>
+                                {{ receta.instrugenerales|linebreaks }}
+                            </div>
+                            {% endif %}
+                            <div style="display:flex; width:100%; justify-content:center; margin-top:12px;">
+                                <a href="{% url 'receta_hosp_pdf' hosp.numero %}"
+                                   class="btn-primary"
+                                   target="_blank"
+                                   style="text-decoration:none; flex:1; display:flex; justify-content:center; align-items:center; gap:6px;">
+                                    <span class="material-symbols-outlined">picture_as_pdf</span>
+                                    Descargar Receta
+                                </a>
+                            </div>
                         {% else %}
                             <p style="font-size:0.83rem; color:var(--text-muted);">Sin receta registrada</p>
                         {% endif %}
@@ -455,6 +472,12 @@
                             </div>
                         </div>
                         {% endfor %}
+                        {% if receta and receta.instrugenerales %}
+                        <div style="margin-top:8px; padding:8px 12px; background:#fef9e3; border-left:3px solid #f59e0b; font-size:0.82rem;">
+                            <strong>Instrucciones generales actuales:</strong><br>
+                            {{ receta.instrugenerales }}
+                        </div>
+                        {% endif %}
                         <hr class="divider-dashed">
                         <span class="seccion-label">Agregar más medicamentos</span>
                         {% endif %}
@@ -468,6 +491,10 @@
                             <span class="material-symbols-outlined">add</span>
                             Añadir Medicamento
                         </button>
+                        <div id="instruccionesContainer" style="display:none; margin-top:12px;">
+                            <label class="form-label">Instrucciones generales</label>
+                            <textarea name="instrugenerales" id="id_instrugenerales" class="form-textarea" rows="2" placeholder="Ej: Administrar con comida, evitar ejercicio..."></textarea>
+                        </div>
 
                     {% else %}
                         <!-- modo iniciar -->
@@ -480,6 +507,10 @@
                             <span class="material-symbols-outlined">add</span>
                             Añadir Medicamento
                         </button>
+                        <div id="instruccionesContainer" style="display:none; margin-top:12px;">
+                            <label class="form-label">Instrucciones generales</label>
+                            <textarea name="instrugenerales" id="id_instrugenerales" class="form-textarea" rows="2" placeholder="Ej: Administrar con comida, evitar ejercicio..."></textarea>
+                        </div>
                     {% endif %}
 
                 </div>
@@ -768,6 +799,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const lista     = document.getElementById('recetaLista');
         const vacia     = document.getElementById('recetaVacia');
         const jsonInput = document.getElementById('medicamentosJson');
+        const instruccionesDiv = document.getElementById('instruccionesContainer');
+
+        if (instruccionesDiv) {
+            instruccionesDiv.style.display = medicamentosReceta.length > 0 ? 'block' : 'none';
+        }
+
         if (vacia) vacia.style.display = medicamentosReceta.length ? 'none' : 'block';
         lista.querySelectorAll('.receta-item').forEach(el => el.remove());
         medicamentosReceta.forEach((m, idx) => {

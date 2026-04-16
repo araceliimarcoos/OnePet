@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Receta Médica #{{ receta.numero }}</title>
+    <style>
+        @page {
+            size: letter;
+            margin: 2.5cm 2cm;
+        }
+        body {
+            font-family: 'Helvetica', Arial, sans-serif;
+            font-size: 12pt;
+            line-height: 1.4;
+            color: #1e2a3a;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #2c6e9e;
+            padding-bottom: 10px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 18pt;
+            color: #2c6e9e;
+        }
+        .header p {
+            margin: 5px 0 0;
+            font-size: 10pt;
+            color: #4a627a;
+        }
+        .datos-paciente {
+            background: #f0f4f8;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .datos-paciente table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .datos-paciente td {
+            padding: 4px 8px;
+            vertical-align: top;
+        }
+        .datos-paciente td:first-child {
+            font-weight: bold;
+            width: 120px;
+        }
+        .receta-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .receta-table th {
+            background: #2c6e9e;
+            color: white;
+            padding: 8px;
+            text-align: left;
+            font-size: 11pt;
+        }
+        .receta-table td {
+            border: 1px solid #cbd5e1;
+            padding: 8px;
+            vertical-align: top;
+        }
+        .instrucciones {
+            margin-top: 20px;
+            background: #fef9e3;
+            padding: 10px;
+            border-left: 4px solid #f59e0b;
+        }
+        .footer {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 10pt;
+            color: #4a627a;
+        }
+        .firma {
+            margin-top: 30px;
+            text-align: right;
+            border-top: 1px dashed #aaa;
+            padding-top: 20px;
+            width: 250px;
+            margin-left: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>RECETA MÉDICA</h1>
+        <p>OnePet | Folio receta #: {{ receta.numero }}</p>
+    </div>
+
+    <div class="datos-paciente">
+        <table>
+            <tr><td>Paciente:</td><td><strong>{{ mascota.nombre }}</strong> ({{ mascota.especie.nombre }} · {{ mascota.raza.nombre }})</td></tr>
+            <tr><td>Propietario:</td><td>{{ propietario.nombrepila }} {{ propietario.primerapellido }}</td></tr>
+            <tr><td>Edad:</td><td>{{ edad }}</td></tr>
+            <tr><td>Peso:</td><td>{{ mascota.peso }} kg</td></tr>
+            <tr><td>Fecha de emisión:</td><td>{{ fecha|date:"d/m/Y" }}</td></tr>
+        </table>
+    </div>
+
+    <h3>💊 Tratamiento prescrito</h3>
+    <table class="receta-table">
+        <thead>
+            <tr><th>Medicamento</th><th>Dosis</th><th>Frecuencia</th><th>Duración</th><th>Cantidad</th></tr>
+        </thead>
+        <tbody>
+            {% for t in tratamientos %}
+            <tr><td>{{ t.nombre }}</td><td>{{ t.dosis }}</td><td>{{ t.frecuencia }}</td><td>{{ t.duracion }}</td><td>{{ t.cantidad|default:"1" }}</td></tr>
+            {% empty %}
+            <tr><td colspan="5">No se indicaron medicamentos.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if receta.instrugenerales %}
+    <div class="instrucciones">
+        <strong>📋 Instrucciones generales:</strong><br>
+        {{ receta.instrugenerales|linebreaks }}
+    </div>
+    {% endif %}
+
+    <div class="footer">
+        <div>Firma y sello del médico veterinario</div>
+        <div>{{ veterinario.nombrepila }} {{ veterinario.primerapellido }}<br>Céd. Prof. {{ veterinario.cedula }}</div>
+    </div>
+    <div class="firma">
+        _________________________
+    </div>
+</body>
+</html>
