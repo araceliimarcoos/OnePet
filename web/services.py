@@ -5,6 +5,7 @@ from django.utils import timezone
 from datetime import date, time, datetime, timedelta
 import re, json
 from django.db import connection
+from django.db import transaction
 
 
 from .utils.validaciones import (
@@ -69,6 +70,9 @@ def validar_datos(data):
 
     return True, None
 
+from django.contrib.auth.hashers import make_password
+
+@transaction.atomic
 def crear_propietario_db(data):
 
     propietario = Propietario.objects.create(
@@ -91,6 +95,18 @@ def crear_propietario_db(data):
             if data.get('tel_secundario') else None,
         propietario=propietario
     )
+    
+    tipo_prop = TipoUsuario.objects.get(codigo='PRO')  # 👈 ajusta si usas otro código
+    estado_act = EdoUsuario.objects.get(clave='A')
+
+    Usuario.objects.create(
+        usuario=propietario.folio,
+        contrasena=('12345'),
+        tipo=tipo_prop,
+        propietario=propietario,
+        estado=estado_act,
+    )
+
 
     return propietario
 
@@ -1135,9 +1151,6 @@ def validar_datos_veterinario(data, folio_actual=None):
         return False, 'La especialidad seleccionada no existe'
  
     return True, None
-
-
-from django.db import transaction
 
 
 @transaction.atomic
