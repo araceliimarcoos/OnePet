@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from .models import Propietario, Telefono, Medicamento, Servicio, Especie, Raza, Cita, Mascota, Veterinario, EdoCita, Especialidad, EdoUsuario, Usuario, Consulta, Expediente, Receta, Tratamiento, Hospitalizacion, EdoHosp, ServCons, ServHosp, SignosVitales, Pago
+from .models import Propietario, Telefono, Medicamento, Servicio, Especie, Raza, Cita, Mascota, Veterinario, EdoCita, Especialidad, EdoUsuario, Usuario, Consulta, Expediente, Receta, Tratamiento, Hospitalizacion, EdoHosp, ServCons, ServHosp, SignosVitales, Pago, TipoUsuario
 from django.utils import timezone
 from datetime import date, time, datetime, timedelta
 import re, json
@@ -1076,9 +1076,9 @@ def generar_folio_veterinario():
                 max_num = num
         except:
             continue
-
+ 
     return f"VET-{max_num + 1:03d}"
-
+ 
 def validar_datos_veterinario(data, folio_actual=None):
     import re
     from .models import Veterinario, Especialidad
@@ -1136,9 +1136,14 @@ def validar_datos_veterinario(data, folio_actual=None):
  
     return True, None
 
+
+from django.db import transaction
+
+
+@transaction.atomic
 def crear_veterinario_db(data):
-    numeros   = re.sub(r'\D', '', data.get('telefono', ''))
-    tel_fmt   = f"({numeros[:3]}) {numeros[3:6]}-{numeros[6:]}"
+    numeros      = re.sub(r'\D', '', data.get('telefono', ''))
+    tel_fmt      = f"({numeros[:3]}) {numeros[3:6]}-{numeros[6:]}"
     especialidad = Especialidad.objects.get(clave=data['especialidad'])
  
     veterinario = Veterinario.objects.create(
@@ -1151,8 +1156,24 @@ def crear_veterinario_db(data):
         cedula=data['cedula'].strip(),
         especialidad=especialidad,
     )
-    return veterinario
  
+    # ── Crear usuario asociado automáticamente ───────────────────────────────
+    # El usuario se llama igual que el folio del veterinario (ej: VET-001)
+    # La contraseña por defecto es '12345'
+    # El tipo es 'VET' y el estado inicial es 'A' (Activo)
+    tipo_vet   = TipoUsuario.objects.get(codigo='VET')
+    estado_act = EdoUsuario.objects.get(clave='A')
+ 
+    Usuario.objects.create(
+        usuario=veterinario.folio,          # ej: VET-001
+        contrasena='12345',
+        tipo=tipo_vet,
+        veterinario=veterinario,
+        estado=estado_act,
+    )
+    # ─────────────────────────────────────────────────────────────────────────
+ 
+    return veterinario 
  
 def editar_veterinario_db(veterinario, data):
     numeros = re.sub(r'\D', '', data.get('telefono', ''))
