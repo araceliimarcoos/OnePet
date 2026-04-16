@@ -338,10 +338,11 @@
                 <div class="filters-right">
                     <select class="filter-select" id="filterEspecialidad">
                         <option value="">Todas las Especialidades</option>
+                        
                         {% for esp in especialidades %}
-                        <option value="{{ esp.clave }}">{{ esp.nombre }}</option>
-                        {% empty %}
-                        <option value="">No hay especialidades disponibles</option>
+                        <option value="{{ esp.clave|lower }}">
+                            {{ esp.nombre }}
+                        </option>
                         {% endfor %}
                     </select>
                     <select class="filter-select" id="filterEstado">
@@ -365,7 +366,7 @@
 
                     <tbody id="personalBody">
                         {% for veterinario in veterinarios %}
-                        <tr>
+                        <tr data-especialidad="{{ veterinario.especialidad.clave|lower }}">
                             <td>
                                 <div class="user-cell">
                                     <div class="user-avatar-p" style="background-color: #a8d8b9; color: var(--green-dark);">

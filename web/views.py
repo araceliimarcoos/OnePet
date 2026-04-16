@@ -1786,7 +1786,8 @@ def nueva_raza(request):
 @login_required
 def personal(request):
     query = request.GET.get('q', '')
-    
+    especialidad = request.GET.get('especialidad', '')
+
     veterinarios_list = Veterinario.objects.select_related('especialidad').all()
     
     if query:
@@ -1795,6 +1796,11 @@ def personal(request):
             Q(primerapellido__icontains=query) |
             Q(segundoapellido__icontains=query) |
             Q(folio__icontains=query)
+        )
+
+    if especialidad:
+        veterinarios_list = veterinarios_list.filter(
+            especialidad__clave=especialidad
         )
 
     veterinarios_list = veterinarios_list.order_by('primerapellido', 'nombrepila')
