@@ -608,7 +608,7 @@ def crear_hospitalizacion_db(consulta, data):
             _insertar_tratamientos(cursor, receta.numero, medicamentos_list)
  
     # Servicios
-    servicios_list = _parsear_json(data.get('medicamentos_json', '[]'))
+    servicios_list = _parsear_json(data.get('servicios_json', '[]'))
     if servicios_list:
         with connection.cursor() as cursor:
             for item in servicios_list:
