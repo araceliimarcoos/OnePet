@@ -1811,7 +1811,8 @@ def nueva_raza(request):
 @login_required
 def personal(request):
     query = request.GET.get('q', '')
-    
+    especialidad = request.GET.get('especialidad', '')
+
     veterinarios_list = Veterinario.objects.select_related('especialidad').all()
     
     if query:
@@ -1822,7 +1823,12 @@ def personal(request):
             Q(folio__icontains=query)
         )
 
-    veterinarios_list = veterinarios_list.order_by('primerapellido', 'nombrepila')
+    if especialidad:
+        veterinarios_list = veterinarios_list.filter(
+            especialidad__clave=especialidad
+        )
+
+    veterinarios_list = veterinarios_list.order_by('-folio')
     paginator = Paginator(veterinarios_list, 15)
     page_number = request.GET.get('page')
     veterinarios = paginator.get_page(page_number)
