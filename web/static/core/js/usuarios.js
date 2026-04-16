@@ -1,7 +1,46 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    // ─── UTILIDADES ───────────────────────────────────────────────────────────
 
+// ─────── FILTRADO ───────────────────────────────────────────────────────────
+    const filtroEstado = document.getElementById('filterEstado');
+    const filtroRol = document.getElementById('filterRol');
+
+    function aplicarFiltros() {
+        const valorEstado = filtroEstado ? filtroEstado.value : 'todos';
+        const valorRol = filtroRol ? filtroRol.value : '';
+
+        const filas = document.querySelectorAll('#usuariosBody tr');
+
+        filas.forEach(fila => {
+            const estado = fila.dataset.estado;
+            const rol = fila.dataset.rol;
+
+            const coincideEstado = (valorEstado === 'todos' || estado === valorEstado);
+            const coincideRol = (valorRol === '' || rol === valorRol);
+
+            if (coincideEstado && coincideRol) {
+                fila.style.display = '';
+            } else {
+                fila.style.display = 'none';
+            }
+        });
+    }
+
+    // Eventos
+    if (filtroEstado) {
+        filtroEstado.addEventListener('change', aplicarFiltros);
+    }
+
+    if (filtroRol) {
+        filtroRol.addEventListener('change', aplicarFiltros);
+    }
+
+    // Aplicar al cargar
+    aplicarFiltros();
+
+
+
+    // ─── UTILIDADES ───────────────────────────────────────────────────────────
     function abrirOverlay(overlay) {
         overlay.classList.add('visible');
         document.body.style.overflow = 'hidden';
@@ -54,55 +93,28 @@ document.addEventListener('DOMContentLoaded', () => {
         return btn ? { ...btn.dataset } : {};
     }
 
-    // ─── MODAL: NUEVO VETERINARIO ─────────────────────────────────────────────
 
-    const overlayNuevo = document.getElementById('modalNuevoVeterinario');
-    const formNuevo    = document.getElementById('formNuevoVeterinario');
+    // ─── ESCAPE ───────────────────────────────────────────────────────────────
 
-    document.getElementById('btnNuevoVeterinario')
-        ?.addEventListener('click', () => abrirOverlay(overlayNuevo));
-    document.getElementById('btnCerrarModal')
-        ?.addEventListener('click', () => cerrarOverlay(overlayNuevo, formNuevo));
-    document.getElementById('btnCancelar')
-        ?.addEventListener('click', () => cerrarOverlay(overlayNuevo, formNuevo));
-    overlayNuevo?.addEventListener('click', (e) => {
-        if (e.target === overlayNuevo) cerrarOverlay(overlayNuevo, formNuevo);
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        cerrarDropdowns();
+        if (overlayNuevo?.classList.contains('visible'))    cerrarOverlay(overlayNuevo, formNuevo);
+        if (overlayDetalles?.classList.contains('visible')) cerrarOverlay(overlayDetalles);
+        if (overlayEditar?.classList.contains('visible'))   cerrarOverlay(overlayEditar, formEditar);
+        if (overlayBaja?.classList.contains('visible'))     cerrarOverlay(overlayBaja);
+        if (overlayEsp?.classList.contains('visible'))      cerrarOverlay(overlayEsp, formEsp);
     });
 
-    formNuevo?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        limpiarError(overlayNuevo);
-        const btnGuardar    = formNuevo.querySelector('[type=submit]');
-        const textoOriginal = btnGuardar.innerHTML;
-        btnGuardar.disabled = true;
-        btnGuardar.innerHTML = '<span class="material-symbols-outlined">hourglass_top</span> Guardando...';
-        try {
-            const resp = await fetch('/personal/nuevo/', {
-                method:  'POST',
-                headers: { 'X-CSRFToken': getCsrfToken() },
-                body:    new FormData(formNuevo),
-            });
-            const data = await resp.json();
-            if (data.ok) {
-                cerrarOverlay(overlayNuevo, formNuevo);
-                mostrarToast('Veterinario registrado', `${data.nombre} — ${data.folio}`);
-                setTimeout(() => window.location.reload(), 2500);
-            } else {
-                mostrarError(overlayNuevo, data.error || 'Error al guardar');
-            }
-        } catch {
-            mostrarError(overlayNuevo, 'No se pudo conectar con el servidor');
-        } finally {
-            btnGuardar.disabled  = false;
-            btnGuardar.innerHTML = textoOriginal;
-        }
-    });
+    document.addEventListener('scroll', cerrarDropdowns, true);
+
 
     // ─── MODAL: VER DETALLES ──────────────────────────────────────────────────
 
     const overlayDetalles = document.getElementById('modalVerDetalles');
 
     function abrirDetalles(d) {
+        console.log(d);
         const nombre = d.nombre || '';
         // Iniciales para el avatar: primera letra de nombre y primer apellido
         const partes   = nombre.trim().split(' ');
@@ -113,12 +125,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const avatar = document.getElementById('det-avatar');
         if (avatar) avatar.textContent = iniciales || '—';
 
-        document.getElementById('det-folio').textContent        = d.folio        || '—';
-        document.getElementById('det-nombre').textContent       = nombre         || '—';
-        document.getElementById('det-correo').textContent       = d.correo       || '—';
-        document.getElementById('det-telefono').textContent     = d.telefono     || '—';
-        document.getElementById('det-cedula').textContent       = d.cedula       || '—';
-        document.getElementById('det-especialidad').textContent = d.especialidad || '—';
+        document.getElementById('det-nombre-real').textContent = d.nombre || '—';
+        document.getElementById('det-estado').textContent = d.estado      || '—';
+        document.getElementById('det-rol').textContent = d.rol            || '—';
+        document.getElementById('det-contrasena').textContent = '********'|| '—';
+
         abrirOverlay(overlayDetalles);
     }
 
@@ -126,65 +137,77 @@ document.addEventListener('DOMContentLoaded', () => {
         ?.addEventListener('click', () => cerrarOverlay(overlayDetalles));
     document.getElementById('btnCerrarDetalles2')
         ?.addEventListener('click', () => cerrarOverlay(overlayDetalles));
-    
-        
-        
-        Detalles?.addEventListener('click', (e) => {
+    overlayDetalles?.addEventListener('click', (e) => {
         if (e.target === overlayDetalles) cerrarOverlay(overlayDetalles);
+        
     });
 
-    // ─── MODAL: EDITAR VETERINARIO ────────────────────────────────────────────
 
-    const overlayEditar = document.getElementById('modalEditarVeterinario');
-    const formEditar    = document.getElementById('formEditarVeterinario');
+
+    // ─── MODAL: EDITAR USUARIO (SOLO CONTRASEÑA) ────────────────────────────
+
+    const overlayEditar = document.getElementById('modalEditarUsuario');
+    const formEditar    = document.getElementById('formEditarUsuario');
 
     function abrirEditar(d) {
-        document.getElementById('editar-folio').value          = d.folio          || '';
-        document.getElementById('editar-nombre').value         = d.nombrepila     || '';
-        document.getElementById('editar-apellido-pat').value   = d.apellidoPat    || '';
-        document.getElementById('editar-apellido-mat').value   = d.apellidoMat    || '';
-        document.getElementById('editar-correo').value         = d.correo         || '';
-        document.getElementById('editar-telefono').value       = d.telefono       || '';
-        document.getElementById('editar-cedula').value         = d.cedula         || '';
+        const overlay = document.getElementById('modalEditarUsuario');
 
-        const selEsp = document.getElementById('editar-especialidad');
-        [...selEsp.options].forEach(o => {
-            o.selected = o.value === d.especialidadClave;
-        });
-        abrirOverlay(overlayEditar);
+        document.getElementById('editar_usuario_mostrar').value = d.usuario || '';
+        document.getElementById('editar_usuario_nombre').value = d.nombre || '';
+        document.getElementById('editar-usuario-id').value = d.usuario || '';
+        document.getElementById('editar_contrasena').value = '';
+
+        abrirOverlay(overlay);
     }
 
+    // cerrar modal
     document.getElementById('btnCerrarEditar')
         ?.addEventListener('click', () => cerrarOverlay(overlayEditar, formEditar));
+
     document.getElementById('btnCancelarEditar')
         ?.addEventListener('click', () => cerrarOverlay(overlayEditar, formEditar));
+
     overlayEditar?.addEventListener('click', (e) => {
-        if (e.target === overlayEditar) cerrarOverlay(overlayEditar, formEditar);
+        if (e.target === overlayEditar) {
+            cerrarOverlay(overlayEditar, formEditar);
+        }
     });
+
+
+    // ─── SUBMIT EDITAR CONTRASEÑA ────────────────────────────────────────────
 
     formEditar?.addEventListener('submit', async (e) => {
         e.preventDefault();
+
         limpiarError(overlayEditar);
-        const folio         = document.getElementById('editar-folio').value;
+
+        const usuario       = document.getElementById('editar-usuario-id').value;
         const btnGuardar    = formEditar.querySelector('[type=submit]');
         const textoOriginal = btnGuardar.innerHTML;
+
         btnGuardar.disabled = true;
         btnGuardar.innerHTML = '<span class="material-symbols-outlined">hourglass_top</span> Guardando...';
+
         try {
-            const resp = await fetch(`/personal/${folio}/editar/`, {
-                method:  'POST',
-                headers: { 'X-CSRFToken': getCsrfToken() },
-                body:    new FormData(formEditar),
+            const resp = await fetch(`/usuarios/${usuario}/cambiar-password/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: new FormData(formEditar)
             });
+
             const data = await resp.json();
+
             if (data.ok) {
                 cerrarOverlay(overlayEditar, formEditar);
-                mostrarToast('Veterinario actualizado', `${data.nombre} — ${data.folio}`);
-                setTimeout(() => window.location.reload(), 2500);
+                mostrarToast('Contraseña actualizada', `Usuario ${usuario}`);
+                setTimeout(() => window.location.reload(), 2000);
             } else {
                 mostrarError(overlayEditar, data.error || 'Error al guardar');
             }
-        } catch {
+
+        } catch (err) {
             mostrarError(overlayEditar, 'No se pudo conectar con el servidor');
         } finally {
             btnGuardar.disabled  = false;
@@ -192,98 +215,79 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // ─── MODAL: NUEVA ESPECIALIDAD ────────────────────────────────────────────
 
-    const overlayEsp = document.getElementById('modalNuevaEspecialidad');
-    const formEsp    = document.getElementById('formNuevaEspecialidad');
 
-    document.getElementById('btnNuevaEspecialidad')
-        ?.addEventListener('click', () => abrirOverlay(overlayEsp));
-    document.getElementById('btnCerrarEsp')
-        ?.addEventListener('click', () => cerrarOverlay(overlayEsp, formEsp));
-    document.getElementById('btnCancelarEsp')
-        ?.addEventListener('click', () => cerrarOverlay(overlayEsp, formEsp));
-    overlayEsp?.addEventListener('click', (e) => {
-        if (e.target === overlayEsp) cerrarOverlay(overlayEsp, formEsp);
+
+    function leerDatosEditar(btn) {
+        return {
+            usuario: btn.getAttribute('data-usuario')
+        };
+    }
+
+    const inputPass = document.getElementById('editar_contrasena');
+    const toggleBtn = document.getElementById('togglePassword');
+
+    toggleBtn.addEventListener('click', () => {
+        const isHidden = inputPass.type === 'password';
+        inputPass.type = isHidden ? 'text' : 'password';
+        toggleBtn.textContent = isHidden ? 'NO VER' : 'VER';
     });
 
-    formEsp?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        limpiarError(overlayEsp);
-        const btnGuardar    = formEsp.querySelector('[type=submit]');
-        const textoOriginal = btnGuardar.innerHTML;
-        btnGuardar.disabled = true;
-        btnGuardar.innerHTML = '<span class="material-symbols-outlined">hourglass_top</span> Guardando...';
-        try {
-            const resp = await fetch('/personal/especialidades/nueva/', {
-                method:  'POST',
-                headers: { 'X-CSRFToken': getCsrfToken() },
-                body:    new FormData(formEsp),
-            });
-            const data = await resp.json();
-            if (data.ok) {
-                cerrarOverlay(overlayEsp, formEsp);
-                mostrarToast('Especialidad agregada', `${data.nombre}`);
-                setTimeout(() => window.location.reload(), 2500);
-            } else {
-                mostrarError(overlayEsp, data.error || 'Error al guardar');
-            }
-        } catch {
-            mostrarError(overlayEsp, 'No se pudo conectar con el servidor');
-        } finally {
-            btnGuardar.disabled  = false;
-            btnGuardar.innerHTML = textoOriginal;
-        }
-    });
 
     // ─── MODAL: CONFIRMAR BAJA ────────────────────────────────────────────────
 
     const overlayBaja = document.getElementById('modalConfirmarBaja');
-    let folioParaBaja = null;
+    let usuarioParaBaja = null;
 
     function abrirBaja(d) {
-        folioParaBaja = d.id;
-        document.getElementById('baja-nombre').textContent = d.nombre || 'este veterinario';
+        usuarioParaBaja = d.usuario;  // ✔ correcto
+
+        document.getElementById('baja-usuario').textContent =
+            d.nombre || d.usuario || 'este usuario';
+
         abrirOverlay(overlayBaja);
     }
 
     document.getElementById('btnCerrarBaja')
         ?.addEventListener('click', () => cerrarOverlay(overlayBaja));
+
     document.getElementById('btnCancelarBaja')
         ?.addEventListener('click', () => cerrarOverlay(overlayBaja));
+
     overlayBaja?.addEventListener('click', (e) => {
         if (e.target === overlayBaja) cerrarOverlay(overlayBaja);
     });
 
     document.getElementById('btnConfirmarBaja')?.addEventListener('click', async () => {
-        if (!folioParaBaja) return;
-        const btn           = document.getElementById('btnConfirmarBaja');
-        const textoOriginal = btn.innerHTML;
-        btn.disabled        = true;
-        btn.innerHTML       = '<span class="material-symbols-outlined">hourglass_top</span> Procesando...';
+
+        console.log("CLICK BAJA FUNCIONA");
+
+        if (!usuarioParaBaja) return;
+
+        const btn = document.getElementById('btnConfirmarBaja');
+
         try {
-            const resp = await fetch(`/personal/${folioParaBaja}/baja/`, {
-                method:  'POST',
-                headers: { 'X-CSRFToken': getCsrfToken() },
+            const resp = await fetch(`/usuarios/${usuarioParaBaja}/baja/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCsrfToken()
+                }
             });
+
             const data = await resp.json();
+
             if (data.ok) {
                 cerrarOverlay(overlayBaja);
-                mostrarToast('Veterinario dado de baja', '');
-                setTimeout(() => window.location.reload(), 2500);
+                mostrarToast('Usuario dado de baja', d.nombre || usuarioParaBaja);
+                setTimeout(() => location.reload(), 1500);
             } else {
-                cerrarOverlay(overlayBaja);
-                mostrarToast('Error', data.error || 'No se pudo dar de baja');
+                mostrarToast('Error', data.error);
             }
-        } catch {
-            cerrarOverlay(overlayBaja);
-            mostrarToast('Error', 'No se pudo conectar con el servidor');
-        } finally {
-            btn.disabled  = false;
-            btn.innerHTML = textoOriginal;
+
+        } catch (e) {
+            console.error(e);
         }
     });
-
     // ─── MENÚ DE ACCIONES ───────────────────────────────────────────────────
 
     document.addEventListener('click', (e) => {
@@ -295,16 +299,32 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!isOpen) abrirDropdown(menuBtn, menu);
             return;
         }
+
         const itemDetalles = e.target.closest('.dropdown-item[data-accion="detalles"]');
-        if (itemDetalles) { cerrarDropdowns(); abrirDetalles(leerDatosFila(itemDetalles)); return; }
+        if (itemDetalles) {
+            cerrarDropdowns();
+            abrirDetalles(leerDatosFila(itemDetalles));
+            return;
+        }
+
         const itemEditar = e.target.closest('.dropdown-item[data-accion="editar"]');
-        if (itemEditar)   { cerrarDropdowns(); abrirEditar(leerDatosFila(itemEditar)); return; }
+        if (itemEditar) {
+            cerrarDropdowns();
+            abrirEditar(leerDatosFila(itemEditar));
+            return;
+        }
+
         const dangerBtn = e.target.closest('.dropdown-item.danger');
-        if (dangerBtn)    { cerrarDropdowns(); abrirBaja(dangerBtn.dataset); return; }
+        if (dangerBtn) {
+            cerrarDropdowns();
+            abrirBaja(dangerBtn.dataset);
+            return;
+        }
+
         cerrarDropdowns();
     });
 
-    // ─── ESCAPE ───────────────────────────────────────────────────────────────
+        // ─── ESCAPE ───────────────────────────────────────────────────────────────
 
     document.addEventListener('keydown', (e) => {
         if (e.key !== 'Escape') return;
@@ -354,4 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
         toast.addEventListener('transitionend', () => toast.remove(), { once: true });
     }
 
+
 });
+
+    

@@ -24,12 +24,6 @@
                 <p class="page-sub">Gesion de Usuarios del Hospital</p>
             </div>
 
-            <div class="page-header-right">
-                <button class="btn-primary">
-                    <span class="material-symbols-outlined">person_add</span>
-                    Nuevo Usuario
-                </button>
-            </div>
         </div>
         <!-- FILTRO-->
         <div class="card">
@@ -49,14 +43,17 @@
                 </form>
                 <div class="filters-right">
                     <select class="filter-select" id="filterRol">   
-                    <option value="">Todos los roles</option>
-                    <option value="vet">Veterinario</option>
-                    <option value="recep">Recepcionista</option>
-                    <option value="admin">Administrador</option>
-                  </select>
-                    <select class="filter-select">
-                    <option>Estado: Activo</option>
-                    <option>Inactivo</option>
+                        <option value="">Todos los roles</option>
+                        <option value="pro">Propietario</option>
+                        <option value="vet">Veterinario</option>
+                        <option value="rec">Recepcionista</option>
+                        <option value="adm">Administrador</option>
+                    </select>
+
+                    <select class="filter-select" id="filterEstado">
+                    <option value="todos">Estado: Todos</option>
+                        <option value="activo">Activo</option>
+                        <option value="inactivo">Inactivo</option>
                     </select>
                 </div>
             </div>
@@ -77,7 +74,7 @@
                     <tbody id="usuariosBody">
                         {% for usuario in usuarios %}
                         
-                        <tr>
+                        <tr data-estado="{{ usuario.estado.nombre|lower }}" data-rol="{{ usuario.tipo.codigo|lower }}">
                             <td>
                             <!-- USUARIO -->
                                 <div class="user-cell">
@@ -100,8 +97,9 @@
                              </td>
 
                             <!-- ROL -->
+
                             <td>
-                                <span class="badge-especie feline">
+                                <span class="user-name-table">
                                     {{ usuario.tipo.nombre }}
                                 </span>
                             </td>
@@ -123,7 +121,39 @@
 
                             <!-- ACCIONES -->
                             <td>
-                                <a href="#" class="link-green">Ver Acciones</a>
+                                <div class="menu-wrap">
+                                    <button class="menu-btn"
+                                        aria-label="Acciones"
+                                        data-usuario="{{ usuario.usuario }}"
+                                        data-nombre="{{ usuario.nombre_real }}"
+                                        data-rol="{{ usuario.tipo.nombre }}"
+                                        data-estado="{{ usuario.estado.nombre }}"
+                                    >
+
+                                        <span class="material-symbols-outlined">more_horiz</span>
+                                    </button>
+                                    <div class="dropdown-menu" role="menu">
+                                        <button class="dropdown-item" data-accion="detalles">
+                                            <span class="material-symbols-outlined">info</span>
+                                            Ver detalles
+                                        </button>
+                                        <button class="dropdown-item" role="menuitem" data-accion="editar">
+                                            <span class="material-symbols-outlined">edit</span>
+                                            Editar
+                                        </button>
+
+                                        <div class="dropdown-divider"></div>
+
+                                        <button class="dropdown-item danger" role="menuitem"
+                                            data-usuario="{{ usuario.usuario }}"
+                                            data-nombre="{{ usuario.nombre_real }}">
+                                            
+                                            <span class="material-symbols-outlined">delete</span>
+                                            Dar de baja
+                                        </button>
+
+                                    </div>
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
@@ -153,24 +183,140 @@
         </div>
     </div>
 
-    <!-- MODAL -->
-    <div class="modal-overlay" id="modalNuevoUsuario">
-        <div class="modal">
-            <div class="modalHeader">
-                <h2>Registrar Nuevo Usuario</h2>
-                <button class="modal-close" id="btnCerrarModal">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
-            </div>
 
-            <form id="formNuevoUsuario">
-                {% csrf_token %}
-                <div class="modal-body">
-
+<!-- ══════════════════════════ MODAL: VER DETALLES ════════════════════════════ -->
+<div class="modal-overlay" id="modalVerDetalles">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>Detalles del Usuario</h2>
+            <button class="modal-close" id="btnCerrarDetalles" type="button">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="modal-body" style="padding: 0;">
+ 
+            <!-- Cabecera con avatar -->
+            <div style="display:flex; align-items:center; gap:16px; padding:20px 24px; border-bottom:1px solid var(--border);">
+                <div style="width:56px; height:56px; border-radius:50%; background:var(--blue-light); display:flex; align-items:center; justify-content:center; font-size:1.3rem; font-weight:700; color:var(--blue-dark); flex-shrink:0;" id="det-avatar">—</div>
+                <div>
+                    <p style="font-size:1rem; font-weight:700; color:var(--text); margin:0 0 2px;" id="det-nombre-real">—</p>
                 </div>
-            </form>
-
+                <span class="folio-badge" style="margin-left:auto;" id="det-estado">—</span>
+            </div>
+ 
+            <!-- Grid de datos -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0; padding:4px 0;">
+ 
+                <div style="padding:14px 24px; border-right:1px solid var(--border);">
+                    <p style="font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; margin:0 0 4px;">Rol</p>
+                    <p style="font-size:0.88rem; color:var(--text); margin:0; word-break:break-all;" id="det-rol">—</p>
+                </div>
+ 
+                <div style="padding:14px 24px; ">
+                    <p style="font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; margin:0 0 4px;">Constraseña</p>
+                    <p style="font-size:0.88rem; color:var(--text); margin:0;" id="det-contrasena">—</p>
+                </div>
+ 
+ 
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-cancelar" id="btnCerrarDetalles2">Cerrar</button>
         </div>
     </div>
+</div>
 
+
+<!-- ══════════════════════════ MODAL: EDITAR VETERINARIO ═════════════════════════════ -->
+<div class="modal-overlay" id="modalEditarUsuario">
+    <div class="modal-big">
+        <div class="modal-header">
+            <h2>Cambiar contraseña</h2>
+            <button class="modal-close" id="btnCerrarEditar" type="button">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <form id="formEditarUsuario" novalidate>
+            {% csrf_token %}
+
+            <input type="hidden" id="editar-usuario-id" name="usuario">
+
+            <div class="modal-body">
+
+                <p class="modal-error" style="display:none;"></p>
+
+                <div class="form-row-1">
+                    
+                    <div class="form-field">
+                        <label>Usuario seleccionado</label>
+                        <input type="text" id="editar_usuario_mostrar" disabled>
+                    </div>
+
+                    <div class="form-field">
+                        <label>Nombre</label>
+                        <input type="text" id="editar_usuario_nombre" disabled>
+                    </div>
+
+                    <div class="form-field">
+                    <label>Nueva Contraseña</label>
+
+                    <div style="position:relative;">
+                        <input type="password" id="editar_contrasena" name="contrasena">
+
+                        <button type="button" id="togglePassword"
+                            style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer;">
+                            👁️
+                        </button>
+                    </div>
+                </div>
+                    
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-cancelar" id="btnCancelarEditar">
+                    Cancelar
+                </button>
+
+                <button type="submit" class="btn-primary">
+                    <span class="material-symbols-outlined">save</span>
+                    Guardar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<!-- ══════════════════════════ MODAL: CONFIRMAR BAJA ═════════════════════════════ -->
+<div class="modal-overlay" id="modalConfirmarBaja">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>Confirmar Baja</h2>
+            <button class="modal-close" id="btnCerrarBaja" type="button">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="modal-body" style="text-align:center; padding: 28px 24px;">
+            <span class="material-symbols-outlined" style="font-size:48px; color:#e67e22; display:block; margin-bottom:12px;">warning</span>
+            <p style="font-size:0.95rem; color:var(--text); margin:0 0 8px;">¿Dar de baja a <strong id="baja-usuario">este usuario</strong>?</p>
+            <p style="font-size:0.82rem; color:var(--text-muted); margin:0;">El usuario quedará inactivo en el sistema.</p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-cancelar" id="btnCancelarBaja">Cancelar</button>
+            <button type="button" id="btnConfirmarBaja" style="background:#c0392b; color:#fff; border:none; padding:9px 20px; border-radius:8px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                <span class="material-symbols-outlined" style="font-size:17px;">person_off</span>
+                Confirmar Baja
+            </button>
+        </div>
+    </div>
+</div>
+<div id="toast-container"></div>
+
+{% endblock %}
+
+{% block scripts %}
+    <script src="{% static 'core/js/usuarios.js' %}"></script>
 {% endblock %}
