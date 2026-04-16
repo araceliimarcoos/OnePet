@@ -126,7 +126,10 @@ document.addEventListener('DOMContentLoaded', () => {
         ?.addEventListener('click', () => cerrarOverlay(overlayDetalles));
     document.getElementById('btnCerrarDetalles2')
         ?.addEventListener('click', () => cerrarOverlay(overlayDetalles));
-    overlayDetalles?.addEventListener('click', (e) => {
+    
+        
+        
+        Detalles?.addEventListener('click', (e) => {
         if (e.target === overlayDetalles) cerrarOverlay(overlayDetalles);
     });
 

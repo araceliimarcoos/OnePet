@@ -1653,6 +1653,45 @@ def usuarios(request):
         'total_conteo': paginator.count,
         'query': query
     })
+    
+    
+def cambiar_password(request, usuario):
+    nueva = request.POST.get('contrasena')
+
+    if not nueva:
+        return JsonResponse({
+            'ok': False,
+            'error': 'La contraseña no puede estar vacía'
+        })
+
+    user = get_object_or_404(Usuario, usuario=usuario)
+
+    user.contrasena = nueva  # ⚠️ ideal: hash si usas auth real
+    user.save()
+
+    return JsonResponse({
+        'ok': True,
+        'usuario': user.usuario
+    })
+    
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+from django.contrib.auth.decorators import login_required
+from .services import dar_baja_usuario
+
+
+@login_required
+def baja_usuario(request, usuario):
+    if request.method != 'POST':
+        return JsonResponse({'ok': False, 'error': 'Método no permitido'})
+
+    result = dar_baja_usuario(usuario)
+
+    if not result:
+        return JsonResponse({'ok': False, 'error': 'Usuario no encontrado'})
+
+    return JsonResponse({'ok': True})
+    
+    
 #............................................................... E S P E C I E S ....................................................................................................#
 
 @login_required
