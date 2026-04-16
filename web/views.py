@@ -11,6 +11,9 @@ from .models import Mascota, Propietario, Especie, Raza, Servicio, Medicamento, 
 
 from django.db.models import Value, CharField
 from django.db.models.functions import Concat, TruncMonth
+from django.http import HttpResponse
+from weasyprint import HTML
+from django.template.loader import render_to_string
 
 from django.core.paginator import Paginator
 from django.db.models import Q, Count, Sum
@@ -677,7 +680,7 @@ def citas(request):
 
     # Datos para los selects del modal — listas independientes
     propietarios = Propietario.objects.order_by('primerapellido', 'nombrepila')
-    veterinarios = Veterinario.objects.order_by('primerapellido', 'nombrepila')
+    veterinarios = obtener_veterinarios_activos(solo_medicina_general=True)
     estados_cita = EdoCita.objects.all()
     
     # Mascotas en JSON para el filtro dinámico por propietario
@@ -757,6 +760,27 @@ def editar_cita(request, folio):
 
     except Exception as e:
         return JsonResponse({'ok': False, 'error': f'Error interno: {str(e)}'})
+    
+
+def obtener_veterinarios_activos(solo_medicina_general=True):
+    """
+    Retorna un queryset de veterinarios cuyo usuario asociado está activo (estado='A').
+    Opcionalmente, filtra por especialidad 'Medicina General'.
+    """
+    # Obtener folios de veterinarios con usuario activo
+    usuarios_activos = Usuario.objects.filter(
+        estado__clave='A',          # Estado activo
+        veterinario__isnull=False   # Tiene veterinario asociado
+    ).values_list('veterinario', flat=True)
+    
+    qs = Veterinario.objects.filter(folio__in=usuarios_activos)
+    
+    if solo_medicina_general:
+        # Asumiendo que el nombre de la especialidad es exactamente 'Medicina General'
+        # O puedes usar el código/clave si lo prefieres, por ejemplo: especialidad__clave='GEN'
+        qs = qs.filter(especialidad__nombre__iexact='Medicina General')
+    
+    return qs.order_by('primerapellido', 'nombrepila')
 
 #------------------------------------------------------------------ C O N S U L T A S ------------------------------------------------------------#
 
@@ -1163,7 +1187,7 @@ def iniciar_hospitalizacion(request, consulta_numero):
     else:
         mascota.edad = f"{anios} año{'s' if anios != 1 else ''}"
     
-    veterinarios         = Veterinario.objects.order_by('primerapellido')
+    veterinarios         = obtener_veterinarios_activos(solo_medicina_general=True)
     medicamentos_disp    = Medicamento.objects.order_by('nombre')
     servicios_disp       = Servicio.objects.order_by('nombre')
  
@@ -1258,6 +1282,7 @@ def ver_hospitalizacion(request, numero):
         'consulta':        hosp.consulta,
         'hosp':            hosp,
         'modo':            'ver',
+        'receta':          receta,
         'tratamientos':    tratamientos,
         'servicios':       servicios,
         'signos_vitales':  signos_vitales,
@@ -1898,8 +1923,112 @@ def nueva_especialidad(request):
     except Exception as e:
         return JsonResponse({'ok': False, 'error': f'Error interno: {str(e)}'})
 
-#------------------------------------------ PAGOS ------------------------------------------------------------#
+#------------------------------------------ R E C E T A ------------------------------------------------------------#
+def generar_pdf_receta_consulta(request, numero_consulta):
+    consulta = get_object_or_404(Consulta.objects.select_related(
+        'cita__mascota__especie', 'cita__mascota__raza',
+        'cita__propietario', 'cita__veterinario'
+    ), numero=numero_consulta)
+    
+    receta = Receta.objects.filter(consulta=consulta).first()
+    if not receta:
+        return HttpResponse("No hay receta asociada a esta consulta", status=404)
+    
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT m.nombre, t.dosis, t.frecuencia, t.duracion, t.cantidad
+            FROM tratamiento t
+            JOIN medicamento m ON t.medicamento = m.clave
+            WHERE t.receta = %s
+        """, [receta.numero])
+        cols = [c[0] for c in cursor.description]
+        tratamientos = [dict(zip(cols, row)) for row in cursor.fetchall()]
+        
+    mascota = consulta.cita.mascota
+    propietario = consulta.cita.propietario
+    veterinario = consulta.cita.veterinario
+    
+    hoy = timezone.now().date()
+    anios = hoy.year - mascota.fechanacimiento.year
+    meses = hoy.month - mascota.fechanacimiento.month
+    if (hoy.month, hoy.day) < (mascota.fechanacimiento.month, mascota.fechanacimiento.day):
+        anios -= 1
+    if meses < 0:
+        meses += 12
+    if anios == 0:
+        edad = f"{meses} mes{'es' if meses != 1 else ''}"
+    else:
+        edad = f"{anios} año{'s' if anios != 1 else ''}"
+    
+    html_string = render_to_string('recetas/receta_pdf.html', {
+        'receta': receta,
+        'tratamientos': tratamientos,
+        'mascota': mascota,
+        'propietario': propietario,
+        'veterinario': veterinario,
+        'fecha': timezone.now(),
+        'edad': edad,
+    })
+    
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="receta_{receta.numero}.pdf"'
+    HTML(string=html_string, base_url=request.build_absolute_uri()).write_pdf(response)
+    return response
+    
+def generar_pdf_receta_hospitalizacion(request, numero_hosp):
+    hosp = get_object_or_404(Hospitalizacion.objects.select_related(
+        'expediente__mascota__especie', 'expediente__mascota__raza',
+        'expediente__mascota__propietario', 'veterinario'
+    ), numero=numero_hosp)
+    
+    receta = Receta.objects.filter(hospitalizacion=hosp).first()
+    if not receta:
+        return HttpResponse("No hay receta asociada a esta hospitalización", status=404)
+    
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT m.nombre, t.dosis, t.frecuencia, t.duracion, t.cantidad
+            FROM tratamiento t
+            JOIN medicamento m ON t.medicamento = m.clave
+            WHERE t.receta = %s
+        """, [receta.numero])
+        cols = [c[0] for c in cursor.description]
+        tratamientos = [dict(zip(cols, row)) for row in cursor.fetchall()]
+        
+    mascota = hosp.consulta.cita.mascota
+    propietario = hosp.consulta.cita.propietario
+    veterinario = hosp.consulta.cita.veterinario
+    
+    hoy = timezone.now().date()
+    anios = hoy.year - mascota.fechanacimiento.year
+    meses = hoy.month - mascota.fechanacimiento.month
+    if (hoy.month, hoy.day) < (mascota.fechanacimiento.month, mascota.fechanacimiento.day):
+        anios -= 1
+    if meses < 0:
+        meses += 12
+    if anios == 0:
+        edad = f"{meses} mes{'es' if meses != 1 else ''}"
+    else:
+        edad = f"{anios} año{'s' if anios != 1 else ''}"
+    
+    html_string = render_to_string('recetas/receta_pdf.html', {
+        'receta': receta,
+        'tratamientos': tratamientos,
+        'mascota': mascota,
+        'propietario': propietario,
+        'veterinario': veterinario,
+        'fecha': timezone.now(),
+        'edad': edad,
+    })
+    
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="receta_{receta.numero}.pdf"'
+    HTML(string=html_string).write_pdf(response)
+    return response
+    
+    
 
+#------------------------------------------ PAGOS ------------------------------------------------------------#
 @login_required
 def reportes(request):
     return render(request, 'reportes/reportes.html', { 'seccion_activa': 'reportes' })
