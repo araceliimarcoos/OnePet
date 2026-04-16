@@ -243,10 +243,10 @@ body.login-body {
                 </div>
 
                 <!-- Error de Django -->
-                {% if form.errors %}
+                {% if errors %}
                 <div class="login-error">
                     <span class="material-symbols-outlined">error</span>
-                    <span>Usuario o contraseña incorrectos. Intenta de nuevo.</span>
+                    <span>{{ error }}</span>
                 </div>
                 {% endif %}
 
