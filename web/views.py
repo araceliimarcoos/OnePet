@@ -1965,8 +1965,11 @@ def personal(request):
     page_number = request.GET.get('page')
     veterinarios = paginator.get_page(page_number)
 
-    especialidades = Especialidad.objects.order_by('nombre')
+    especialidades = Especialidad.objects.annotate(
+        total_veterinarios=Count('veterinario')
+    ).order_by('nombre')
 
+    
     #Citas de la semana actuaal
     hoy        = date.today()
     inicio_sem = hoy - timedelta(days=hoy.weekday())   # lunes

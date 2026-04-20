@@ -546,7 +546,7 @@
                             <td><code class="med-key">{{ esp.clave }}</code></td>
                             <td><strong>{{ esp.nombre }}</strong></td>
                             <td>{{ esp.descripcion }}</td>
-                            <td>{{ esp.total_vets|default:"0" }}</td>
+                            <td>{{ esp.total_veterinarios|default:"0"}}</td>
                         </tr>
                         {% empty %}
                         <tr><td colspan="4">No hay especialidades registradas</td></tr>
