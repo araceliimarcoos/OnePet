@@ -1,173 +1,359 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block titulo %}Dashboard{%endblock%}
-
+{% block titulo %}Dashboard Recepcionista{% endblock %}
 {% block nav_dashboard %}active{% endblock %}
 
 {% block breadcrumb %}
-  
     <span class="breadcrumb-current">Dashboard</span>
-  
 {% endblock %}
 
 {% block topbar_titulo %}Panel de Control{% endblock %}
 
-{% block contenido%} 
+{% block estilos %}
+<style>
+.dash-welcome {
+    background: linear-gradient(135deg, #1d3461 0%, #1f6e8c 100%);
+    border-radius: var(--radius);
+    padding: 24px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+.dash-welcome-text h2 { color:#fff; font-size:1.25rem; font-weight:800; margin:0 0 4px; }
+.dash-welcome-text p  { color:rgba(255,255,255,0.6); font-size:0.85rem; margin:0; }
+.dash-welcome-badge   { background:rgba(255,255,255,0.18); color:#fff; font-size:0.78rem; font-weight:700; padding:6px 16px; border-radius:20px; }
 
-      <!-- ===== DASHBOARD PAGE ===== -->
-      <div class="page active" id="page-dashboard">
-        <div class="page-header">
-            <div>
-              <h1 class="page-title">Dashboard de Hoy</h1>
-              <p class="page-sub">{% now "l, j F Y" %}</p>
-          </div>
+.dash-cols { display:grid; grid-template-columns:1fr 340px; gap:20px; align-items:start; }
+
+.dash-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:16px; }
+.dash-card-header { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid var(--border); }
+.dash-card-header h3 { font-size:0.92rem; font-weight:700; color:var(--text); margin:0; display:flex; align-items:center; gap:8px; }
+.dash-card-header h3 .material-symbols-outlined { font-size:18px; color:var(--blue-dark); }
+
+/* ── Tabla de citas de hoy ───────────────────────────────────────────────── */
+.citas-table { width:100%; border-collapse:collapse; font-size:0.83rem; }
+.citas-table th { padding:8px 14px; text-align:left; font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--border); background:var(--bg); }
+.citas-table td { padding:11px 14px; border-bottom:1px solid var(--border); color:var(--text); vertical-align:middle; }
+.citas-table tr:last-child td { border-bottom:none; }
+.citas-table tr:hover td { background:var(--bg); }
+.cita-mascota { font-weight:700; }
+.cita-prop    { font-size:0.75rem; color:var(--text-muted); }
+.cita-vet     { font-size:0.78rem; color:var(--text-muted); }
+
+/* ── Badge estado cita ───────────────────────────────────────────────────── */
+.badge-cita-sm { display:inline-flex; align-items:center; gap:3px; font-size:0.68rem; font-weight:700; padding:3px 8px; border-radius:20px; }
+.badge-pend     { background:#fef9e7; color:#d4ac0d; }
+.badge-atend    { background:var(--green-light); color:var(--green-dark); }
+.badge-cancel   { background:#fff5f5; color:var(--red); }
+
+/* ── Alerta de pago pendiente ────────────────────────────────────────────── */
+.pago-item {
+    display:flex; align-items:center; gap:12px;
+    padding:10px 18px; border-bottom:1px solid var(--border);
+}
+.pago-item:last-child { border-bottom:none; }
+.pago-dot {
+    width:8px; height:8px; border-radius:50%;
+    background:#e67e22; flex-shrink:0;
+}
+.pago-info { flex:1; }
+.pago-nombre { font-size:0.85rem; font-weight:700; color:var(--text); }
+.pago-sub { font-size:0.75rem; color:var(--text-muted); }
+.pago-tipo { font-size:0.7rem; font-weight:700; padding:2px 8px; border-radius:20px; }
+.pago-tipo-c { background:var(--green-light); color:var(--green-dark); }
+.pago-tipo-h { background:var(--blue-light);  color:var(--blue-dark); }
+
+/* ── Stat mini sidebar ───────────────────────────────────────────────────── */
+.dash-stat-mini { display:flex; align-items:center; gap:14px; padding:14px 18px; border-bottom:1px solid var(--border); }
+.dash-stat-mini:last-child { border-bottom:none; }
+.dsm-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.dsm-icon .material-symbols-outlined { font-size:20px; }
+.dsm-label { font-size:0.75rem; color:var(--text-muted); }
+.dsm-val   { font-size:1.3rem; font-weight:800; color:var(--text); line-height:1; }
+
+/* ── Próximas citas ──────────────────────────────────────────────────────── */
+.proxima-item { display:flex; align-items:center; gap:12px; padding:10px 14px; border-bottom:1px solid var(--border); }
+.proxima-item:last-child { border-bottom:none; }
+.proxima-fecha { min-width:54px; text-align:center; }
+.proxima-fecha-dia  { font-size:0.7rem; color:var(--text-muted); }
+.proxima-fecha-hora { font-size:0.88rem; font-weight:800; color:var(--text); }
+.proxima-info { flex:1; }
+.proxima-mascota { font-size:0.85rem; font-weight:700; color:var(--text); }
+.proxima-vet     { font-size:0.75rem; color:var(--text-muted); }
+
+.dash-empty { padding:20px; text-align:center; font-size:0.83rem; color:var(--text-muted); }
+
+/* ── Separador de sección de tabla ──────────────────────────────────────── */
+.seccion-citas { 
+    padding: 6px 14px; background:var(--bg);
+    font-size:0.7rem; font-weight:700; color:var(--text-muted);
+    text-transform:uppercase; letter-spacing:0.06em;
+    border-bottom:1px solid var(--border);
+}
+</style>
+{% endblock %}
+
+{% block contenido %}
+<div class="page active">
+
+    <!-- Bienvenida -->
+    <div class="dash-welcome">
+        <div class="dash-welcome-text">
+            <h2>Buenos días — Panel de Recepción</h2>
+            <p>{% now "l, j \d\e F \d\e Y" %} &nbsp;·&nbsp; Resumen del día</p>
         </div>
+        <span class="dash-welcome-badge">Recepcionista</span>
+    </div>
 
-        <div class="stats-grid">
-          <div class="stat-card green">
+    <!-- Stats superiores -->
+    <div class="stats-grid" style="margin-bottom:20px;">
+        <div class="stat-card green">
             <span class="stat-icon material-symbols-outlined">calendar_today</span>
             <div class="stat-body">
-              <p class="stat-label">Citas hoy</p>
-              <p class="stat-value">12</p>
-              <p class="stat-sub">4 pendientes por atender</p>
+                <p class="stat-label">Citas de hoy</p>
+                <p class="stat-value">{{ total_citas_hoy }}</p>
+                <p class="stat-sub">{{ citas_pendientes }} pendiente{{ citas_pendientes|pluralize:"s" }} · {{ citas_atendidas }} atendida{{ citas_atendidas|pluralize:"s" }}</p>
             </div>
-          </div>
-          <div class="stat-card blue">
-            <span class="stat-icon material-symbols-outlined">apartment</span>
+        </div>
+        <div class="stat-card orange">
+            <span class="stat-icon material-symbols-outlined">receipt_long</span>
             <div class="stat-body">
-              <p class="stat-label">Mascotas Hospitalizadas</p>
-              <p class="stat-value">8</p>
-              <p class="stat-sub">2 citas programadas para hoy</p>
+                <p class="stat-label">Pagos pendientes</p>
+                <p class="stat-value">{{ total_pendientes_pago }}</p>
+                <p class="stat-sub">Consultas y hospitalizaciones sin cobrar</p>
             </div>
-          </div>
         </div>
+        <div class="stat-card blue">
+            <span class="stat-icon material-symbols-outlined">payments</span>
+            <div class="stat-body">
+                <p class="stat-label">Ingresos del día</p>
+                <p class="stat-value">${{ ingresos_hoy|floatformat:0 }}</p>
+                <p class="stat-sub">Total cobrado hoy</p>
+            </div>
+        </div>
+    </div>
 
-        <div class="card">
-          <div class="card-header">
-            <h2>Citas de hoy</h2>
-            <a href="{% url 'citas' %}" class="link-green">Ver todas</a>
-          </div>
-          <div class="table-wrapper">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>HORA</th>
-                  <th>MASCOTA</th>
-                  <th>PROPIETARIO</th>
-                  <th>MOTIVO</th>
-                  <th>ESTADO</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>09:00</td>
-                  <td>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                      <div class="user-avatar-p" style="background-color: #FFEDD5; color: #EA580C;">
-                        <span class="material-symbols-outlined">pets</span>
-                      </div>
-                      <div>
-                        <strong>Luna</strong>
-                      </div>
+    <div class="dash-cols">
+
+        <!-- COLUMNA PRINCIPAL ─────────────────────────────────────────────── -->
+        <div>
+
+            <!-- Citas de hoy -->
+            <div class="dash-card">
+                <div class="dash-card-header">
+                    <h3>
+                        <span class="material-symbols-outlined">today</span>
+                        Citas de hoy
+                    </h3>
+                    <a href="{% url 'citas' %}" class="link-green" style="font-size:0.82rem;">Ver todas</a>
+                </div>
+                {% if citas_hoy %}
+                <table class="citas-table">
+                    <thead>
+                        <tr>
+                            <th>Hora</th>
+                            <th>Mascota</th>
+                            <th>Propietario</th>
+                            <th>Veterinario</th>
+                            <th>Motivo</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in citas_hoy %}
+                        <tr>
+                            <td style="font-weight:800; font-variant-numeric:tabular-nums;">
+                                {{ c.hora|time:"H:i" }}
+                            </td>
+                            <td>
+                                <div class="cita-mascota">{{ c.mascota.nombre }}</div>
+                            </td>
+                            <td>
+                                <div>{{ c.propietario.nombrepila }} {{ c.propietario.primerapellido }}</div>
+                            </td>
+                            <td class="cita-vet">
+                                Dr. {{ c.veterinario.nombrepila }} {{ c.veterinario.primerapellido }}
+                            </td>
+                            <td class="cita-vet">{{ c.motivo|truncatechars:24 }}</td>
+                            <td>
+                                {% if c.estado.nombre == 'Pendiente' %}
+                                <span class="badge-cita-sm badge-pend">Pendiente</span>
+                                {% elif c.estado.nombre == 'Atendida' %}
+                                <span class="badge-cita-sm badge-atend">Atendida</span>
+                                {% elif c.estado.nombre == 'Cancelada' %}
+                                <span class="badge-cita-sm badge-cancel">Cancelada</span>
+                                {% else %}
+                                <span class="badge-cita-sm" style="background:var(--bg); color:var(--text-muted);">{{ c.estado.nombre }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="dash-empty">No hay citas programadas para hoy.</p>
+                {% endif %}
+            </div>
+
+            <!-- Pagos pendientes -->
+            <div class="dash-card">
+                <div class="dash-card-header">
+                    <h3>
+                        <span class="material-symbols-outlined" style="color:#e67e22;">payments</span>
+                        Pendientes de cobro
+                    </h3>
+                    <a href="{% url 'pagos' %}" class="link-green" style="font-size:0.82rem;">Ir a pagos</a>
+                </div>
+
+                {% if consultas_sin_pago %}
+                <div class="seccion-citas">Consultas</div>
+                {% for c in consultas_sin_pago %}
+                <div class="pago-item">
+                    <div class="pago-dot"></div>
+                    <div class="pago-info">
+                        <div class="pago-nombre">{{ c.cita.mascota.nombre }}</div>
+                        <div class="pago-sub">{{ c.cita.propietario.nombrepila }} {{ c.cita.propietario.primerapellido }} · {{ c.cita.fecha|date:"d/m/Y" }}</div>
                     </div>
-                  </td>
-                  <td>María López</td>
-                  <td>Vacunación</td>
-                  <td><span class="badge confirmed">CONFIRMADO</span></td>
-                </tr>
+                    <span class="pago-tipo pago-tipo-c">Consulta</span>
+                    <a href="{% url 'pagos' %}" class="link-green" style="font-size:0.78rem; white-space:nowrap;">Cobrar</a>
+                </div>
+                {% endfor %}
+                {% endif %}
 
-                <tr>
-                  <td>10:30</td>
-                  <td><div style="display: flex; align-items: center; gap: 10px;">
-                      <div class="user-avatar-p" style="background-color: #DBEAFE; color: #2563EB;">
-                        <span class="material-symbols-outlined">pets</span>
-                      </div>
-                      <div>
-                        <strong>Thor</strong>
-                      </div>
-                    </div></td>
-                  <td>Juan Pérez</td>
-                  <td>Consulta General</td>
-                  <td><span class="badge waiting">EN ESPERA</span></td>
-                </tr>
+                {% if hosps_sin_pago %}
+                <div class="seccion-citas">Hospitalizaciones</div>
+                {% for h in hosps_sin_pago %}
+                <div class="pago-item">
+                    <div class="pago-dot" style="background:var(--blue-dark);"></div>
+                    <div class="pago-info">
+                        <div class="pago-nombre">{{ h.expediente.mascota.nombre }}</div>
+                        <div class="pago-sub">{{ h.expediente.mascota.propietario.nombrepila }} {{ h.expediente.mascota.propietario.primerapellido }} · Alta: {{ h.fechaalta|date:"d/m/Y" }}</div>
+                    </div>
+                    <span class="pago-tipo pago-tipo-h">Hospitalización</span>
+                    <a href="{% url 'pagos' %}" class="link-green" style="font-size:0.78rem; white-space:nowrap;">Cobrar</a>
+                </div>
+                {% endfor %}
+                {% endif %}
 
-                <tr>
-                  <td>11:15</td>
-                  <td><div style="display: flex; align-items: center; gap: 10px;">
-                      <div class="user-avatar-p" style="background-color: #DBEAFE; color: #2563EB;">
-                        <span class="material-symbols-outlined">pets</span>
-                      </div>
-                      <div>
-                        <strong>Kira</strong>
-                      </div>
-                    </div></td>
-                  <td>Ana Gómez</td>
-                  <td>Cirugía</td>
-                  <td><span class="badge in-consult">EN CONSULTA</span></td>
-                </tr>
-                <tr>
-                  <td>12:00</td>
-                  <td><div style="display: flex; align-items: center; gap: 10px;">
-                      <div class="user-avatar-p" style="background-color: #FFEDD5; color: #EA580C;">
-                        <span class="material-symbols-outlined">pets</span>
-                      </div>
-                      <div>
-                        <strong>Thor</strong>
-                      </div>
-                    </div></td>
-                  <td>Carlos Ruiz</td>
-                  <td>Revisión</td>
-                  <td><span class="badge pending">PENDIENTE</span></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+                {% if not consultas_sin_pago and not hosps_sin_pago %}
+                <p class="dash-empty">
+                    <span class="material-symbols-outlined" style="display:block; font-size:28px; margin-bottom:6px; color:var(--green);">check_circle</span>
+                    No hay pagos pendientes.
+                </p>
+                {% endif %}
+            </div>
 
+        </div><!-- /col principal -->
 
-      <!-- PLACEHOLDER PAGES -->
-      
-      <div class="page" id="page-citas">
-        <div class="page-header"><h1 class="page-title">Citas</h1></div>
-        <div class="card placeholder-card">
-          <div class="placeholder-icon">📅</div>
-          <p>Módulo de Citas</p>
-        </div>
-      </div>
+        <!-- SIDEBAR ──────────────────────────────────────────────────────── -->
+        <div>
 
-      <div class="page" id="page-consultas">
-        <div class="page-header"><h1 class="page-title">Consultas</h1></div>
-        <div class="card placeholder-card"><div class="placeholder-icon">🩺</div><p>Módulo de Consultas</p></div>
-      </div>
-      <div class="page" id="page-hospitalizacion">
-        <div class="page-header"><h1 class="page-title">Hospitalización</h1></div>
-        <div class="card placeholder-card"><div class="placeholder-icon">🏥</div><p>Módulo de Hospitalización</p></div>
-      </div>
-      <div class="page" id="page-pagos">
-        <div class="page-header"><h1 class="page-title">Pagos</h1></div>
-        <div class="card placeholder-card"><div class="placeholder-icon">💳</div><p>Módulo de Pagos</p></div>
-      </div>
-      <div class="page" id="page-catalogo">
-        <div class="page-header"><h1 class="page-title">Catálogo</h1></div>
-        <div class="card placeholder-card"><div class="placeholder-icon">📦</div><p>Módulo de Catálogo</p></div>
-      </div>
-      <div class="page" id="page-medicamentos">
-        <div class="page-header"><h1 class="page-title">Medicamentos</h1></div>
-        <div class="card placeholder-card"><div class="placeholder-icon">💊</div><p>Módulo de Medicamentos</p></div>
-      </div>
-      <div class="page" id="page-usuarios">
-        <div class="page-header"><h1 class="page-title">Usuarios</h1></div>
-        <div class="card placeholder-card"><div class="placeholder-icon">👥</div><p>Módulo de Usuarios</p></div>
-      </div>
-      <div class="page" id="page-especies">
-        <div class="page-header"><h1 class="page-title">Especies Animales</h1></div>
-        <div class="card placeholder-card"><div class="placeholder-icon">🦜</div><p>Módulo de Especies Animales</p></div>
-      </div>
-      <div class="page" id="page-reportes">
-        <div class="page-header"><h1 class="page-title">Reportes</h1></div>
-        <div class="card placeholder-card"><div class="placeholder-icon">📊</div><p>Módulo de Reportes</p></div>
-      </div>
+            <!-- Resumen del día -->
+            <div class="dash-card">
+                <div class="dash-card-header">
+                    <h3><span class="material-symbols-outlined">bar_chart</span>Resumen del día</h3>
+                </div>
+                <div>
+                    <div class="dash-stat-mini">
+                        <div class="dsm-icon" style="background:var(--green-light);">
+                            <span class="material-symbols-outlined" style="color:var(--green-dark);">check_circle</span>
+                        </div>
+                        <div>
+                            <div class="dsm-label">Atendidas</div>
+                            <div class="dsm-val">{{ citas_atendidas }}</div>
+                        </div>
+                    </div>
+                    <div class="dash-stat-mini">
+                        <div class="dsm-icon" style="background:#fef9e7;">
+                            <span class="material-symbols-outlined" style="color:#d4ac0d;">schedule</span>
+                        </div>
+                        <div>
+                            <div class="dsm-label">Pendientes</div>
+                            <div class="dsm-val">{{ citas_pendientes }}</div>
+                        </div>
+                    </div>
+                    <div class="dash-stat-mini">
+                        <div class="dsm-icon" style="background:#fff5f5;">
+                            <span class="material-symbols-outlined" style="color:var(--red);">cancel</span>
+                        </div>
+                        <div>
+                            <div class="dsm-label">Canceladas</div>
+                            <div class="dsm-val">{{ citas_canceladas }}</div>
+                        </div>
+                    </div>
+                    <div class="dash-stat-mini">
+                        <div class="dsm-icon" style="background:var(--green-light);">
+                            <span class="material-symbols-outlined" style="color:var(--green-dark);">payments</span>
+                        </div>
+                        <div>
+                            <div class="dsm-label">Ingresos hoy</div>
+                            <div class="dsm-val" style="font-size:1.05rem;">${{ ingresos_hoy|floatformat:2 }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
+            <!-- Próximas citas (mañana y pasado) -->
+            <div class="dash-card">
+                <div class="dash-card-header">
+                    <h3><span class="material-symbols-outlined">event_upcoming</span>Próximos 2 días</h3>
+                    <a href="{% url 'citas' %}" class="link-green" style="font-size:0.82rem;">Nueva cita</a>
+                </div>
+                <div>
+                    {% if proximas %}
+                        {% for c in proximas %}
+                        <div class="proxima-item">
+                            <div class="proxima-fecha">
+                                <div class="proxima-fecha-dia">{{ c.fecha|date:"d M" }}</div>
+                                <div class="proxima-fecha-hora">{{ c.hora|time:"H:i" }}</div>
+                            </div>
+                            <div class="proxima-info">
+                                <div class="proxima-mascota">{{ c.mascota.nombre }}</div>
+                                <div class="proxima-vet">Dr. {{ c.veterinario.nombrepila }} {{ c.veterinario.primerapellido }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <p class="dash-empty">Sin citas para los próximos 2 días.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Accesos rápidos -->
+            <div class="dash-card">
+                <div class="dash-card-header">
+                    <h3><span class="material-symbols-outlined">apps</span>Accesos rápidos</h3>
+                </div>
+                <div style="padding:14px; display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                    <a href="{% url 'citas' %}"
+                       style="display:flex; flex-direction:column; align-items:center; gap:6px; padding:12px 8px; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm); text-decoration:none; color:var(--text); font-size:0.78rem; font-weight:600; transition:background 0.15s;">
+                        <span class="material-symbols-outlined" style="font-size:22px; color:var(--blue-dark);">calendar_today</span>
+                        Agendar cita
+                    </a>
+                    <a href="{% url 'propietarios' %}"
+                       style="display:flex; flex-direction:column; align-items:center; gap:6px; padding:12px 8px; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm); text-decoration:none; color:var(--text); font-size:0.78rem; font-weight:600; transition:background 0.15s;">
+                        <span class="material-symbols-outlined" style="font-size:22px; color:var(--green-dark);">person_add</span>
+                        Propietario
+                    </a>
+                    <a href="{% url 'mascotas' %}"
+                       style="display:flex; flex-direction:column; align-items:center; gap:6px; padding:12px 8px; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm); text-decoration:none; color:var(--text); font-size:0.78rem; font-weight:600; transition:background 0.15s;">
+                        <span class="material-symbols-outlined" style="font-size:22px; color:#e67e22;">pets</span>
+                        Mascota
+                    </a>
+                    <a href="{% url 'pagos' %}"
+                       style="display:flex; flex-direction:column; align-items:center; gap:6px; padding:12px 8px; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm); text-decoration:none; color:var(--text); font-size:0.78rem; font-weight:600; transition:background 0.15s;">
+                        <span class="material-symbols-outlined" style="font-size:22px; color:var(--blue-dark);">receipt_long</span>
+                        Cobrar
+                    </a>
+                </div>
+            </div>
+
+        </div><!-- /sidebar -->
+    </div>
+
+</div>
 {% endblock %}

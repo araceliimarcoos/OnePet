@@ -217,8 +217,13 @@
                         <span class="user-name">Invitado</span>
                     {% endif %}
                 </div>
-                <span class="material-symbols-outlined">person</span>
-
+                <div class="user-avatar">
+                    {% if user.imagen %}
+                    <img src="{{ user.imagen }}" alt="{{ user.nombre_real}}">
+                    {% else %}
+                    <span class="material-symbols-outlined" >person</span>
+                    {% endif %}
+                </div>
                 <!-- Logout -->
                 <form method="post" action="{% url 'logout' %}" style="margin:0;">
                     {% csrf_token %}
