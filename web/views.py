@@ -135,12 +135,137 @@ def admin_dashboard(request):
 @login_required
 @user_passes_test(es_veterinario, login_url='login')
 def veterinario_dashboard(request):
-    return render(request, 'dashboard_vet.html')
+    
+    hoy = timezone.now().date()
+    
+    veterinario = Veterinario.objects.filter(usuario=request.user).first()
+    
+    mis_citas_hoy = Cita.objects.select_related(
+        'mascota__propietario', 'estado'
+    ).filter(
+        veterinario=veterinario,
+        fecha=hoy,
+    ).order_by('hora') if veterinario else []
+ 
+    citas_pendientes  = [c for c in mis_citas_hoy if c.estado.nombre == 'Pendiente']
+    citas_atendidas   = [c for c in mis_citas_hoy if c.estado.nombre == 'Atendida']
+    
+    mis_hosps = Hospitalizacion.objects.select_related(
+        'expediente__mascota', 'estado'
+    ).filter(
+        veterinario=veterinario,
+        fechaalta__isnull=True,
+    ) if veterinario else []
+    
+    revisadas_hoy = SignosVitales.objects.filter(
+        fecha=hoy,
+        hospitalizacion__veterinario=veterinario,
+    ).values_list('hospitalizacion_id', flat=True)
+ 
+    hosp_sin_revision = [h for h in mis_hosps if h.numero not in revisadas_hoy]
+    
+    # ── Mis consultas recientes (últimas 5) ───────────────────────────────────
+    mis_consultas_recientes = Consulta.objects.select_related(
+        'cita__mascota', 'cita__estado'
+    ).filter(
+        cita__veterinario=veterinario
+    ).order_by('-cita__fecha')[:5] if veterinario else []
+ 
+    # ── Próximas citas (hoy en adelante, pendientes) ──────────────────────────
+    proximas_citas = Cita.objects.select_related(
+        'mascota__propietario', 'estado'
+    ).filter(
+        veterinario=veterinario,
+        fecha__gte=hoy,
+        estado__nombre='Pendiente',
+    ).order_by('fecha', 'hora')[:8] if veterinario else []
+ 
+    # ── Stats del mes actual ──────────────────────────────────────────────────
+    inicio_mes = hoy.replace(day=1)
+    consultas_mes = Consulta.objects.filter(
+        cita__veterinario=veterinario,
+        cita__fecha__gte=inicio_mes,
+    ).count() if veterinario else 0
+ 
+    contexto = {
+        'seccion_activa':        'dashboard',
+        'veterinario':           veterinario,
+        'mis_citas_hoy':         mis_citas_hoy,
+        'citas_pendientes':      len(citas_pendientes),
+        'citas_atendidas':       len(citas_atendidas),
+        'mis_hosps':             mis_hosps,
+        'hosp_sin_revision':     hosp_sin_revision,
+        'mis_consultas_recientes': mis_consultas_recientes,
+        'proximas_citas':        proximas_citas,
+        'consultas_mes':         consultas_mes,
+        'hosps_activas':         len(list(mis_hosps)),
+    }
+    return render(request, 'dashboard_vet.html', contexto)
 
 @login_required
 @user_passes_test(es_recepcionista, login_url='login')
 def recepcionista_dashboard(request):
-    return render(request, 'dashboard_rep.html')
+    from django.db.models import Sum
+    hoy = timezone.now().date()
+ 
+    # ── Citas de hoy (todas, no solo de un vet) ───────────────────────────────
+    citas_hoy = Cita.objects.select_related(
+        'mascota__propietario', 'veterinario', 'estado'
+    ).filter(fecha=hoy).order_by('hora')
+ 
+    total_citas_hoy    = citas_hoy.count()
+    citas_pendientes   = citas_hoy.filter(estado__nombre='Pendiente').count()
+    citas_atendidas    = citas_hoy.filter(estado__nombre='Atendida').count()
+    citas_canceladas   = citas_hoy.filter(estado__nombre='Cancelada').count()
+ 
+    # ── Próximas citas (mañana y pasado) ─────────────────────────────────────
+    manana = hoy + timedelta(days=1)
+    proximas = Cita.objects.select_related(
+        'mascota__propietario', 'veterinario', 'estado'
+    ).filter(
+        fecha__in=[manana, manana + timedelta(days=1)],
+        estado__nombre='Pendiente',
+    ).order_by('fecha', 'hora')[:10]
+ 
+    # ── Pagos pendientes (consultas atendidas sin pago) ───────────────────────
+    consultas_sin_pago = Consulta.objects.select_related(
+        'cita__mascota__propietario', 'cita__veterinario'
+    ).filter(
+        cita__estado__nombre='Atendida'
+    ).exclude(pago__isnull=False)[:8]
+ 
+    hosps_sin_pago = Hospitalizacion.objects.select_related(
+        'expediente__mascota__propietario'
+    ).filter(
+        fechaalta__isnull=False,
+        estado__nombre__icontains='Alta',
+    ).exclude(pago__isnull=False)[:5]
+ 
+    total_pendientes_pago = consultas_sin_pago.count() + hosps_sin_pago.count()
+ 
+    # ── Ingresos del día ──────────────────────────────────────────────────────
+    ingresos_hoy = Pago.objects.filter(fecha=hoy).aggregate(
+        total=Sum('pagofinal')
+    )['total'] or 0
+ 
+    # ── Nuevos registros de hoy ───────────────────────────────────────────────
+    mascotas_hoy     = Mascota.objects.filter(folio__endswith=hoy.strftime('%Y')).count()
+    propietarios_hoy = Propietario.objects.all().count()  # aproximado si no hay fecha de registro
+ 
+    contexto = {
+        'seccion_activa':        'dashboard',
+        'citas_hoy':             citas_hoy,
+        'total_citas_hoy':       total_citas_hoy,
+        'citas_pendientes':      citas_pendientes,
+        'citas_atendidas':       citas_atendidas,
+        'citas_canceladas':      citas_canceladas,
+        'proximas':              proximas,
+        'consultas_sin_pago':    consultas_sin_pago,
+        'hosps_sin_pago':        hosps_sin_pago,
+        'total_pendientes_pago': total_pendientes_pago,
+        'ingresos_hoy':          ingresos_hoy,
+    }
+    return render(request, 'dashboard_rep.html', contexto)
 
 # --- VISTA DE LOGIN Y LOGOUT ---
 
@@ -208,6 +333,7 @@ from django.core.cache import cache
 
 
 @login_required
+@user_passes_test(lambda u: es_admin(u) or es_veterinario(u) or es_recepcionista(u))
 def mascotas(request):
     # 1. OPTIMIZACIÓN DE CACHE: Evitamos consultar Especies y Razas en cada carga.
     # Si no usas un sistema de cache (como Redis), Django usará Local Memory por defecto.
@@ -446,6 +572,7 @@ def obtener_razas(request):
 #------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 @login_required
+@user_passes_test(lambda u: es_admin(u) or es_recepcionista(u))
 def propietarios(request):
 
     query = request.GET.get('q')
@@ -481,6 +608,7 @@ def propietarios(request):
 # . . . . .  . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .  . . . . . . . . . . . . . . . . . . . .
 
 @login_required
+@user_passes_test(lambda u: es_admin(u) or es_recepcionista(u))
 def propietarios_detalles(request,folio):
     propietario = get_object_or_404(Propietario, folio=folio)
     telefonos   = Telefono.objects.filter(propietario=propietario).first()
@@ -647,6 +775,7 @@ def obtener_folio(request):
 #------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 @login_required
+@user_passes_test(lambda u: es_admin(u) or es_veterinario(u) or es_recepcionista(u))
 def citas(request):
     query = request.GET.get('q', '')
     estado = request.GET.get('estado', '')
@@ -785,6 +914,7 @@ def obtener_veterinarios_activos(solo_medicina_general=True):
 #------------------------------------------------------------------ C O N S U L T A S ------------------------------------------------------------#
 
 @login_required
+@user_passes_test(lambda u: es_admin(u) or es_veterinario(u))
 def consultas(request):
     query = request.GET.get('q', '').strip()
     
@@ -827,6 +957,7 @@ def consultas(request):
     return render(request, 'consultas/consultas_lista.html', contexto)
 
 @login_required
+@user_passes_test(lambda u: es_admin(u) or es_veterinario(u))
 def iniciar_consulta(request, folio_cita):
     """
     GET  → muestra el formulario de nueva consulta para la cita indicada.
@@ -1530,6 +1661,7 @@ def confirmar_pago(request):
 from django.db.models import Q
 
 @login_required
+@user_passes_test(es_admin)
 def servicios(request):
 
     query = request.GET.get('q')

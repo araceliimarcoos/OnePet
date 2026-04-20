@@ -133,7 +133,7 @@
                                 <button class="menu-btn"
                                         aria-label="Acciones"
                                         data-folio="{{ cita.folio }}"
-                                        data-fecha="{{ cita.fecha }}"
+                                        data-fecha="{{ cita.fecha|date:'Y-m-d' }}"
                                         data-hora="{{ cita.hora|time:'H:i' }}"
                                         data-motivo="{{ cita.motivo }}"
                                         data-propietario="{{ cita.propietario.nombrepila }} {{ cita.propietario.primerapellido }}"

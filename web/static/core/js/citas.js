@@ -199,6 +199,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const formEditar    = document.getElementById('formEditarCita');
 
     function abrirEditar(d) {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('editar-fecha').min = today;
+
         document.getElementById('editar-folio').value      = d.folio              || '';
         document.getElementById('editar-fecha').value      = d.fecha              || '';
         document.getElementById('editar-hora').value       = d.hora               || '';

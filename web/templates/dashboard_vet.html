@@ -1,173 +1,468 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block titulo %}Dashboard{%endblock%}
-
+{% block titulo %}Dashboard Veterinario{% endblock %}
 {% block nav_dashboard %}active{% endblock %}
 
 {% block breadcrumb %}
-  
     <span class="breadcrumb-current">Dashboard</span>
-  
 {% endblock %}
 
 {% block topbar_titulo %}Panel de Control{% endblock %}
 
-{% block contenido%} 
+{% block estilos %}
+<style>
+/* ── Bienvenida ───────────────────────────────────────────────────────────── */
+.dash-welcome {
+    background: linear-gradient(135deg, #1a2535 0%, #2d3f52 100%);
+    border-radius: var(--radius);
+    padding: 24px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+.dash-welcome-text h2 {
+    color: #fff;
+    font-size: 1.25rem;
+    font-weight: 800;
+    margin: 0 0 4px;
+}
+.dash-welcome-text p {
+    color: rgba(255,255,255,0.6);
+    font-size: 0.85rem;
+    margin: 0;
+}
+.dash-welcome-badge {
+    background: var(--blue-dark);
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 6px 16px;
+    border-radius: 20px;
+    white-space: nowrap;
+}
 
-      <!-- ===== DASHBOARD PAGE ===== -->
-      <div class="page active" id="page-dashboard">
-        <div class="page-header">
-            <div>
-              <h1 class="page-title">Dashboard de Hoy</h1>
-              <p class="page-sub">{% now "l, j F Y" %}</p>
-          </div>
+/* ── Sección de dos columnas ─────────────────────────────────────────────── */
+.dash-cols {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 20px;
+    align-items: start;
+}
+
+/* ── Card genérica del dashboard ─────────────────────────────────────────── */
+.dash-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+.dash-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+}
+.dash-card-header h3 {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.dash-card-header h3 .material-symbols-outlined {
+    font-size: 18px;
+    color: var(--blue-dark);
+}
+.dash-card-body { padding: 0; }
+
+/* ── Fila de cita en agenda ──────────────────────────────────────────────── */
+.agenda-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+}
+.agenda-item:last-child { border-bottom: none; }
+.agenda-item:hover { background: var(--bg); }
+.agenda-hora {
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: var(--text);
+    min-width: 44px;
+    font-variant-numeric: tabular-nums;
+}
+.agenda-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--blue-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.agenda-avatar .material-symbols-outlined { font-size: 18px; color: var(--blue-dark); }
+.agenda-info { flex: 1; min-width: 0; }
+.agenda-mascota {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.agenda-propietario {
+    font-size: 0.76rem;
+    color: var(--text-muted);
+    margin-top: 1px;
+}
+.agenda-motivo {
+    font-size: 0.76rem;
+    color: var(--text-muted);
+    text-align: right;
+    white-space: nowrap;
+}
+
+/* ── Badge de estado agenda ──────────────────────────────────────────────── */
+.badge-agenda {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+.badge-agenda-pendiente { background: #fef9e7; color: #d4ac0d; }
+.badge-agenda-atendida  { background: var(--green-light); color: var(--green-dark); }
+.badge-agenda-cancelada { background: #fff5f5; color: var(--red); }
+
+/* ── Fila alerta hospitalización ─────────────────────────────────────────── */
+.hosp-alerta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 18px;
+    border-bottom: 1px solid var(--border);
+}
+.hosp-alerta:last-child { border-bottom: none; }
+.hosp-alerta-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: #fff3e0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.hosp-alerta-icon .material-symbols-outlined { font-size: 16px; color: #e67e22; }
+.hosp-alerta-info { flex: 1; }
+.hosp-alerta-nombre { font-size: 0.85rem; font-weight: 700; color: var(--text); }
+.hosp-alerta-sub { font-size: 0.75rem; color: var(--text-muted); }
+
+/* ── Consulta reciente ───────────────────────────────────────────────────── */
+.consulta-recent {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 18px;
+    border-bottom: 1px solid var(--border);
+}
+.consulta-recent:last-child { border-bottom: none; }
+.consulta-recent-fecha {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    min-width: 72px;
+    text-align: center;
+}
+.consulta-recent-info { flex: 1; }
+.consulta-recent-mascota { font-size: 0.85rem; font-weight: 700; color: var(--text); }
+.consulta-recent-dx { font-size: 0.75rem; color: var(--text-muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+
+/* ── Sidebar stat ────────────────────────────────────────────────────────── */
+.dash-stat-mini {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+}
+.dash-stat-mini:last-child { border-bottom: none; }
+.dash-stat-mini-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.dash-stat-mini-icon .material-symbols-outlined { font-size: 20px; }
+.dash-stat-mini-label { font-size: 0.75rem; color: var(--text-muted); }
+.dash-stat-mini-value { font-size: 1.3rem; font-weight: 800; color: var(--text); line-height: 1; }
+
+/* ── Vacío ───────────────────────────────────────────────────────────────── */
+.dash-empty {
+    padding: 20px;
+    text-align: center;
+    font-size: 0.83rem;
+    color: var(--text-muted);
+}
+</style>
+{% endblock %}
+
+{% block contenido %}
+<div class="page active">
+
+    <!-- Bienvenida -->
+    <div class="dash-welcome">
+        <div class="dash-welcome-text">
+            {% if veterinario %}
+            <h2>Buenos días, Dr. {{ veterinario.nombrepila }} {{ veterinario.primerapellido }}</h2>
+            {% else %}
+            <h2>Buenos días</h2>
+            {% endif %}
+            <p>{% now "l, j \d\e F \d\e Y" %} &nbsp;·&nbsp; Panel del Veterinario</p>
         </div>
+        <div>
+            {% if veterinario %}
+            <span class="dash-welcome-badge">{{ veterinario.especialidad.nombre }}</span>
+            {% endif %}
+        </div>
+    </div>
 
-        <div class="stats-grid">
-          <div class="stat-card green">
+    <!-- Stats rápidos -->
+    <div class="stats-grid" style="margin-bottom:20px;">
+        <div class="stat-card green">
             <span class="stat-icon material-symbols-outlined">calendar_today</span>
             <div class="stat-body">
-              <p class="stat-label">Citas hoy</p>
-              <p class="stat-value">12</p>
-              <p class="stat-sub">4 pendientes por atender</p>
+                <p class="stat-label">Mis citas hoy</p>
+                <p class="stat-value">{{ mis_citas_hoy|length }}</p>
+                <p class="stat-sub">{{ citas_pendientes }} pendiente{{ citas_pendientes|pluralize:"s" }} · {{ citas_atendidas }} atendida{{ citas_atendidas|pluralize:"s" }}</p>
             </div>
-          </div>
-          <div class="stat-card blue">
-            <span class="stat-icon material-symbols-outlined">apartment</span>
+        </div>
+        <div class="stat-card blue">
+            <span class="stat-icon material-symbols-outlined">bed</span>
             <div class="stat-body">
-              <p class="stat-label">Mascotas Hospitalizadas</p>
-              <p class="stat-value">8</p>
-              <p class="stat-sub">2 citas programadas para hoy</p>
+                <p class="stat-label">Mis hospitalizados</p>
+                <p class="stat-value">{{ hosps_activas }}</p>
+                <p class="stat-sub">
+                    {% if hosp_sin_revision %}
+                    {{ hosp_sin_revision|length }} sin revisión hoy
+                    {% else %}
+                    Todos revisados hoy
+                    {% endif %}
+                </p>
             </div>
-          </div>
         </div>
+        <div class="stat-card orange">
+            <span class="stat-icon material-symbols-outlined">stethoscope</span>
+            <div class="stat-body">
+                <p class="stat-label">Consultas este mes</p>
+                <p class="stat-value">{{ consultas_mes }}</p>
+                <p class="stat-sub">Desde el inicio del mes</p>
+            </div>
+        </div>
+    </div>
 
-        <div class="card">
-          <div class="card-header">
-            <h2>Citas de hoy</h2>
-            <a href="{% url 'citas' %}" class="link-green">Ver todas</a>
-          </div>
-          <div class="table-wrapper">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>HORA</th>
-                  <th>MASCOTA</th>
-                  <th>PROPIETARIO</th>
-                  <th>MOTIVO</th>
-                  <th>ESTADO</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>09:00</td>
-                  <td>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                      <div class="user-avatar-p" style="background-color: #FFEDD5; color: #EA580C;">
-                        <span class="material-symbols-outlined">pets</span>
-                      </div>
-                      <div>
-                        <strong>Luna</strong>
-                      </div>
+    <div class="dash-cols">
+
+        <!-- COLUMNA PRINCIPAL ─────────────────────────────────────────────── -->
+        <div>
+
+            <!-- Agenda del día -->
+            <div class="dash-card">
+                <div class="dash-card-header">
+                    <h3>
+                        <span class="material-symbols-outlined">today</span>
+                        Agenda de hoy
+                    </h3>
+                    <a href="{% url 'citas' %}" class="link-green" style="font-size:0.82rem;">Ver todas</a>
+                </div>
+                <div class="dash-card-body">
+                    {% if mis_citas_hoy %}
+                        {% for c in mis_citas_hoy %}
+                        <div class="agenda-item">
+                            <span class="agenda-hora">{{ c.hora|time:"H:i" }}</span>
+                            <div class="agenda-avatar">
+                                <span class="material-symbols-outlined">pets</span>
+                            </div>
+                            <div class="agenda-info">
+                                <div class="agenda-mascota">{{ c.mascota.nombre }}</div>
+                                <div class="agenda-propietario">{{ c.propietario.nombrepila }} {{ c.propietario.primerapellido }}</div>
+                            </div>
+                            <div class="agenda-motivo">{{ c.motivo|truncatechars:24 }}</div>
+                            {% if c.estado.nombre == 'Pendiente' %}
+                            <span class="badge-agenda badge-agenda-pendiente">Pendiente</span>
+                            {% elif c.estado.nombre == 'Atendida' %}
+                            <span class="badge-agenda badge-agenda-atendida">Atendida</span>
+                            {% else %}
+                            <span class="badge-agenda badge-agenda-cancelada">{{ c.estado.nombre }}</span>
+                            {% endif %}
+                            {% if c.estado.nombre == 'Pendiente' %}
+                            <a href="{% url 'iniciar_consulta' c.folio %}" class="link-green" style="font-size:0.78rem; white-space:nowrap;">Iniciar</a>
+                            {% elif c.estado.nombre == 'Atendida' %}
+                            <a href="{% url 'ver_consulta' c.consulta.numero %}" class="link-green" style="font-size:0.78rem; white-space:nowrap;">Ver</a>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <p class="dash-empty">No tienes citas programadas para hoy.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Hospitalizaciones sin revisión -->
+            {% if hosp_sin_revision %}
+            <div class="dash-card">
+                <div class="dash-card-header">
+                    <h3>
+                        <span class="material-symbols-outlined" style="color:#e67e22;">warning</span>
+                        Pacientes sin revisión hoy
+                    </h3>
+                    <a href="{% url 'hospitalizacion' %}" class="link-green" style="font-size:0.82rem;">Ver hospitalizaciones</a>
+                </div>
+                <div class="dash-card-body">
+                    {% for h in hosp_sin_revision %}
+                    <div class="hosp-alerta">
+                        <div class="hosp-alerta-icon">
+                            <span class="material-symbols-outlined">vital_signs</span>
+                        </div>
+                        <div class="hosp-alerta-info">
+                            <div class="hosp-alerta-nombre">{{ h.expediente.mascota.nombre }}</div>
+                            <div class="hosp-alerta-sub">Ingresó: {{ h.fechaingreso|date:"d/m/Y" }} · Sin signos vitales hoy</div>
+                        </div>
+                        <a href="{% url 'editar_hospitalizacion' h.numero %}" class="link-green" style="font-size:0.78rem; white-space:nowrap;">Registrar</a>
                     </div>
-                  </td>
-                  <td>María López</td>
-                  <td>Vacunación</td>
-                  <td><span class="badge confirmed">CONFIRMADO</span></td>
-                </tr>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
 
-                <tr>
-                  <td>10:30</td>
-                  <td><div style="display: flex; align-items: center; gap: 10px;">
-                      <div class="user-avatar-p" style="background-color: #DBEAFE; color: #2563EB;">
-                        <span class="material-symbols-outlined">pets</span>
-                      </div>
-                      <div>
-                        <strong>Thor</strong>
-                      </div>
-                    </div></td>
-                  <td>Juan Pérez</td>
-                  <td>Consulta General</td>
-                  <td><span class="badge waiting">EN ESPERA</span></td>
-                </tr>
+            <!-- Mis consultas recientes -->
+            <div class="dash-card">
+                <div class="dash-card-header">
+                    <h3>
+                        <span class="material-symbols-outlined">history</span>
+                        Últimas consultas
+                    </h3>
+                    <a href="{% url 'consultas' %}" class="link-green" style="font-size:0.82rem;">Ver todas</a>
+                </div>
+                <div class="dash-card-body">
+                    {% if mis_consultas_recientes %}
+                        {% for c in mis_consultas_recientes %}
+                        <div class="consulta-recent">
+                            <div class="consulta-recent-fecha">
+                                {{ c.cita.fecha|date:"d M" }}<br>
+                                <span style="font-size:0.7rem;">{{ c.cita.hora|time:"H:i" }}</span>
+                            </div>
+                            <div class="consulta-recent-info">
+                                <div class="consulta-recent-mascota">{{ c.cita.mascota.nombre }}</div>
+                                <div class="consulta-recent-dx">{{ c.diagnostico|truncatechars:50 }}</div>
+                            </div>
+                            <a href="{% url 'ver_consulta' c.numero %}" class="link-green" style="font-size:0.78rem;">Ver</a>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <p class="dash-empty">Sin consultas registradas.</p>
+                    {% endif %}
+                </div>
+            </div>
 
-                <tr>
-                  <td>11:15</td>
-                  <td><div style="display: flex; align-items: center; gap: 10px;">
-                      <div class="user-avatar-p" style="background-color: #DBEAFE; color: #2563EB;">
-                        <span class="material-symbols-outlined">pets</span>
-                      </div>
-                      <div>
-                        <strong>Kira</strong>
-                      </div>
-                    </div></td>
-                  <td>Ana Gómez</td>
-                  <td>Cirugía</td>
-                  <td><span class="badge in-consult">EN CONSULTA</span></td>
-                </tr>
-                <tr>
-                  <td>12:00</td>
-                  <td><div style="display: flex; align-items: center; gap: 10px;">
-                      <div class="user-avatar-p" style="background-color: #FFEDD5; color: #EA580C;">
-                        <span class="material-symbols-outlined">pets</span>
-                      </div>
-                      <div>
-                        <strong>Thor</strong>
-                      </div>
-                    </div></td>
-                  <td>Carlos Ruiz</td>
-                  <td>Revisión</td>
-                  <td><span class="badge pending">PENDIENTE</span></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+        </div><!-- /col principal -->
 
+        <!-- SIDEBAR ──────────────────────────────────────────────────────── -->
+        <div>
 
-      <!-- PLACEHOLDER PAGES -->
-      
-      <div class="page" id="page-citas">
-        <div class="page-header"><h1 class="page-title">Citas</h1></div>
-        <div class="card placeholder-card">
-          <div class="placeholder-icon">📅</div>
-          <p>Módulo de Citas</p>
-        </div>
-      </div>
+            <!-- Mis stats -->
+            <div class="dash-card">
+                <div class="dash-card-header">
+                    <h3><span class="material-symbols-outlined">analytics</span>Mi actividad hoy</h3>
+                </div>
+                <div class="dash-card-body">
+                    <div class="dash-stat-mini">
+                        <div class="dash-stat-mini-icon" style="background:var(--green-light);">
+                            <span class="material-symbols-outlined" style="color:var(--green-dark);">check_circle</span>
+                        </div>
+                        <div>
+                            <div class="dash-stat-mini-label">Atendidas hoy</div>
+                            <div class="dash-stat-mini-value">{{ citas_atendidas }}</div>
+                        </div>
+                    </div>
+                    <div class="dash-stat-mini">
+                        <div class="dash-stat-mini-icon" style="background:#fef9e7;">
+                            <span class="material-symbols-outlined" style="color:#d4ac0d;">pending</span>
+                        </div>
+                        <div>
+                            <div class="dash-stat-mini-label">Pendientes hoy</div>
+                            <div class="dash-stat-mini-value">{{ citas_pendientes }}</div>
+                        </div>
+                    </div>
+                    <div class="dash-stat-mini">
+                        <div class="dash-stat-mini-icon" style="background:var(--blue-light);">
+                            <span class="material-symbols-outlined" style="color:var(--blue-dark);">bed</span>
+                        </div>
+                        <div>
+                            <div class="dash-stat-mini-label">Hospitalizados activos</div>
+                            <div class="dash-stat-mini-value">{{ hosps_activas }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-      <div class="page" id="page-consultas">
-        <div class="page-header"><h1 class="page-title">Consultas</h1></div>
-        <div class="card placeholder-card"><div class="placeholder-icon">🩺</div><p>Módulo de Consultas</p></div>
-      </div>
-      <div class="page" id="page-hospitalizacion">
-        <div class="page-header"><h1 class="page-title">Hospitalización</h1></div>
-        <div class="card placeholder-card"><div class="placeholder-icon">🏥</div><p>Módulo de Hospitalización</p></div>
-      </div>
-      <div class="page" id="page-pagos">
-        <div class="page-header"><h1 class="page-title">Pagos</h1></div>
-        <div class="card placeholder-card"><div class="placeholder-icon">💳</div><p>Módulo de Pagos</p></div>
-      </div>
-      <div class="page" id="page-catalogo">
-        <div class="page-header"><h1 class="page-title">Catálogo</h1></div>
-        <div class="card placeholder-card"><div class="placeholder-icon">📦</div><p>Módulo de Catálogo</p></div>
-      </div>
-      <div class="page" id="page-medicamentos">
-        <div class="page-header"><h1 class="page-title">Medicamentos</h1></div>
-        <div class="card placeholder-card"><div class="placeholder-icon">💊</div><p>Módulo de Medicamentos</p></div>
-      </div>
-      <div class="page" id="page-usuarios">
-        <div class="page-header"><h1 class="page-title">Usuarios</h1></div>
-        <div class="card placeholder-card"><div class="placeholder-icon">👥</div><p>Módulo de Usuarios</p></div>
-      </div>
-      <div class="page" id="page-especies">
-        <div class="page-header"><h1 class="page-title">Especies Animales</h1></div>
-        <div class="card placeholder-card"><div class="placeholder-icon">🦜</div><p>Módulo de Especies Animales</p></div>
-      </div>
-      <div class="page" id="page-reportes">
-        <div class="page-header"><h1 class="page-title">Reportes</h1></div>
-        <div class="card placeholder-card"><div class="placeholder-icon">📊</div><p>Módulo de Reportes</p></div>
-      </div>
+            <!-- Próximas citas -->
+            <div class="dash-card">
+                <div class="dash-card-header">
+                    <h3><span class="material-symbols-outlined">event_upcoming</span>Próximas citas</h3>
+                </div>
+                <div class="dash-card-body">
+                    {% if proximas_citas %}
+                        {% for c in proximas_citas %}
+                        <div class="agenda-item" style="padding:10px 14px;">
+                            <div style="min-width:52px; text-align:center;">
+                                <div style="font-size:0.7rem; color:var(--text-muted);">{{ c.fecha|date:"d M" }}</div>
+                                <div style="font-size:0.85rem; font-weight:800; color:var(--text);">{{ c.hora|time:"H:i" }}</div>
+                            </div>
+                            <div class="agenda-info">
+                                <div class="agenda-mascota">{{ c.mascota.nombre }}</div>
+                                <div class="agenda-propietario">{{ c.motivo|truncatechars:28 }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <p class="dash-empty">Sin citas próximas.</p>
+                    {% endif %}
+                </div>
+            </div>
 
+            <!-- Perfil rápido -->
+            {% if veterinario %}
+            <div class="dash-card">
+                <div class="dash-card-header">
+                    <h3><span class="material-symbols-outlined">badge</span>Mi perfil</h3>
+                </div>
+                <div class="dash-card-body" style="padding:16px 18px;">
+                    <p style="font-size:0.82rem; color:var(--text-muted); margin:0 0 4px;">Especialidad</p>
+                    <p style="font-size:0.88rem; font-weight:700; margin:0 0 10px;">{{ veterinario.especialidad.nombre }}</p>
+                    <p style="font-size:0.82rem; color:var(--text-muted); margin:0 0 4px;">Cédula</p>
+                    <p style="font-size:0.88rem; font-weight:700; margin:0 0 10px;">{{ veterinario.cedula }}</p>
+                    <p style="font-size:0.82rem; color:var(--text-muted); margin:0 0 4px;">Correo</p>
+                    <p style="font-size:0.85rem; margin:0;">{{ veterinario.correo }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+        </div><!-- /sidebar -->
+    </div>
+
+</div>
 {% endblock %}

@@ -257,8 +257,8 @@ def validar_datos_editar_cita(data, folio_actual):
 
     try:
         fecha    = date.fromisoformat(data['fecha'])
-        if fecha <= date.today():
-            return False, 'La fecha debe ser a partir de mañana'
+        if fecha < date.today():
+            return False, 'La fecha no puede ser anterior a hoy'
         
         hora_str = data['hora']
 

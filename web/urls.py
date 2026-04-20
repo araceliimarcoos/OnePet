@@ -73,9 +73,9 @@ urlpatterns = [
     path('personal/especialidades/nueva/', views.nueva_especialidad, name='nueva_especialidad'),
     path('personal/<str:folio>/editar/', views.editar_veterinario, name='editar_veterinario'),
     path('personal/<str:folio>/baja/', views.baja_veterinario,   name='baja_veterinario'),
-        
-    path('reportes/', views.reportes, name='reportes'),
     
+    path('reportes/', views.reportes, name='reportes'),
+     
     #Estos son para las ventanitas 
     path('mascotas/nueva/', views.nueva_mascota, name='nueva_mascota'),
     path('mascotas/crear/', views.crear_mascota, name='crear_mascota'),#Este es para crear uno nuevo
