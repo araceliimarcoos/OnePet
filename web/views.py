@@ -333,6 +333,7 @@ from django.core.cache import cache
 
 
 @login_required
+@user_passes_test(lambda u: es_admin(u) or es_veterinario(u) or es_recepcionista(u))
 def mascotas(request):
     # 1. OPTIMIZACIÓN DE CACHE: Evitamos consultar Especies y Razas en cada carga.
     # Si no usas un sistema de cache (como Redis), Django usará Local Memory por defecto.
@@ -571,6 +572,7 @@ def obtener_razas(request):
 #------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 @login_required
+@user_passes_test(lambda u: es_admin(u) or es_recepcionista(u))
 def propietarios(request):
 
     query = request.GET.get('q')
@@ -606,6 +608,7 @@ def propietarios(request):
 # . . . . .  . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .  . . . . . . . . . . . . . . . . . . . .
 
 @login_required
+@user_passes_test(lambda u: es_admin(u) or es_recepcionista(u))
 def propietarios_detalles(request,folio):
     propietario = get_object_or_404(Propietario, folio=folio)
     telefonos   = Telefono.objects.filter(propietario=propietario).first()
@@ -772,6 +775,7 @@ def obtener_folio(request):
 #------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 @login_required
+@user_passes_test(lambda u: es_admin(u) or es_veterinario(u) or es_recepcionista(u))
 def citas(request):
     query = request.GET.get('q', '')
     estado = request.GET.get('estado', '')
@@ -910,6 +914,7 @@ def obtener_veterinarios_activos(solo_medicina_general=True):
 #------------------------------------------------------------------ C O N S U L T A S ------------------------------------------------------------#
 
 @login_required
+@user_passes_test(lambda u: es_admin(u) or es_veterinario(u))
 def consultas(request):
     query = request.GET.get('q', '').strip()
     
@@ -952,6 +957,7 @@ def consultas(request):
     return render(request, 'consultas/consultas_lista.html', contexto)
 
 @login_required
+@user_passes_test(lambda u: es_admin(u) or es_veterinario(u))
 def iniciar_consulta(request, folio_cita):
     """
     GET  → muestra el formulario de nueva consulta para la cita indicada.
@@ -1655,6 +1661,7 @@ def confirmar_pago(request):
 from django.db.models import Q
 
 @login_required
+@user_passes_test(es_admin)
 def servicios(request):
 
     query = request.GET.get('q')
